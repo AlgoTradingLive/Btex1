@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        function notifyKodular(str) { if (window.AppInventor) { window.AppInventor.setWebViewString(str); } }
+
+        // ─── Login Persistence ───
+        // Kodular मधून login success झाल्यावर हे call करा: loginSuccess('username')
+        function loginSuccess(userId) {
+            localStorage.setItem('NAFAA_USER', userId || 'user');
+            localStorage.setItem('NAFAA_LOGIN_TIME', Date.now().toString());
+            notifyKodular('LOGIN_SAVED|' + (userId || 'user'));
+        }
+
+        // Kodular मधून logout बटणावर हे call करा: logout()
+        function logout() {
+            localStorage.removeItem('NAFAA_USER');
+            localStorage.removeItem('NAFAA_LOGIN_TIME');
+            notifyKodular('LOGGED_OUT');
+        }
+
+        // Page load होताना auto check — Kodular ला signal जातो
+        (function checkAutoLogin() {
+            const user = localStorage.getItem('NAFAA_USER');
+            const t = parseInt(localStorage.getItem('NAFAA_LOGIN_TIME') || '0');
+            const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+            if (user && (Date.now() - t) < thirtyDays) {
+                // Valid login आहे — Kodular ला कळव, login screen skip करा
+                notifyKodular('ALREADY_LOGGED_IN|' + user);
+            } else {
+                // Login नाही — Kodular ला कळव, login screen दाखवा
+                notifyKodular('NEED_LOGIN');
+            }
+        })();
+    </script>
+    <style>
+        body { background-color: #0c0d10; color: #ffffff; font-family: sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #top_control_bar { flex-shrink: 0; }
+        #chart_container { flex: 2.8; width: 100%; position: relative; background: #0c0d10; }
+        #tradingview_widget { width: 100%; height: 100%; }
+        
+        /* Top control bar — sits above TradingView, no overlap */
+        #top_control_bar {
+            display: flex; align-items: center; gap: 4px;
+            background: #1a1d28; border-bottom: 1px solid #2a2e39;
+            padding: 4px 8px; flex-shrink: 0; z-index: 1002;
+            height: 32px; box-sizing: border-box;
+        }
+        #hamburger_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444;
+            border-radius: 5px; width: 26px; height: 24px;
+            font-size: 15px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-weight: bold;
+            flex-shrink: 0;
+        }
+        .top-bar-sep { width: 1px; height: 18px; background: #2a2e39; margin: 0 2px; flex-shrink: 0; }
+        #chart_controls { display: flex; gap: 3px; align-items: center; }
+        .chart-select { background: #1e222d; color: #38bdf8; border: 1px solid #444; padding: 0px 2px; border-radius: 3px; font-size: 9px; font-weight: bold; cursor: pointer; height: 22px; width: auto; min-width: 42px; outline: none; }
+        #tools_toggle { background: #2a2e39; color: #38bdf8; border: 1px solid #444; padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; height: 24px; margin-left: auto; flex-shrink: 0; }
+        #manual_trade_panel { position: absolute; bottom: 0px; left: 0px; right: 0px; z-index: 1001; display: flex; flex-direction: column; gap: 4px; align-items: center; background: rgba(12, 13, 16, 0.97); padding: 5px 6px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .mtp-row { display: flex; flex-direction: row; gap: 3px; align-items: center; justify-content: center; flex-wrap: nowrap; width: 100%; max-width: 480px; }
+        .mtp-pill { background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 4px; font-size: 8.5px; font-weight: bold; padding: 3px 0px; height: 24px; flex: 0 0 auto; width: 42px; }
+        .mtp-pill.gold { color: #38bdf8; }
+        .mtp-price { width: 48px; flex: 0 0 auto; }
+        .mtp-qty { width: 38px; flex: 0 0 auto; }
+        .mtp-sltp { width: 42px; flex: 0 0 auto; }
+        .mtp-margin { font-size: 7.5px; color: #b2b5be; font-weight: bold; white-space: nowrap; flex: 0 0 auto; padding-left: 1px; }
+        .m-btn { color: white; border: none; padding: 5px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; height: 26px; flex: 1; }
+        .m-buy { background-color: #089981; } .m-sell { background-color: #f23645; }
+        .qty-input { width: 60px; background: #1e222d; border: 1px solid #444; color: white; font-size: 9.5px; text-align: center; border-radius: 3px; padding: 3px 2px; height: 24px; box-sizing: border-box; flex-shrink: 0; }
+        .m-label { font-size: 8px; color: #888; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 1px; }
+        .m-field { display: flex; flex-direction: column; align-items: center; }
+        /* Tab styles */
+        .tab-bar { display: flex; background: #1e222d; border-bottom: 1px solid #2a2e39; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 5px 4px; font-size: 9px; font-weight: bold; color: #b2b5be; background: transparent; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; background: rgba(240,185,11,0.06); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 60px; flex: 1 1 auto; }
+        /* Positions table */
+        .positions-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .positions-table th { color: #b2b5be; padding: 5px 4px; border-bottom: 1px solid #2a2e39; background: #1e222d; font-size: 8px; text-transform: uppercase; }
+        .positions-table td { padding: 5px 4px; border-bottom: 1px solid #2a2e39; text-align: center; font-weight: bold; }
+        .exit-btn { background: #f23645; color: white; border: none; padding: 3px 7px; border-radius: 3px; font-size: 8px; font-weight: bold; cursor: pointer; }
+        #active_positions_overlay { 
+            position: absolute; 
+            bottom: 12px;
+            left: 170px;
+            z-index: 1000; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            pointer-events: none; 
+        }
+        .pos-card { pointer-events: auto; background: rgba(20, 24, 35, 0.95); border: 1px solid #444; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; display: flex; flex-direction: column; min-width: 145px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .pos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .strat-tag { font-size: 8.5px; color: #38bdf8; text-transform: uppercase; }
+        .close-icon { color: #f23645; cursor: pointer; font-size: 14px; padding: 0 4px; font-weight: bold; }
+        .sl-tgt-info { font-size: 8px; color: #aaa; margin-top: 2px; border-top: 1px solid #333; padding-top: 2px; }
+        .status-panel { flex: 1.5; background: #131722; border-top: 1px solid #2a2e39; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+        .row { display: flex; justify-content: space-between; padding: 4px 10px; border-bottom: 1px solid #2a2e39; align-items: center; flex-shrink: 0; }
+        .asset-pnl-box { display: flex; gap: 3px; padding: 3px 6px; background: #1e222d; border-bottom: 1px solid #2a2e39; justify-content: space-between; flex-shrink: 0; }
+        .pnl-chip { flex: 1; padding: 4px 2px; border-radius: 4px; background: #0c0d10; border: 1px solid #333; text-align: center; font-size: 8.5px; min-width: 60px; }
+        .controls-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 15px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 8px; flex-shrink: 0; }
+        .strat-select { background: #0c0d10; color: #38bdf8; border: 1px solid #444; padding: 4px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
+        .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
+        #auto_mode:checked + .toggle { background: #089981; }
+        #auto_mode:checked + .toggle::after { left: 18px; }
+        #auto_mode { display: none; }
+        .small-close-btn { background: #f23645; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .history-table th { color: #b2b5be; padding: 6px 4px; border-bottom: 1px solid #2a2e39; background: #1e222d; }
+        .history-table td { padding: 6px 4px; border-bottom: 1px solid #2a2e39; text-align: center; font-weight: bold; }
+        #s4_monitor { position: absolute; top: 45px; right: 10px; z-index: 1005; background: rgba(20, 24, 35, 0.95); border: 1px solid #38bdf8; padding: 5px 8px; border-radius: 5px; font-size: 9px; display: none; width: fit-content; max-width: 220px; }
+
+        /* 30 DAY CHALLENGE STYLES */
+        #challenge_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
+        #challenge_overlay.show { display:flex; }
+        .chal-box { background:#131722; border:2px solid #38bdf8; border-radius:12px; padding:16px; width:92%; max-width:360px; max-height:88vh; overflow-y:auto; }
+        .chal-title { color:#38bdf8; font-size:14px; font-weight:bold; text-align:center; margin-bottom:10px; letter-spacing:1px; }
+        .chal-progress-bar { width:100%; height:10px; background:#2a2e39; border-radius:5px; margin:4px 0 10px; overflow:hidden; }
+        .chal-progress-fill { height:100%; border-radius:5px; transition:width 0.5s; }
+        .chal-stat-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #2a2e39; font-size:10px; }
+        .chal-stat-label { color:#b2b5be; }
+        .chal-stat-val { font-weight:bold; font-size:11px; }
+        .chal-day-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:3px; margin:8px 0; }
+        .day-dot { width:100%; aspect-ratio:1; border-radius:3px; font-size:7px; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; }
+        .day-dot.win { background:#089981; color:#fff; }
+        .day-dot.loss { background:#f23645; color:#fff; }
+        .day-dot.empty { background:#2a2e39; color:#555; }
+        .day-dot.today { border:1.5px solid #38bdf8; }
+        .chal-btn { width:100%; padding:7px; border-radius:5px; border:none; font-size:11px; font-weight:bold; cursor:pointer; margin-top:6px; }
+        .chal-btn-start { background:#38bdf8; color:#000; }
+        .chal-btn-reset { background:#f23645; color:#fff; }
+        .chal-btn-close { background:#2a2e39; color:#fff; }
+
+        .chal-warning-banner { background:#f23645; color:#fff; font-size:9px; font-weight:bold; text-align:center; padding:4px; border-radius:4px; margin-bottom:6px; display:none; }
+        .chal-section-title { color:#38bdf8; font-size:9px; font-weight:bold; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.5px; }
+
+        /* ── HAMBURGER SIDE PANEL ── */
+        #side_panel_overlay {
+            display: none; position: fixed; inset: 0; z-index: 2500;
+            background: rgba(0,0,0,0.55);
+        }
+        #side_panel_overlay.open { display: block; }
+        #side_panel {
+            position: fixed; top: 0; left: -290px; width: 280px; height: 100%;
+            background: #131722; border-right: 2px solid #38bdf8;
+            z-index: 2600; display: flex; flex-direction: column;
+            transition: left 0.28s ease; overflow-y: auto;
+        }
+        #side_panel.open { left: 0; }
+        .sp-header {
+            background: #1e222d; padding: 14px 16px 12px;
+            border-bottom: 1px solid #2a2e39; display: flex;
+            align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .sp-logo { color: #38bdf8; font-size: 15px; font-weight: bold; letter-spacing: 1.5px; }
+        .sp-close {
+            color: #b2b5be; font-size: 20px; cursor: pointer; line-height: 1;
+            background: none; border: none; padding: 0 4px;
+        }
+        .sp-close:hover { color: #f23645; }
+        .sp-section { padding: 10px 14px 6px; border-bottom: 1px solid #2a2e39; }
+        .sp-section-title {
+            color: #38bdf8; font-size: 9px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+        }
+        .sp-item {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 10px; color: #d1d4dc; line-height: 1.45;
+        }
+        .sp-item:last-child { border-bottom: none; }
+        .sp-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+        .sp-item-title { color: #fff; font-weight: bold; font-size: 10px; display: block; }
+        .sp-item-sub { color: #888; font-size: 9px; display: block; margin-top: 1px; }
+        .sp-rule-chip {
+            display: inline-block; background: rgba(240,185,11,0.12);
+            border: 1px solid rgba(240,185,11,0.4); color: #38bdf8;
+            border-radius: 3px; padding: 1px 5px; font-size: 9px;
+            font-weight: bold; margin: 2px 2px 0 0;
+        }
+        .sp-rule-chip.red { background: rgba(242,54,69,0.12); border-color: rgba(242,54,69,0.4); color: #f23645; }
+        .sp-rule-chip.green { background: rgba(8,153,129,0.12); border-color: rgba(8,153,129,0.4); color: #089981; }
+        .sp-action-btn {
+            width: 100%; padding: 8px; border-radius: 5px; border: none;
+            font-size: 11px; font-weight: bold; cursor: pointer; margin-top: 5px;
+            background: #38bdf8; color: #000;
+        }
+        .sp-action-btn:hover { background: #e0a800; }
+        .sp-footer {
+            padding: 10px 14px; color: #555; font-size: 8px; text-align: center; margin-top: auto;
+        }
+        /* Accordion */
+        .sp-accordion { border-bottom: 1px solid #2a2e39; }
+        .sp-accordion-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 14px; cursor: pointer; user-select: none;
+            background: transparent; transition: background 0.15s;
+        }
+        .sp-accordion-head:hover { background: rgba(240,185,11,0.05); }
+        .sp-accordion-head-left { display: flex; align-items: center; gap: 9px; }
+        .sp-accordion-icon { font-size: 15px; }
+        .sp-accordion-label { color: #fff; font-size: 11px; font-weight: bold; letter-spacing: 0.3px; }
+        .sp-accordion-arrow {
+            color: #b2b5be; font-size: 10px; transition: transform 0.25s;
+            display: inline-block;
+        }
+        .sp-accordion.open .sp-accordion-arrow { transform: rotate(180deg); color: #38bdf8; }
+        .sp-accordion.open .sp-accordion-label { color: #38bdf8; }
+        .sp-accordion-body {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            background: #0c0d10;
+        }
+        .sp-accordion.open .sp-accordion-body { max-height: 600px; }
+        .sp-accordion-inner { padding: 4px 14px 12px; }
+        .sp-rule-row {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 10px; color: #d1d4dc; line-height: 1.5;
+        }
+        .sp-rule-row:last-child { border-bottom: none; }
+        .sp-rule-emoji { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+        .sp-rule-title { color: #fff; font-weight: bold; font-size: 10px; display: block; }
+        .sp-rule-desc { color: #8a8e99; font-size: 9px; display: block; margin-top: 2px; line-height: 1.5; }
+        .sp-chip {
+            display: inline-block; border-radius: 3px; padding: 1px 6px;
+            font-size: 9px; font-weight: bold; margin: 2px 2px 0 0;
+        }
+        .sp-chip-gold { background: rgba(240,185,11,0.15); border: 1px solid rgba(240,185,11,0.4); color: #38bdf8; }
+        .sp-chip-red  { background: rgba(242,54,69,0.15);  border: 1px solid rgba(242,54,69,0.4);  color: #f23645; }
+        .sp-chip-green{ background: rgba(8,153,129,0.15);  border: 1px solid rgba(8,153,129,0.4);  color: #089981; }
+        .sp-chip-blue { background: rgba(41,98,255,0.15);  border: 1px solid rgba(41,98,255,0.4);  color: #2962ff; }
+        .sp-strat-card {
+            background: #1a1f2e; border: 1px solid #2a2e39; border-radius: 5px;
+            padding: 7px 9px; margin-bottom: 6px;
+        }
+        .sp-strat-name { color: #38bdf8; font-size: 10px; font-weight: bold; }
+        .sp-strat-tf { color: #888; font-size: 8px; margin-left: 4px; }
+        .sp-strat-desc { color: #8a8e99; font-size: 9px; margin-top: 3px; line-height: 1.45; }
+        .sp-action-btn {
+            width: 100%; padding: 9px; border-radius: 5px; border: none;
+            font-size: 11px; font-weight: bold; cursor: pointer; margin-top: 8px;
+            background: #38bdf8; color: #000;
+        }
+        .sp-action-btn:hover { background: #e0a800; }
+        /* Language toggle */
+        .sp-lang-bar {
+            display: flex; gap: 6px; padding: 8px 14px;
+            background: #1a1f2e; border-bottom: 1px solid #2a2e39; flex-shrink: 0;
+        }
+        .sp-lang-btn {
+            flex: 1; padding: 5px; border-radius: 4px; border: 1px solid #444;
+            font-size: 10px; font-weight: bold; cursor: pointer; text-align: center;
+            background: #0c0d10; color: #888; transition: all 0.2s;
+        }
+        .sp-lang-btn.active { background: #38bdf8; color: #000; border-color: #38bdf8; }
+        [data-hi] { display: none; }
+        body.lang-hi [data-en] { display: none; }
+        body.lang-hi [data-hi] { display: inline; }
+        body.lang-en [data-en] { display: inline; }
+        body.lang-en [data-hi] { display: none; }
+
+        /* trade marker animation below */
+    </style>
+</head>
+<body onload="initApp()">
+
+    <!-- ── SIDE PANEL OVERLAY ── -->
+    <div id="side_panel_overlay" onclick="closeSidePanel()"></div>
+
+    <!-- ── SIDE PANEL ── -->
+    <div id="side_panel">
+        <div class="sp-header">
+            <img src="BtexLogo.png" style="height:34px; width:34px; border-radius:50%; object-fit:cover; flex-shrink:0;"><span class="sp-logo" style="margin-left:8px;">Btex</span>
+            <button class="sp-close" onclick="closeSidePanel()">✕</button>
+        </div>
+
+        <!-- Language Toggle -->
+        <div class="sp-lang-bar">
+            <button class="sp-lang-btn active" id="btn_lang_en" onclick="setLang('en')">🇬🇧 English</button>
+            <button class="sp-lang-btn" id="btn_lang_hi" onclick="setLang('hi')">🇮🇳 हिंदी</button>
+        </div>
+
+        <!-- ACCORDION 1: 30 Day Challenge Rules -->
+        <div class="sp-accordion" id="acc_challenge">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_challenge')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">🏆</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>30 Day Challenge Rules</span>
+                        <span data-hi>३० दिन चैलेंज — नियम</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎯</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Profit Target</span>
+                                <span data-hi>प्रॉफिट टार्गेट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Earn <span class="sp-chip sp-chip-gold">₹2,00,000</span> within 30 days to complete the challenge.</span>
+                                <span data-hi>३० दिनों में <span class="sp-chip sp-chip-gold">₹2,00,000</span> कमाने पर चैलेंज पूरा होता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📅</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Daily Trade Limit</span>
+                                <span data-hi>रोज़ाना ट्रेड लिमिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Maximum <span class="sp-chip sp-chip-gold">10 trades per day</span>. Once the limit is hit, no more trades are allowed for that day.</span>
+                                <span data-hi>एक दिन में अधिकतम <span class="sp-chip sp-chip-gold">10 ट्रेड</span> किए जा सकते हैं। लिमिट खत्म होने पर उस दिन ट्रेडिंग बंद।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔒</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Daily Loss Lockout</span>
+                                <span data-hi>डेली लॉस लॉकआउट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If net loss reaches <span class="sp-chip sp-chip-red">₹5,000 in a day</span>, trading is automatically locked until the next day.</span>
+                                <span data-hi>एक दिन में <span class="sp-chip sp-chip-red">₹5,000</span> का नुकसान होने पर ट्रेडिंग अगले दिन तक अपने आप लॉक हो जाती है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📈</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Required Daily Average</span>
+                                <span data-hi>रोज़ाना ज़रूरी प्रॉफिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>To hit the target on time, aim for at least <span class="sp-chip sp-chip-green">₹6,667 profit per day</span>.</span>
+                                <span data-hi>टार्गेट समय पर पूरा करने के लिए रोज़ कम से कम <span class="sp-chip sp-chip-green">₹6,667 प्रॉफिट</span> बनाना होगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🗓️</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Day Grid Colors</span>
+                                <span data-hi>डे ग्रिड रंग</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en><span class="sp-chip sp-chip-green">Green</span> = Profit Day &nbsp; <span class="sp-chip sp-chip-red">Red</span> = Loss Day. Gold border = Today.</span>
+                                <span data-hi><span class="sp-chip sp-chip-green">हरा</span> = प्रॉफिट दिन &nbsp; <span class="sp-chip sp-chip-red">लाल</span> = लॉस दिन। सुनहरी बॉर्डर = आज का दिन।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔄</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Reset Rule</span>
+                                <span data-hi>रीसेट नियम</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>You can reset the challenge anytime, but each reset is counted. Fewer resets = better discipline.</span>
+                                <span data-hi>चैलेंज कभी भी रीसेट किया जा सकता है, लेकिन हर रीसेट की गिनती होती है। कम रीसेट = बेहतर अनुशासन।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎉</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>How to Win</span>
+                                <span data-hi>जीत कैसे होती है?</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>When Total P&L ≥ ₹2,00,000 within 30 days, you'll see <strong style="color:#089981;">TARGET ACHIEVED!</strong></span>
+                                <span data-hi>३० दिनों में Total P&L ≥ ₹2,00,000 होने पर <strong style="color:#089981;">TARGET ACHIEVED!</strong> दिखेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎁</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Prize — 15,000 Coins</span>
+                                <span data-hi>इनाम — 15,000 कॉइन्स</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Challenge winner gets <span class="sp-chip sp-chip-gold">15,000 Coins*</span> = <span class="sp-chip sp-chip-green">₹150 Google Play Voucher FREE!</span> Coins are awarded after manual verification.</span>
+                                <span data-hi>चैलेंज विजेता को <span class="sp-chip sp-chip-gold">15,000 Coins*</span> मिलेंगे = <span class="sp-chip sp-chip-green">₹150 Google Play Voucher FREE!</span> मैनुअल वेरिफिकेशन के बाद कॉइन्स दिए जाएंगे।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🤖</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Auto Trade vs 30 Day Challenge</span>
+                                <span data-hi>ऑटो ट्रेड vs ३० दिन चैलेंज</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Auto trades are <span class="sp-chip sp-chip-red">NOT counted</span> in the 30 Day Challenge. Only <span class="sp-chip sp-chip-green">manual trades</span> are tracked. Turn OFF Auto mode to trade for the challenge.</span>
+                                <span data-hi>ऑटो ट्रेड <span class="sp-chip sp-chip-red">30 दिन चैलेंज में नहीं गिने जाते।</span> केवल <span class="sp-chip sp-chip-green">मैनुअल ट्रेड</span> ही काउंट होते हैं। चैलेंज के लिए ऑटो मोड बंद रखें।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="sp-action-btn" onclick="closeSidePanel(); openChallenge();">
+                        <span data-en>Open Challenge Dashboard</span>
+                        <span data-hi>चैलेंज डैशबोर्ड खोलें</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCORDION 2: Auto Mode & Strategies -->
+        <div class="sp-accordion" id="acc_strategies">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_strategies')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">🤖</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Auto Mode & Strategies</span>
+                        <span data-hi>ऑटो मोड और स्ट्रैटेजी</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔀</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>How to Select a Strategy</span>
+                                <span data-hi>स्ट्रैटेजी कैसे चुनें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>In the controls bar below the chart, first select your asset (BTC / ETH / GOLD) from the left dropdown, then choose a strategy from the <span class="sp-chip sp-chip-gold">Strategy dropdown</span>. Each asset saves its own strategy.</span>
+                                <span data-hi>चार्ट के नीचे कंट्रोल बार में पहले बाईं ओर से असेट (BTC / ETH / GOLD) चुनें, फिर <span class="sp-chip sp-chip-gold">Strategy dropdown</span> से स्ट्रैटेजी सेलेक्ट करें। हर असेट की स्ट्रैटेजी अलग-अलग सेव होती है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">⚡</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>How to Use Auto Mode</span>
+                                <span data-hi>ऑटो मोड कैसे चालू करें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>After selecting the strategy, flip the <span class="sp-chip sp-chip-gold">AUTO</span> toggle to ON. The system checks the market every 5 seconds and places trades automatically — no manual input needed.</span>
+                                <span data-hi>स्ट्रैटेजी चुनने के बाद <span class="sp-chip sp-chip-gold">AUTO</span> टॉगल ON करें। सिस्टम हर ५ सेकंड में मार्केट चेक करता है और सिग्नल आने पर खुद ट्रेड लगाता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">✋</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Manual Mode (AUTO off)</span>
+                                <span data-hi>मैन्युअल मोड (AUTO बंद)</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Keep AUTO off to trade yourself. Enter Qty, SL price and Target price at the bottom of the chart, then tap <span class="sp-chip sp-chip-green">BUY</span> or <span class="sp-chip sp-chip-red">SELL</span>.</span>
+                                <span data-hi>AUTO बंद रखें और खुद ट्रेड करें। चार्ट के नीचे Qty, SL और Target भरें, फिर <span class="sp-chip sp-chip-green">BUY</span> या <span class="sp-chip sp-chip-red">SELL</span> दबाएं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💡</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Tip</span>
+                                <span data-hi>टिप</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Strategy logic (S1–S6) is kept private. Just select, enable AUTO, and trust the system.</span>
+                                <span data-hi>S1–S6 की अंदरूनी लॉजिक प्राइवेट है। बस स्ट्रैटेजी चुनें, AUTO ON करें और सिस्टम पर भरोसा रखें।</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCORDION 3: Tools On / Off -->
+        <div class="sp-accordion" id="acc_tools">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_tools')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">🛠️</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Chart Tools — On / Off</span>
+                        <span data-hi>चार्ट टूल्स — चालू / बंद</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔘</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Where is the Tools button?</span>
+                                <span data-hi>Tools बटन कहाँ है?</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Look at the top-right corner of the chart — you'll see a <span class="sp-chip sp-chip-gold">Tools: ON</span> button.</span>
+                                <span data-hi>चार्ट के ऊपर दाईं ओर <span class="sp-chip sp-chip-gold">Tools: ON</span> बटन दिखेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">✅</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Tools: ON</span>
+                                <span data-hi>Tools: ON</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>The TradingView drawing toolbar (trendlines, rectangles, text etc.) is visible on the left side of the chart.</span>
+                                <span data-hi>TradingView का ड्रॉइंग टूलबार (ट्रेंडलाइन, बॉक्स, टेक्स्ट आदि) चार्ट की बाईं ओर दिखता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">❌</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Tools: OFF</span>
+                                <span data-hi>Tools: OFF</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Toolbar is hidden for a clean, distraction-free chart. Tap the button again to bring it back.</span>
+                                <span data-hi>टूलबार छुपा दिया जाता है — साफ चार्ट व्यू मिलता है। दोबारा दबाने पर वापस आ जाता है।</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCORDION 4: Timeframe & Indicator -->
+        <div class="sp-accordion" id="acc_tf">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_tf')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">⏱️</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Timeframe & Indicator</span>
+                        <span data-hi>टाइमफ्रेम और इंडिकेटर</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📐</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Timeframe Selector</span>
+                                <span data-hi>टाइमफ्रेम सेलेक्टर</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Top-right of the chart — first small dropdown. Pick: <span class="sp-chip sp-chip-gold">1m</span> <span class="sp-chip sp-chip-gold">5m</span> <span class="sp-chip sp-chip-gold">15m</span> <span class="sp-chip sp-chip-gold">1H</span> <span class="sp-chip sp-chip-gold">D</span>. Chart reloads instantly.</span>
+                                <span data-hi>चार्ट के ऊपर दाईं ओर पहला छोटा ड्रॉपडाउन। चुनें: <span class="sp-chip sp-chip-gold">1m</span> <span class="sp-chip sp-chip-gold">5m</span> <span class="sp-chip sp-chip-gold">15m</span> <span class="sp-chip sp-chip-gold">1H</span> <span class="sp-chip sp-chip-gold">D</span>। चार्ट तुरंत रीलोड होता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📊</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Indicator Selector</span>
+                                <span data-hi>इंडिकेटर सेलेक्टर</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Second dropdown — overlay one indicator: EMA 9/21/50/200, RSI, SuperTrend, Bollinger Bands, VWAP, MACD or Volume. Pick <span class="sp-chip sp-chip-gold">None</span> to clear.</span>
+                                <span data-hi>दूसरा ड्रॉपडाउन — एक इंडिकेटर चुनें: EMA 9/21/50/200, RSI, SuperTrend, BB, VWAP, MACD या Volume। हटाने के लिए <span class="sp-chip sp-chip-gold">None</span> चुनें।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💾</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Auto-Saved</span>
+                                <span data-hi>अपने आप सेव</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Your timeframe and indicator choice are saved automatically. Next time you open the app, the chart loads with the same settings.</span>
+                                <span data-hi>आपका टाइमफ्रेम और इंडिकेटर अपने आप सेव हो जाता है। अगली बार ऐप खोलने पर वही सेटिंग्स लोड होती हैं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCORDION 5: USD / INR Currency -->
+        <div class="sp-accordion" id="acc_currency">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_currency')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">💱</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>USD / INR Currency</span>
+                        <span data-hi>USD / INR करेंसी</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💰</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>What does it do?</span>
+                                <span data-hi>यह क्या करता है?</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Your balance and P&L can be shown in Indian Rupees <span class="sp-chip sp-chip-gold">INR</span> or US Dollars <span class="sp-chip sp-chip-gold">USD</span>. Conversion rate used: $1 = ₹83.50.</span>
+                                <span data-hi>आपका बैलेंस और P&L भारतीय रुपयों <span class="sp-chip sp-chip-gold">INR</span> या अमेरिकी डॉलर <span class="sp-chip sp-chip-gold">USD</span> में देख सकते हैं। रेट: $1 = ₹83.50।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔄</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>How to Change</span>
+                                <span data-hi>कैसे बदलें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>In the <strong style="color:#fff;">Real Balance</strong> row (top of the status panel below the chart), tap the small <span class="sp-chip sp-chip-gold">INR / USD</span> dropdown next to the balance number to switch instantly.</span>
+                                <span data-hi>चार्ट के नीचे स्टेटस पैनल में <strong style="color:#fff;">Real Balance</strong> की लाइन पर बैलेंस के बगल में छोटा <span class="sp-chip sp-chip-gold">INR / USD</span> ड्रॉपडाउन दिखेगा — उसे दबाएं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📌</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Note</span>
+                                <span data-hi>ध्यान दें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>This only changes the display — your actual trading and P&L calculations are always in USDT internally.</span>
+                                <span data-hi>यह सिर्फ डिस्प्ले बदलता है — असल ट्रेडिंग और P&L की गणना हमेशा USDT में होती है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="sp-footer">Btex Trading App · v15</div>
+    </div>
+
+    <!-- ── TOP CONTROL BAR (above chart, no overlap) ── -->
+    <div id="top_control_bar">
+        <button id="hamburger_btn" onclick="openSidePanel()" title="Menu">☰</button>
+        <div class="top-bar-sep"></div>
+        <div id="chart_controls">
+            <select id="user_tf" class="chart-select" onchange="updateUserPreferences()">
+                <option value="1">1m</option>
+                <option value="5">5m</option>
+                <option value="15">15m</option>
+                <option value="60">1H</option>
+                <option value="240">4H</option>
+                <option value="D">D</option>
+            </select>
+            <select id="user_ind" class="chart-select" onchange="updateUserPreferences()">
+                <option value="">None</option>
+                <option value="EMA9">E9</option>
+                <option value="EMA21">E21</option>
+                <option value="EMA50">E50</option>
+                <option value="EMA200">E200</option>
+                <option value="RSI@tv-basicstudies">RSI</option>
+                <option value="SuperTrend@tv-basicstudies">ST</option>
+                <option value="BB@tv-basicstudies">BB</option>
+                <option value="VWAP@tv-basicstudies">VWAP</option>
+                <option value="MACD@tv-basicstudies">MACD</option>
+                <option value="Volume@tv-basicstudies">Vol</option>
+            </select>
+        </div>
+        <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
+        <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
+    </div>
+
+    <div id="chart_container">
+        <div id="tradingview_widget"></div>
+        <div id="s4_monitor">
+            <div id="s4_title" style="font-size:8px; font-weight:bold; color:#38bdf8; line-height:1.3;">SCANNING...</div>
+            <div id="s4_st_val" style="font-size:10px; font-family:monospace; font-weight:bold; line-height:1.3;">---</div>
+            <div style="color:#aaa; font-size:7px; line-height:1.2;">BUF: <span id="s4_zone_val" style="color:#38bdf8; font-family:monospace;">---</span></div>
+        </div>
+        
+        
+        <div id="active_positions_overlay"></div>
+        <div id="manual_trade_panel">
+            <div class="mtp-row">
+                <select id="mtp_lev" class="mtp-pill gold" onchange="syncSharkQty()">
+                    <option value="10">10x</option>
+                    <option value="25">25x</option>
+                    <option value="50">50x</option>
+                    <option value="75" selected>75x</option>
+                    <option value="100">100x</option>
+                    <option value="150">150x</option>
+                </select>
+                <select id="mtp_order_type" class="mtp-pill" onchange="sharkSetOrderType(this.value)">
+                    <option value="Market">Market</option>
+                    <option value="Limit" selected>Limit</option>
+                    <option value="Stop Limit">Stop Lmt</option>
+                    <option value="Stop Market">Stop Mkt</option>
+                </select>
+                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Price" oninput="syncSharkQty()">
+                <input type="number" id="manual_qty" class="qty-input mtp-qty" value="1" min="1" placeholder="Qty" oninput="syncSharkQty()">
+                <input type="number" id="manual_sl_input" class="qty-input mtp-sltp" placeholder="SL" oninput="updateTradePreview()">
+                <input type="number" id="manual_target_input" class="qty-input mtp-sltp" placeholder="TP" oninput="updateTradePreview()">
+                <span id="mtp_margin" class="mtp-margin">M: 0.00</span>
+            </div>
+            <div class="mtp-row">
+                <button class="m-btn m-buy" onclick="manualTrade('BUY')">Buy/Long</button>
+                <button class="m-btn m-sell" onclick="manualTrade('SELL')">Sell/Short</button>
+            </div>
+        </div>
+        <div id="trade_preview_bar" style="position:absolute;bottom:60px;left:0;width:auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:3px 8px;background:rgba(12,13,16,0.92);font-size:8px;pointer-events:none;z-index:1000;border-radius:0 6px 0 0;border-top:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
+            <span id="sl_preview" style="color:#f23645;"></span>
+            <span id="tgt_preview" style="color:#089981;"></span>
+        </div>
+    </div>
+
+    <div class="status-panel">
+        <div class="row">
+            <span style="color:#b2b5be;"><span style="color:#f0b90b">Real</span> Balance</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <select id="currency_mode" class="strat-select" onchange="refreshUI()" style="padding: 1px 3px; font-size: 9px; height: 18px; min-width: 45px;">
+                    <option value="INR">INR</option>
+                    <option value="USD" selected>USD</option>
+                </select>
+                <span id="displayBalance" style="font-weight:bold; color:#ffffff;">0.00</span>
+            </div>
+        </div>
+        
+        <div class="asset-pnl-box">
+            <div class="pnl-chip">
+                <div style="color:#aaa; font-size:7px;">BTC P&L</div>
+                <div id="btc_pnl_val" style="font-weight:bold;">0</div>
+            </div>
+            <div class="pnl-chip">
+                <div style="color:#aaa; font-size:7px;">ETH P&L</div>
+                <div id="eth_pnl_val" style="font-weight:bold;">0</div>
+            </div>
+            <div class="pnl-chip">
+                <div style="color:#aaa; font-size:7px;">GOLD P&L</div>
+                <div id="gold_pnl_val" style="font-weight:bold; color:#f0b90b;">0</div>
+            </div>
+            <div class="pnl-chip" style="border-color: #38bdf8;">
+                <div style="color:#38bdf8; font-size:7px;">TOTAL P&L</div>
+                <div id="total_pnl" style="font-weight:bold;">0</div>
+            </div>
+        </div>
+
+        <div class="controls-row" style="padding:3px 8px; gap:4px;">
+            <select id="asset_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:0 0 auto;" onchange="switchMarket(); updateTradePreview();">
+                <option value="BTCUSDT">BTC/USDT</option>
+                <option value="ETHUSDT">ETH/USDT</option>
+                <option value="PAXGUSDT">GOLD</option>
+            </select>
+            <select id="strategy_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:1;" onchange="updateAssetStrategy()">
+                <option value="s1">S1: REVERSAL (5M)</option>
+                <option value="s1_5m">S1: REVERSAL (15M)</option>
+                <option value="s2">S2: EMA (5M)</option>
+                <option value="s2_5m">S2: EMA (15M)</option>
+                <option value="s3_power">S3: POWER ZONE (15M)</option>
+                <option value="s4">S4: STRONG ZONE (5M)</option>
+                <option value="s6_struct">S6: STRUCTURE BREAK (15M)</option>
+            </select>
+            <div style="display:flex; align-items:center; gap:4px; flex:0 0 auto;">
+                <span style="font-size:8px; font-weight:bold; color:#b2b5be;">AUTO</span>
+                <input type="checkbox" id="auto_mode" onchange="saveData()">
+                <label for="auto_mode" class="toggle"></label>
+            </div>
+        </div>
+        <!-- AdSense Banner -->
+        
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab_pos_btn" onclick="switchTab('positions')">📊 Positions</button>
+            <button class="tab-btn" id="tab_hist_btn" onclick="switchTab('history')">📋 History</button>
+        </div>
+
+        <!-- Positions Tab -->
+        <div class="tab-content active" id="tab_positions">
+            <table class="positions-table">
+                <thead><tr><th>ASSET/STRATEGY</th><th>BUY</th><th>SELL</th><th>QTY</th><th>P&L</th><th></th></tr></thead>
+                <tbody id="positions_body"></tbody>
+            </table>
+        </div>
+        <!-- History Tab -->
+        <div class="tab-content" id="tab_history">
+            <table class="history-table">
+                <thead><tr><th>ASSET/STR</th><th>BUY</th><th>B/TIME</th><th>SELL</th><th>S/TIME</th><th>QTY</th><th>P&L</th></tr></thead>
+                <tbody id="history_body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let balance = 1286000.00, trades = [], history = [], showTools = true;
+        let prices = { "BTCUSDT": 0, "ETHUSDT": 0, "PAXGUSDT": 0 };
+        let assetSettings = {
+            "BTCUSDT": { strategy: "s1", lastTime: 0, s2Set: {active: false} },
+            "ETHUSDT": { strategy: "s1", lastTime: 0, s2Set: {active: false} },
+            "PAXGUSDT": { strategy: "s2_5m", lastTime: 0, s2Set: {active: false} }
+        };
+        const USDT_INR = 83.50;
+
+        function fixTabHeight() {
+            var sp = document.querySelector('.status-panel');
+            var tabContent = document.querySelector('.tab-content.active');
+            if (!sp || !tabContent) return;
+            var spRect = sp.getBoundingClientRect();
+            var tabBar = document.querySelector('.tab-bar');
+            var tabBarH = tabBar ? tabBar.offsetHeight : 28;
+            // Sum all fixed children heights
+            var fixedH = 0;
+            sp.childNodes.forEach(function(n) {
+                if (n.nodeType === 1 && !n.classList.contains('tab-content') && !n.classList.contains('tab-bar')) {
+                    fixedH += n.offsetHeight;
+                }
+            });
+            var available = spRect.height - fixedH - tabBarH;
+            if (available > 40) tabContent.style.height = available + 'px';
+            tabContent.style.overflowY = 'auto';
+        }
+
+        function initApp() { loadData(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
+
+        function showKeepOpenMsg() {
+            const toast = document.createElement('div');
+            toast.innerText = '📱 Keep app open for SL/TGT to work';
+            toast.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(30,34,45,0.97);color:#38bdf8;border:1px solid #38bdf8;border-radius:20px;padding:7px 16px;font-size:11px;font-weight:bold;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.opacity = '0', 4000);
+            setTimeout(() => toast.remove(), 4800);
+            toast.style.transition = 'opacity 0.8s';
+        }
+
+        // ── SIDE PANEL FUNCTIONS ──
+        function openSidePanel() {
+            document.getElementById('side_panel').classList.add('open');
+            document.getElementById('side_panel_overlay').classList.add('open');
+        }
+        function closeSidePanel() {
+            document.getElementById('side_panel').classList.remove('open');
+            document.getElementById('side_panel_overlay').classList.remove('open');
+        }
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('open');
+        }
+        function setLang(lang) {
+            document.body.classList.remove('lang-en', 'lang-hi');
+            document.body.classList.add('lang-' + lang);
+            document.getElementById('btn_lang_en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn_lang_hi').classList.toggle('active', lang === 'hi');
+        }
+        // Default language
+        document.body.classList.add('lang-en');
+
+        function updateUserPreferences() {
+            const tf = document.getElementById('user_tf').value;
+            const ind = document.getElementById('user_ind').value;
+            localStorage.setItem('PREF_TF', tf);
+            localStorage.setItem('PREF_IND', ind);
+            initTradingView();
+        }
+
+        function initTradingView() {
+            const savedTF = localStorage.getItem('PREF_TF') || "5";
+            const savedInd = localStorage.getItem('PREF_IND') || "";
+
+            document.getElementById('user_tf').value = savedTF;
+            document.getElementById('user_ind').value = savedInd;
+
+            // Container clear करा — नाहीतर multiple widgets stack होतात
+            const container = document.getElementById('tradingview_widget');
+            container.innerHTML = '';
+
+            let studiesList = [];
+            if (savedInd) {
+                if (savedInd === "EMA9") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 9 } });
+                else if (savedInd === "EMA21") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 21 } });
+                else if (savedInd === "EMA50") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 50 } });
+                else if (savedInd === "EMA200") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 200 } });
+                else if (savedInd === "SuperTrend@tv-basicstudies") studiesList.push("STD;Supertrend");
+                else studiesList.push(savedInd);
+            }
+
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": `BINANCE:${document.getElementById('asset_choice').value}`,
+                "interval": savedTF,
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "container_id": "tradingview_widget",
+                "hide_side_toolbar": !showTools,
+                "hide_top_toolbar": true,
+                "studies": studiesList,
+                "show_popup_button": true,
+                "allow_symbol_change": true
+            });
+        }
+
+        function toggleTools() {
+            showTools = !showTools;
+            document.getElementById('tools_toggle').innerText = showTools ? "Tools: ON" : "Tools: OFF";
+            // Tools साठी chart reload टाळा — फक्त iframe मधला toolbar CSS बदलतो
+            const iframe = document.querySelector('#tradingview_widget iframe');
+            if (iframe) {
+                try {
+                    // TradingView iframe ला postMessage पाठवतो
+                    iframe.contentWindow.postMessage({ name: 'set-symbol', data: {} }, '*');
+                } catch(e) {}
+            }
+            // Reload फक्त तेव्हाच जेव्हा खरंच गरज आहे
+            initTradingView();
+        }
+
+        function connectAllSockets() {
+            ["btcusdt", "ethusdt", "paxgusdt"].forEach(asset => {
+                let ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@ticker`);
+                ws.onmessage = (e) => { 
+                    prices[asset.toUpperCase()] = parseFloat(JSON.parse(e.data).c); 
+                    checkExits(); refreshUI(); 
+                };
+            });
+        }
+
+        async function dualEngine() {
+            Object.keys(assetSettings).forEach(asset => runStrategyForAsset(asset));
+        }
+
+        async function runStrategyForAsset(asset) {
+            try {
+                const settings = assetSettings[asset];
+                const strat = settings.strategy;
+                const isAuto = document.getElementById('auto_mode').checked;
+                const curP = prices[asset];
+                if(!curP || !isAuto) return;
+
+                const activeViewAsset = document.getElementById('asset_choice').value;
+                const monitor = document.getElementById('s4_monitor');
+
+                if (asset === activeViewAsset) {
+                    if (['s3_power', 's4'].includes(strat)) monitor.style.display = 'block';
+                    else monitor.style.display = 'none';
+                }
+
+                let buffer = (asset === 'BTCUSDT' ? 10 : 2);
+                let qty = (asset === 'ETHUSDT' ? 2 : (asset === 'PAXGUSDT' ? 5 : 1));
+
+                if (strat === 's2' || strat === 's2_5m') {
+                    let _v_tf = strat === 's2' ? '1m' : '5m';
+                    let _v_raw = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${_v_tf}&limit=30`);
+                    let _v_map = await _v_raw.json();
+
+                    let _ptr = _v_map.length - 2;
+                    let _k0 = { 
+                        a: parseFloat(_v_map[_ptr][1]),
+                        b: parseFloat(_v_map[_ptr][4]),
+                        c: parseFloat(_v_map[_ptr][2]),
+                        d: parseFloat(_v_map[_ptr][3]),
+                        t: _v_map[_ptr][0]
+                    };
+
+                    let _v_stoch = (_k0.b - _k0.d) / (_k0.c - _k0.d) * 100;
+                    let _v_vola = Math.abs(_k0.b - _k0.a) * 1.5;
+
+                    let _ref_baseline = calculateEMA(_v_map.map(_x => parseFloat(_x[4])).slice(0, -1), 21);
+
+                    if (trades.some(_t => _t.asset === asset)) return;
+
+                    if (_k0.t !== settings.lastTime && _v_stoch !== -999) {
+                        if (_k0.b > _ref_baseline && _k0.b < _k0.a) {
+                            settings.s2Set = { 
+                                active: true, 
+                                trigger: _k0.c + buffer, 
+                                type: 'BUY', 
+                                sl: _k0.d - buffer, 
+                                expiry: 5 
+                            };
+                        }
+                        else if (_k0.b < _ref_baseline && _k0.b > _k0.a) {
+                            settings.s2Set = { 
+                                active: true, 
+                                trigger: _k0.d - buffer, 
+                                type: 'SELL', 
+                                sl: _k0.c + buffer, 
+                                expiry: 5 
+                            };
+                        }
+                        else if (settings.s2Set.active) {
+                            settings.s2Set.expiry--;
+                        }
+                        settings.lastTime = _k0.t;
+                    }
+
+                    if (settings.s2Set.active && settings.s2Set.expiry > 0) {
+                        if (settings.s2Set.type === 'BUY' && curP > settings.s2Set.trigger) {
+                            let _target = curP + (curP - settings.s2Set.sl) * 2;
+                            handleTrade(asset, 'BUY', settings.s2Set.sl, _target, 'S2-EMA', qty);
+                            settings.s2Set.active = false;
+                        }
+                        else if (settings.s2Set.type === 'SELL' && curP < settings.s2Set.trigger) {
+                            let _target = curP - (settings.s2Set.sl - curP) * 2;
+                            handleTrade(asset, 'SELL', settings.s2Set.sl, _target, 'S2-EMA', qty);
+                            settings.s2Set.active = false;
+                        }
+                    }
+                    return;
+                }
+
+                if (strat === 's3_power') {
+                    let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=5m&limit=50`);
+                    let data = await res.json();
+                    
+                    let stData = data.map(d => ({ 
+                        h: parseFloat(d[2]), 
+                        l: parseFloat(d[3]), 
+                        c: parseFloat(d[4]) 
+                    }));
+
+                    let st = calculateSupertrendRMA(stData, 10, 3);
+                    let currentST = st[st.length - 1];
+
+                    let sB = (asset === 'BTCUSDT' ? 20 : 3);
+                    let sL_val = (asset === 'BTCUSDT' ? 60 : 8);
+
+                    if (asset === activeViewAsset) {
+                        let titleEl = document.getElementById('s4_title');
+                        let valEl = document.getElementById('s4_st_val');
+                        let zoneEl = document.getElementById('s4_zone_val');
+                        
+                        titleEl.innerText = currentST.side === 'buy' ? "S3 SUPPORT" : "S3 RESISTANCE";
+                        titleEl.style.color = currentST.side === 'buy' ? "#089981" : "#f23645";
+                        valEl.innerText = currentST.value.toFixed(2);
+                        zoneEl.innerText = currentST.side === 'buy' 
+                            ? `${currentST.value.toFixed(1)} - ${(currentST.value + sB).toFixed(1)}` 
+                            : `${(currentST.value - sB).toFixed(1)} - ${currentST.value.toFixed(1)}`;
+                    }
+
+                    if (!trades.some(t => t.asset === asset)) {
+                        if (currentST.side === 'buy' && curP >= currentST.value && curP <= (currentST.value + sB)) {
+                            handleTrade(asset, 'BUY', curP - sL_val, curP + (sL_val * 2), 'S3-POWER', qty);
+                        }
+                        else if (currentST.side === 'sell' && curP <= currentST.value && curP >= (currentST.value - sB)) {
+                            handleTrade(asset, 'SELL', curP + sL_val, curP - (sL_val * 2), 'S3-POWER', qty);
+                        }
+                    }
+                }
+
+                else if (strat === 's4') {
+                    let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=1m&limit=50`);
+                    let data = await res.json();
+
+                    let d1 = { 
+                        o: parseFloat(data[data.length-2][1]), 
+                        h: parseFloat(data[data.length-2][2]), 
+                        l: parseFloat(data[data.length-2][3]), 
+                        c: parseFloat(data[data.length-2][4]) 
+                    };
+
+                    let stData = data.map(d => ({ 
+                        h: parseFloat(d[2]), 
+                        l: parseFloat(d[3]), 
+                        c: parseFloat(d[4]) 
+                    }));
+
+                    let st = calculateSupertrendRMA(stData, 10, 3);
+                    let currentST = st[st.length - 1];
+
+                    let sB = (asset === 'BTCUSDT' ? 20 : 3);
+                    let sL_val = (asset === 'BTCUSDT' ? 60 : 8);
+
+                    if (asset === activeViewAsset) {
+                        document.getElementById('s4_title').innerText = currentST.side === 'buy' ? "S4 BUY ZONE" : "S4 SELL ZONE";
+                        document.getElementById('s4_title').style.color = currentST.side === 'buy' ? "#089981" : "#f23645";
+                        document.getElementById('s4_st_val').innerText = currentST.value.toFixed(2);
+                        document.getElementById('s4_zone_val').innerText = "WAIT FOR REVERSAL";
+                    }
+
+                    if (!trades.some(t => t.asset === asset)) {
+                        if (currentST.side === 'buy' && d1.l <= (currentST.value + sB) && d1.c > d1.o) {
+                            handleTrade(asset, 'BUY', curP - sL_val, curP + (sL_val * 2), 'S4-REV', qty);
+                        }
+                        else if (currentST.side === 'sell' && d1.h >= (currentST.value - sB) && d1.c < d1.o) {
+                            handleTrade(asset, 'SELL', curP + sL_val, curP - (sL_val * 2), 'S4-REV', qty);
+                        }
+                    }
+                }
+
+                if (strat === 's1' || strat === 's1_5m') {
+                    const _0x_v2 = (f, g) => (f > g ? 0x1 : 0x0);
+                    
+                    let tf = (strat === 's1_5m') ? '5m' : '1m';
+                    let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${tf}&limit=5`);
+                    let data = await res.json();
+
+                    let _v_idx = 50; 
+                    try {
+                        _v_idx = (parseFloat(data[0][4]) > parseFloat(data[0][1])) ? 85 : 15;
+                    } catch (e) { _v_idx = 42; }
+
+                    let _pt = data.length;
+                    let _d1 = { a: parseFloat(data[_pt - 2][1]), b: parseFloat(data[_pt - 2][4]), c: data[_pt - 2][0] };
+                    let _d0 = { a: parseFloat(data[_pt - 3][1]), b: parseFloat(data[_pt - 3][4]), h: parseFloat(data[_pt - 3][2]), l: parseFloat(data[_pt - 3][3]) };
+                    
+                    let currentBuffer = (asset === 'BTCUSDT' ? 10 : 2);
+
+                    if (_d1.c !== settings.lastTime && _v_idx > 0) {
+                        let _is_bull = _0x_v2(_d1.b, _d1.a) && _0x_v2(_d0.b, _d0.a);
+                        let _is_bear = _0x_v2(_d1.a, _d1.b) && _0x_v2(_d0.a, _d0.b);
+
+                        if (_is_bull) {
+                            let exSell = trades.find(t => t.asset === asset && t.side === 'SELL');
+                            if (exSell) closeSingle(exSell.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'BUY')) { 
+                                handleTrade(asset, 'BUY', _d0.l - currentBuffer, 0, (tf === '5m' ? 'S1-15M' : 'S1'), qty); 
+                                settings.lastTime = _d1.c; 
+                            }
+                        } 
+                        else if (_is_bear) {
+                            let exBuy = trades.find(t => t.asset === asset && t.side === 'BUY');
+                            if (exBuy) closeSingle(exBuy.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'SELL')) { 
+                                handleTrade(asset, 'SELL', _d0.h + currentBuffer, 0, (tf === '5m' ? 'S1-15M' : 'S1'), qty); 
+                                settings.lastTime = _d1.c; 
+                            }
+                        }
+                    }
+                }
+
+                else if (strat === 's6_struct') {
+                    let res5m = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=5m&limit=100`);
+                    let data5m = await res5m.json();
+                    
+                    let closes = data5m.map(d => parseFloat(d[4]));
+                    let swings = [];
+
+                    for (let i = 2; i < closes.length - 1; i++) {
+                        if (closes[i] > closes[i-1] && closes[i] > closes[i+1]) {
+                            swings.push({type: 'H', val: closes[i], t: data5m[i][0]});
+                        }
+                        if (closes[i] < closes[i-1] && closes[i] < closes[i+1]) {
+                            swings.push({type: 'L', val: closes[i], t: data5m[i][0]});
+                        }
+                    }
+
+                    let lastC = closes[closes.length - 1];
+                    let lastT = data5m[data5m.length - 1][0];
+
+                    if (swings.length >= 4 && lastT !== settings.lastTime) {
+                        let lowMarkers = swings.filter(x => x.type === 'L');
+                        let highMarkers = swings.filter(x => x.type === 'H');
+                       
+                        let l1 = lowMarkers[lowMarkers.length - 2];
+                        let l2 = lowMarkers[lowMarkers.length - 1];
+                        let h1 = highMarkers[highMarkers.length - 1];
+
+                        if (l2 && l1 && h1 && l2.val > l1.val && lastC > h1.val) {
+                            let existingSell = trades.find(t => t.asset === asset && t.side === 'SELL');
+                            if (existingSell) closeSingle(existingSell.id);
+                           
+                            if (!trades.some(t => t.asset === asset && t.side === 'BUY')) {
+                                let sl = l2.val - (asset === 'BTCUSDT' ? 10 : 2);
+                                let target = lastC + (lastC - sl) * 2;
+                                handleTrade(asset, 'BUY', sl, target, 'S6-15M', qty);
+                                settings.lastTime = lastT;
+                            }
+                        }
+                        else {
+                            let h_1 = highMarkers[highMarkers.length - 2];
+                            let h_2 = highMarkers[highMarkers.length - 1];
+                            let l_1 = lowMarkers[lowMarkers.length - 1];
+
+                            if (h_2 && h_1 && l_1 && h_2.val < h_1.val && lastC < l_1.val) {
+                                let existingBuy = trades.find(t => t.asset === asset && t.side === 'BUY');
+                                if (existingBuy) closeSingle(existingBuy.id);
+
+                                if (!trades.some(t => t.asset === asset && t.side === 'SELL')) {
+                                    let sl = h_2.val + (asset === 'BTCUSDT' ? 10 : 2);
+                                    let target = lastC - (sl - lastC) * 2;
+                                    handleTrade(asset, 'SELL', sl, target, 'S6-15M', qty);
+                                    settings.lastTime = lastT;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            } catch (e) { console.log(e); }
+        }
+
+        // ✅ FIX 1: handleTrade - stratName + isManual parameter add केला
+        function handleTrade(asset, side, sl, tgt, stratName, qty, isManual) {
+            // Calculate estimated SL-based risk in INR
+            const curP = prices[asset] || 0;
+            let riskPerUnit = sl > 0 ? Math.abs(curP - sl) : 0;
+            let estimatedRiskINR = riskPerUnit * (qty || 1) * USDT_INR;
+
+            // 30 Day Challenge check — manual trades only
+            if (isManual && typeof challengeCheckTrade === 'function') {
+                const result = challengeCheckTrade(estimatedRiskINR);
+                if (result === 'block') return; // Hard block — do not place trade
+            }
+
+            const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true) };
+            trades.push(trade); saveData(); refreshUI();
+            notifyKodular("TRADE_OPEN|" + asset + "|" + side + "|" + stratName);
+
+            // Record trade count in challenge — manual only
+            if (isManual && typeof challengeOnTradeOpen === 'function') {
+                challengeOnTradeOpen(); // no risk passed — tracked on close via actual loss
+            }
+        }
+
+        function checkExits() {
+            trades.forEach(t => {
+                const lp = prices[t.asset]; if (!lp) return;
+                if (t.sl > 0 && ((t.side === 'BUY' && lp <= t.sl) || (t.side === 'SELL' && lp >= t.sl))) closeSingle(t.id);
+                if (t.tgt > 0 && ((t.side === 'BUY' && lp >= t.tgt) || (t.side === 'SELL' && lp <= t.tgt))) closeSingle(t.id);
+            });
+        }
+
+        function refreshUI() {
+            if (!balance || balance < 100) balance = 1286000.00;
+            let totalP_USD = 0, btcP_USD = 0, ethP_USD = 0, goldP_USD = 0;
+            const currency = document.getElementById('currency_mode').value;
+            const rate = (currency === 'INR') ? 83.50 : 1;
+            const symbol = (currency === 'INR') ? ' INR' : ' USD';
+
+            // Calculate PnL totals
+            trades.forEach(t => {
+                const lp = prices[t.asset] || t.entry;
+                let pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                totalP_USD += pnlUSD;
+                if(t.asset === 'BTCUSDT') btcP_USD += pnlUSD;
+                else if(t.asset === 'ETHUSDT') ethP_USD += pnlUSD;
+                else if(t.asset === 'PAXGUSDT') goldP_USD += pnlUSD;
+            });
+
+            document.getElementById('btc_pnl_val').innerText = (btcP_USD * rate).toFixed(2) + symbol;
+            document.getElementById('btc_pnl_val').style.color = btcP_USD >= 0 ? "#089981" : "#f23645";
+            document.getElementById('eth_pnl_val').innerText = (ethP_USD * rate).toFixed(2) + symbol;
+            document.getElementById('eth_pnl_val').style.color = ethP_USD >= 0 ? "#089981" : "#f23645";
+            document.getElementById('gold_pnl_val').innerText = (goldP_USD * rate).toFixed(2) + symbol;
+            document.getElementById('gold_pnl_val').style.color = goldP_USD >= 0 ? "#f0b90b" : "#f23645";
+            document.getElementById('total_pnl').innerText = (totalP_USD * rate).toFixed(2) + symbol;
+            document.getElementById('total_pnl').style.color = totalP_USD >= 0 ? "#089981" : "#f23645";
+
+            let displayBal = (balance + (totalP_USD * 83.50));
+            if (currency === 'USD') displayBal = displayBal / 83.50;
+            document.getElementById('displayBalance').innerText = displayBal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+
+            renderPositions();
+            renderHistory();
+            setTimeout(fixTabHeight, 0);
+        }
+
+        // ✅ FIX 2: closeSingle
+        function closeSingle(id) {
+            let idx = trades.findIndex(t => t.id === id);
+            if(idx > -1) {
+                let t = trades[idx]; const lp = prices[t.asset] || t.entry;
+                let pnlINR = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty * 83.50;
+                balance += pnlINR; 
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual });
+                trades.splice(idx, 1); saveData(); refreshUI();
+
+                // Challenge P&L — only for explicitly flagged manual trades
+                if (t.isManual === true && typeof challengeOnTradeClose === 'function') {
+                    challengeOnTradeClose(pnlINR);
+                }
+            }
+        }
+
+        function renderPositions() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1;
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('positions_body');
+            if (!tbody) return;
+            if (trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open positions</td></tr>';
+                return;
+            }
+            tbody.innerHTML = trades.map(t => {
+                const lp = prices[t.asset] || t.entry;
+                const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                const pnlDisp = pnlUSD * rate;
+                let buyCol, sellCol;
+                if (t.side === 'BUY') {
+                    buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    sellCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                } else {
+                    sellCol = `<span style="color:#f23645;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                }
+                return `<tr>
+                    <td style="text-align:left; padding-left:6px;">${t.asset.replace('USDT','')}/${t.strat}</td>
+                    <td>${buyCol}</td>
+                    <td>${sellCol}</td>
+                    <td>${t.qty}</td>
+                    <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;">${t.isManual ? `<button onclick="openModify(${t.id})" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button>` : ''}<button onclick="closeSingle(${t.id})" class="exit-btn">EXIT</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderHistory() { 
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
+            const sym = (curr === 'USD') ? ' USD' : ' INR';
+            const tbody = document.getElementById('history_body');
+            if (!tbody) return;
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color:#555; padding:12px; text-align:center;">No trade history</td></tr>';
+                return;
+            }
+            tbody.innerHTML = history.slice(0, 20).map(h => {
+                const pnlDisp = h.pnl * rate;
+                // openTime = trade open वेळ (id = timestamp), closeTime = h.time (close वेळ)
+                const openTime = h.openTime ? new Date(h.openTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+                const closeTime = h.time ? new Date(h.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+                // BUY trade: BUY=entry price, B/Time=open time, SELL=exit price, S/Time=close time
+                // SELL trade: SELL=entry price, S/Time=open time, BUY=exit (cover) price, B/Time=close time
+                let buyPrice, sellPrice, bTime, sTime;
+                if (h.side === 'BUY') {
+                    buyPrice = `<span style="color:#089981;">${h.entry.toFixed(1)}</span>`;
+                    bTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                    sellPrice = `<span style="color:#f23645;">${h.exit.toFixed(1)}</span>`;
+                    sTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+                } else {
+                    sellPrice = `<span style="color:#f23645;">${h.entry.toFixed(1)}</span>`;
+                    sTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                    buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
+                    bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+                }
+                return `<tr>
+                    <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}</td>
+                    <td>${buyPrice}</td>
+                    <td>${bTime}</td>
+                    <td>${sellPrice}</td>
+                    <td>${sTime}</td>
+                    <td>${h.qty || '-'}</td>
+                    <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab_positions').classList.remove('active');
+            document.getElementById('tab_history').classList.remove('active');
+            document.getElementById('tab_pos_btn').classList.remove('active');
+            document.getElementById('tab_hist_btn').classList.remove('active');
+            if (tab === 'positions') {
+                document.getElementById('tab_positions').classList.add('active');
+                document.getElementById('tab_pos_btn').classList.add('active');
+            } else {
+                document.getElementById('tab_history').classList.add('active');
+                document.getElementById('tab_hist_btn').classList.add('active');
+            }
+            setTimeout(fixTabHeight, 10);
+        }
+
+        function calculateEMA(pArr, period) {
+            const k = 2 / (period + 1); let ema = pArr[0];
+            for (let i = 1; i < pArr.length; i++) { ema = pArr[i] * k + ema * (1 - k); }
+            return ema;
+        }
+
+        function calculateSupertrendRMA(data, period, mult) {
+            let tr = [], hl2 = [];
+            for (let i = 0; i < data.length; i++) {
+                hl2.push((data[i].h + data[i].l) / 2);
+                if (i === 0) tr.push(data[i].h - data[i].l);
+                else tr.push(Math.max(data[i].h - data[i].l, Math.abs(data[i].h - data[i-1].c), Math.abs(data[i].l - data[i-1].c)));
+            }
+            let atr = []; let sumTr = 0;
+            for(let i=0; i<period; i++) sumTr += tr[i];
+            atr[period-1] = sumTr / period;
+            for(let i=period; i<tr.length; i++) atr[i] = (atr[i-1] * (period-1) + tr[i]) / period;
+            let st = [], up = 0, dn = 0, trend = 1;
+            for (let i = period; i < data.length; i++) {
+                let b_up = hl2[i] + mult * atr[i]; let b_dn = hl2[i] - mult * atr[i];
+                up = (b_up < up || data[i-1].c > up) ? b_up : up;
+                dn = (b_dn > dn || data[i-1].c < dn) ? b_dn : dn;
+                if (data[i].c > up) trend = 1; else if (data[i].c < dn) trend = -1;
+                st.push({ value: trend === 1 ? dn : up, side: trend === 1 ? 'buy' : 'sell' });
+            }
+            return st;
+        }
+
+        function updateTradePreview() {
+            const assetEl = document.getElementById('asset_choice');
+            const asset = assetEl ? assetEl.value : 'BTCUSDT';
+            const curP = prices[asset] || 0;
+            const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
+            const sl = parseFloat(document.getElementById('manual_sl_input').value) || 0;
+            const tgt = parseFloat(document.getElementById('manual_target_input').value) || 0;
+            const RATE = 83.50;
+
+            const slEl = document.getElementById('sl_preview');
+            const tgtEl = document.getElementById('tgt_preview');
+            const bar = document.getElementById('trade_preview_bar');
+
+            if (sl > 0 && curP > 0) {
+                const lossINR = Math.abs(curP - sl) * qty * RATE;
+                const over = lossINR > 5000;
+
+                // Challenge mode: आधीचा आजचा loss check करा
+                let remainingLimit = MAX_RISK_PER_DAY;
+                if (challengeData && challengeData.active) {
+                    const todayKey = getTodayKey();
+                    const today = challengeData.days[todayKey];
+                    if (today && today.pnl < 0) {
+                        remainingLimit = MAX_RISK_PER_DAY - Math.abs(today.pnl);
+                        if (remainingLimit < 0) remainingLimit = 0;
+                    }
+                }
+                const overLimit = lossINR > remainingLimit;
+
+                slEl.innerText = '📉 SL Risk: ₹' + Math.round(lossINR).toLocaleString('en-IN') 
+                    + (over ? ' ⚠️' : '')
+                    + (challengeData && challengeData.active ? ` | Limit: ₹${Math.round(remainingLimit).toLocaleString('en-IN')}` : '');
+                slEl.style.color = overLimit ? '#ff4444' : over ? '#ff9800' : '#f23645';
+            } else {
+                slEl.innerText = '';
+            }
+
+            if (tgt > 0 && curP > 0) {
+                const profitINR = Math.abs(tgt - curP) * qty * RATE;
+                tgtEl.innerText = '📈 Target: ₹' + Math.round(profitINR).toLocaleString('en-IN');
+            } else {
+                tgtEl.innerText = '';
+            }
+
+            // Bar दाखव फक्त तेव्हाच जेव्हा काही content आहे
+            bar.style.display = (slEl.innerText || tgtEl.innerText) ? 'flex' : 'none';
+        }
+
+        function manualTrade(side) {
+            const asset = document.getElementById('asset_choice').value;
+            const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
+            const slInput = document.getElementById('manual_sl_input').value;
+            const tgtInput = document.getElementById('manual_target_input').value;
+            
+            const slPrice = slInput ? parseFloat(slInput) : 0;
+            const tgtPrice = tgtInput ? parseFloat(tgtInput) : 0;
+            
+            handleTrade(asset, side, slPrice, tgtPrice, 'MANUAL', qty, true); // isManual = true
+            
+            document.getElementById('manual_sl_input').value = "";
+            document.getElementById('manual_target_input').value = "";
+            document.getElementById('sl_preview').innerText = '';
+            document.getElementById('tgt_preview').innerText = '';
+        }
+
+        // ── Shark Exchange-style compact order bar ──
+        let sharkOrderType = 'Limit';
+
+        function sharkSetOrderType(type) {
+            sharkOrderType = type;
+            const priceInput = document.getElementById('sp_price_input');
+            priceInput.disabled = (type === 'Market');
+            priceInput.placeholder = (type === 'Market') ? 'Mkt' : 'Price';
+            if (type === 'Market') {
+                const asset = document.getElementById('asset_choice').value;
+                const lp = prices[asset] || 0;
+                priceInput.value = lp ? lp.toFixed(2) : '';
+            }
+            syncSharkQty();
+        }
+        function syncSharkQty() {
+            const qty = parseFloat(document.getElementById('manual_qty').value) || 0;
+            const asset = document.getElementById('asset_choice').value;
+            const lev = parseFloat(document.getElementById('mtp_lev').value) || 75;
+            let lp = parseFloat(document.getElementById('sp_price_input').value) || prices[asset] || 0;
+            const margin = lev > 0 ? (lp * qty) / lev : 0;
+            document.getElementById('mtp_margin').innerText = 'M: ' + margin.toFixed(2);
+            updateTradePreview();
+        }
+
+        function switchMarket() {
+            const asset = document.getElementById('asset_choice').value;
+            document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
+            initTradingView(); refreshUI(); syncSharkQty();
+        }
+
+        function updateAssetStrategy() {
+            const asset = document.getElementById('asset_choice').value;
+            assetSettings[asset].strategy = document.getElementById('strategy_choice').value;
+            saveData();
+        }
+
+        function closeAll() { trades.slice().forEach(t => closeSingle(t.id)); }
+
+        // ── MODIFY ORDER ──
+        let modifyTradeId = null;
+
+        function openModify(id) {
+            const t = trades.find(t => t.id === id);
+            if (!t) return;
+            modifyTradeId = id;
+            const lp = prices[t.asset] || t.entry;
+            document.getElementById('modify_trade_info').innerText = t.asset.replace('USDT','') + ' ' + t.side;
+            document.getElementById('modify_entry_val').innerText = t.entry.toFixed(1);
+            document.getElementById('modify_ltp_val').innerText = lp.toFixed(1);
+            document.getElementById('modify_sl_input').value = t.sl > 0 ? t.sl : '';
+            document.getElementById('modify_tgt_input').value = t.tgt > 0 ? t.tgt : '';
+            document.getElementById('modify_modal_overlay').style.display = 'flex';
+        }
+
+        function closeModifyModal() {
+            document.getElementById('modify_modal_overlay').style.display = 'none';
+            modifyTradeId = null;
+        }
+
+        function saveModify() {
+            if (!modifyTradeId) return;
+            const t = trades.find(t => t.id === modifyTradeId);
+            if (!t) return;
+            const newSL = parseFloat(document.getElementById('modify_sl_input').value) || 0;
+            const newTGT = parseFloat(document.getElementById('modify_tgt_input').value) || 0;
+            t.sl = newSL;
+            t.tgt = newTGT;
+            saveData();
+            refreshUI();
+            closeModifyModal();
+        }
+
+        function saveData() { localStorage.setItem('DELTA_ULTRA_S7', JSON.stringify({ bal: balance, trds: trades, hist: history, settings: assetSettings, auto: document.getElementById('auto_mode').checked })); }
+        function loadData() { 
+            let s = localStorage.getItem('DELTA_ULTRA_S7'); 
+            if(s) { 
+                let p = JSON.parse(s); balance = p.bal; trades = p.trds; history = p.hist; 
+                if(p.settings) assetSettings = p.settings;
+                document.getElementById('auto_mode').checked = p.auto || false;
+                renderHistory(); refreshUI();
+            } 
+        }
+
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === 'visible') {
+                connectAllSockets(); 
+                loadData(); 
+                refreshUI();
+                if(typeof initTradingView === "function") initTradingView();
+            }
+        });
+
+        setInterval(function() {
+            if (trades.length > 0) { checkExits(); refreshUI(); }
+        }, 5000);
+
+        // ==========================================
+        // AI VOICE SYSTEM V2 - SUPER ENTERTAINING
+        // ==========================================
+
+        // --- Pattern Detection Engine ---
+        async function detectBTCPattern() {
+            try {
+                let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=5m&limit=20`);
+                let data = await res.json();
+                let candles = data.map(d => ({
+                    o: parseFloat(d[1]), h: parseFloat(d[2]),
+                    l: parseFloat(d[3]), c: parseFloat(d[4]),
+                    v: parseFloat(d[5])
+                }));
+
+                let last = candles[candles.length - 2];
+                let prev = candles[candles.length - 3];
+                let prev2 = candles[candles.length - 4];
+
+                // Doji
+                let bodySize = Math.abs(last.c - last.o);
+                let totalRange = last.h - last.l;
+                if (totalRange > 0 && bodySize / totalRange < 0.15) return 'doji';
+
+                // Engulfing
+                if (last.c > last.o && prev.c < prev.o &&
+                    last.c > prev.o && last.o < prev.c) return 'bullish_engulfing';
+                if (last.c < last.o && prev.c > prev.o &&
+                    last.c < prev.o && last.o > prev.c) return 'bearish_engulfing';
+
+                // Hammer
+                let lowerWick = Math.min(last.o, last.c) - last.l;
+                let upperWick = last.h - Math.max(last.o, last.c);
+                if (lowerWick > bodySize * 2 && upperWick < bodySize * 0.5 && last.c > last.o) return 'hammer';
+                if (upperWick > bodySize * 2 && lowerWick < bodySize * 0.5 && last.c < last.o) return 'shooting_star';
+
+                // Three soldiers / crows
+                let c1 = candles[candles.length-4], c2 = candles[candles.length-3], c3 = candles[candles.length-2];
+                if (c1.c > c1.o && c2.c > c2.o && c3.c > c3.o &&
+                    c2.c > c1.c && c3.c > c2.c) return 'three_soldiers';
+                if (c1.c < c1.o && c2.c < c2.o && c3.c < c3.o &&
+                    c2.c < c1.c && c3.c < c2.c) return 'three_crows';
+
+                // Inside bar
+                if (last.h < prev.h && last.l > prev.l) return 'inside_bar';
+
+                // Trending up/down
+                let closes = candles.slice(-6).map(c => c.c);
+                let rising = closes.every((c, i) => i === 0 || c >= closes[i-1]);
+                let falling = closes.every((c, i) => i === 0 || c <= closes[i-1]);
+                if (rising) return 'strong_uptrend';
+                if (falling) return 'strong_downtrend';
+
+                return null;
+            } catch(e) { return null; }
+        }
+
+        // --- Trend Detection ---
+        async function getBTCTrend() {
+            try {
+                let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=30`);
+                let data = await res.json();
+                let closes = data.map(d => parseFloat(d[4]));
+                let ema9 = calculateEMA(closes.slice(-9), 9);
+                let ema21 = calculateEMA(closes.slice(-21), 21);
+                let lastClose = closes[closes.length - 1];
+                let changePercent = ((lastClose - closes[0]) / closes[0] * 100).toFixed(2);
+                return { ema9, ema21, lastClose, changePercent, bullish: ema9 > ema21 };
+            } catch(e) { return null; }
+        }
+
+        // --- Joke Bank ---
+        const jokes = [
+            "एक ट्रेडर हमेशा लॉस में रहता था। बीवी ने पूछा - क्या करते हो? बोला - मार्केट में पैसा लगाता हूं। बीवी बोली - कम से कम बाजार से सब्जी तो लेकर आओ!",
+            "बिटकॉइन क्या है? वो गर्लफ्रेंड जो कभी स्टेबल नहीं रहती, लेकिन छोड़ भी नहीं सकते!",
+            "ट्रेडर का सबसे बड़ा दुश्मन कौन? खुद का FOMO और बीवी की शॉपिंग!",
+            "मेरे चार्ट में इतनी कैंडल्स हैं कि बर्थडे केक लग रहा है! पर केक तो मार्केट ने खा लिया!",
+            "बिटकॉइन ने आज फिर ब्रेकआउट किया। मेरा दिल भी ब्रेक हो गया, गलत साइड था!",
+            "टेक्निकल एनालिसिस आसान है। बस चार्ट देखो, कुछ लाइन खींचो, और फिर उल्टा ट्रेड करो!",
+            "एक एनालिस्ट ने कहा बिटकॉइन एक लाख जाएगा। दूसरे ने कहा बीस हजार आएगा। सच्चाई? दोनों गलत निकले!",
+            "ट्रेडिंग में तीन चीज़ें जरूरी हैं। रिस्क मैनेजमेंट, डिसिप्लिन, और एक अच्छी चाय!",
+        ];
+        let lastJokeIdx = -1;
+        function getRandomJoke() {
+            let idx;
+            do { idx = Math.floor(Math.random() * jokes.length); } while (idx === lastJokeIdx);
+            lastJokeIdx = idx;
+            return jokes[idx];
+        }
+
+        // --- Pattern Messages ---
+        const patternMessages = {
+            'doji': "अरे! चार्ट पर Doji कैंडल बन रहा है। मार्केट कन्फ्यूज़ है, बुल और बेयर दोनों थके हुए हैं। अब बड़ा मूव आ सकता है!",
+            'bullish_engulfing': "वाह! Bullish Engulfing पैटर्न दिख रहा है! बुल्स ने बेयर्स को पूरा निगल लिया! अब ऊपर की तरफ देखो!",
+            'bearish_engulfing': "ध्यान दो! Bearish Engulfing आया है! बेयर्स ने बुल्स को दबोच लिया! नीचे जाने का सिग्नल है!",
+            'hammer': "Hammer पैटर्न! बेयर्स ने नीचे धकेला लेकिन बुल्स ने वापस लाया। रिवर्सल हो सकता है!",
+            'shooting_star': "Shooting Star दिख रहा है! ऊपर गया लेकिन वापस आ गया। बुल्स को थकान आ रही है!",
+            'three_soldiers': "Three White Soldiers! तीन ग्रीन कैंडल एक के बाद एक। बुल्स की आर्मी मार्च कर रही है!",
+            'three_crows': "Three Black Crows आए हैं! तीन रेड कैंडल। बेयर्स का राज चल रहा है अभी!",
+            'inside_bar': "Inside Bar पैटर्न! मार्केट कम्प्रेशन में है। जल्द ही बड़ा ब्रेकआउट या ब्रेकडाउन आएगा!",
+            'strong_uptrend': "चार्ट पर लगातार हायर हाई बन रहे हैं। ट्रेंड इज़ योर फ्रेंड, और ट्रेंड अभी बुलिश है!",
+            'strong_downtrend': "लगातार लोअर लो आ रहे हैं। डाउनट्रेंड स्ट्रॉन्ग है। शॉर्ट सेलर्स का मज़ा आ रहा है!",
+        };
+
+        // ===================== OVERLAY ALERT SYSTEM =====================
+        window.addEventListener('resize', fixTabHeight);
+        setTimeout(fixTabHeight, 800);
+        setTimeout(fixTabHeight, 2000);
+
+    </script>
+
+    <!-- 30 DAY CHALLENGE OVERLAY -->
+    <div id="challenge_overlay">
+        <div class="chal-box">
+            <div class="chal-title">30 DAY CHALLENGE</div>
+
+            <!-- Prize Banner -->
+            <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center; overflow:visible;">
+                <div style="font-size: 10px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px;">🏆 Challenge Winner Will Get</div>
+                <div style="font-size: 13px; font-weight: bold; color: #ffffff; margin: 3px 0;">15,000 Coins <span style="font-size: 9px; color: #38bdf8;">*</span></div>
+
+            </div>
+
+            <div id="chal_warning" class="chal-warning-banner"></div>
+
+            <!-- Main Progress -->
+            <div class="chal-section-title">📈 Overall Progress</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Target Profit</span>
+                <span class="chal-stat-val" style="color:#38bdf8;">₹2,00,000</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Total P&L</span>
+                <span class="chal-stat-val" id="chal_total_pnl">₹0</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="chal_profit_bar" style="background:#089981; width:0%;"></div>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Day</span>
+                <span class="chal-stat-val" id="chal_day_count">0 / 30</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Remaining Days</span>
+                <span class="chal-stat-val" id="chal_days_left" style="color:#38bdf8;">30</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Needed/Day (Remaining)</span>
+                <span class="chal-stat-val" id="chal_needed_per_day" style="color:#b2b5be;">₹6,667</span>
+            </div>
+
+            <!-- Today's Status -->
+            <div class="chal-section-title">📅 Today's Status</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Trades Today</span>
+                <span class="chal-stat-val" id="chal_today_trades">0 / 10</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="chal_trade_bar" style="background:#38bdf8; width:0%;"></div>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Net Loss Today</span>
+                <span class="chal-stat-val" id="chal_today_risk">₹0 / ₹5,000</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="chal_risk_bar" style="background:#f23645; width:0%;"></div>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Today's P&L</span>
+                <span class="chal-stat-val" id="chal_today_pnl">₹0</span>
+            </div>
+
+            <!-- 30 Day Grid -->
+            <div class="chal-section-title">🗓️ 30 Day Journey</div>
+            <div class="chal-day-grid" id="chal_day_grid"></div>
+
+            <!-- Stats -->
+            <div class="chal-section-title">📊 Stats</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Win Days</span>
+                <span class="chal-stat-val" id="chal_win_days" style="color:#089981;">0</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Loss Days</span>
+                <span class="chal-stat-val" id="chal_loss_days" style="color:#f23645;">0</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Best Day</span>
+                <span class="chal-stat-val" id="chal_best_day" style="color:#089981;">₹0</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Worst Day</span>
+                <span class="chal-stat-val" id="chal_worst_day" style="color:#f23645;">₹0</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Avg Daily P&L</span>
+                <span class="chal-stat-val" id="chal_avg_pnl">₹0</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Challenge Resets</span>
+                <span class="chal-stat-val" id="chal_reset_count" style="color:#b2b5be;">0</span>
+            </div>
+            <div id="chal_congrats" style="display:none; text-align:center; padding:10px; background:rgba(8,153,129,0.15); border:1px solid #089981; border-radius:6px; margin-top:8px; font-size:11px; color:#089981; font-weight:bold;">
+                🎉 TARGET ACHIEVED! CHALLENGE COMPLETE! 🎉
+            </div>
+            <div id="chal_failed" style="display:none; text-align:center; padding:10px; background:rgba(242,54,69,0.15); border:1px solid #f23645; border-radius:6px; margin-top:8px; font-size:11px; color:#f23645; font-weight:bold; line-height:1.6;">
+                🔒 TRADING LOCKED — Daily loss limit hit
+            </div>
+
+            <button class="chal-btn chal-btn-start" id="chal_start_btn" onclick="startChallenge()">🚀 START CHALLENGE</button>
+            <button class="chal-btn chal-btn-reset" id="chal_reset_btn" style="display:none;" onclick="resetChallenge()">🔄 RESET CHALLENGE</button>
+            <button class="chal-btn chal-btn-close" onclick="closeChallenge()">✕ CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // 30 DAY CHALLENGE SYSTEM
+        // =============================================
+        const CHALLENGE_KEY = 'NAFAA_30DAY_CHALLENGE';
+        const CHALLENGE_TARGET = 200000;   // ₹2 लाख
+        const CHALLENGE_DAYS = 30;
+        const MAX_TRADES_PER_DAY = 10;
+        const MAX_RISK_PER_DAY = 5000;     // ₹5000
+
+        let challengeData = null;
+
+        function getTodayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function loadChallenge() {
+            const saved = localStorage.getItem(CHALLENGE_KEY);
+            if (saved) {
+                challengeData = JSON.parse(saved);
+                // Clear expired lockout
+                if (challengeData.lockoutUntil && Date.now() >= challengeData.lockoutUntil) {
+                    challengeData.lockoutUntil = null;
+                    saveChallenge();
+                }
+                ensureTodayInChallenge();
+            }
+        }
+
+        function saveChallenge() {
+            localStorage.setItem(CHALLENGE_KEY, JSON.stringify(challengeData));
+        }
+
+        function ensureTodayInChallenge() {
+            if (!challengeData || !challengeData.active) return;
+            const todayKey = getTodayKey();
+            if (!challengeData.days[todayKey]) {
+                challengeData.days[todayKey] = { trades: 0, riskUsed: 0, pnl: 0, date: todayKey };
+                saveChallenge();
+            }
+        }
+
+        function startChallenge() {
+            const today = getTodayKey();
+            challengeData = {
+                active: true,
+                startDate: today,
+                days: {},
+                totalPnl: 0,
+                lockoutUntil: null,
+                failed: false
+            };
+            challengeData.days[today] = { trades: 0, riskUsed: 0, pnl: 0, date: today };
+            saveChallenge();
+            updateChallengeUI();
+            document.getElementById('chal_start_btn').style.display = 'none';
+            document.getElementById('chal_reset_btn').style.display = 'block';
+            updateMiniBar();
+        }
+
+        function resetChallenge() {
+            // Show custom modal instead of confirm()
+            const overlay = document.getElementById('reset_modal_overlay');
+            overlay.style.display = 'flex';
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset_modal_overlay').style.display = 'none';
+        }
+
+        function confirmReset() {
+            closeResetModal();
+            doResetChallenge();
+        }
+
+        function doResetChallenge() {
+            const prevCount = parseInt(localStorage.getItem('NAFAA_RESET_COUNT') || '0');
+            localStorage.setItem('NAFAA_RESET_COUNT', prevCount + 1);
+            challengeData = null;
+            localStorage.removeItem(CHALLENGE_KEY);
+            document.getElementById('chal_start_btn').style.display = 'block';
+            document.getElementById('chal_reset_btn').style.display = 'none';
+            updateChallengeUI();
+            updateMiniBar();
+        }
+
+        function openChallenge() {
+            loadChallenge();
+            updateChallengeUI();
+            document.getElementById('challenge_overlay').classList.add('show');
+        }
+
+        function closeChallenge() {
+            document.getElementById('challenge_overlay').classList.remove('show');
+        }
+
+        // Returns ms remaining in lockout, 0 if not locked
+        function getLockoutRemaining() {
+            if (!challengeData || !challengeData.lockoutUntil) return 0;
+            const remaining = challengeData.lockoutUntil - Date.now();
+            return remaining > 0 ? remaining : 0;
+        }
+
+        function formatCountdown(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+        }
+
+        // Called before each trade. Returns: 'block' | 'reject_sl' | 'ok'
+        function challengeCheckTrade(estimatedRiskINR) {
+            if (!challengeData || !challengeData.active) return 'ok';
+
+            // 24-hour lockout check
+            const lockRemaining = getLockoutRemaining();
+            if (lockRemaining > 0) {
+                showChallengeMessage(`🔒 Trading locked for ${formatCountdown(lockRemaining)}.\nDaily loss limit of ₹${MAX_RISK_PER_DAY.toLocaleString('en-IN')} was breached. Wait out the 24h cooldown.`, 'block');
+                return 'block';
+            }
+
+            ensureTodayInChallenge();
+            const todayKey = getTodayKey();
+            const today = challengeData.days[todayKey];
+            if (!today) return 'ok';
+
+            // Max trades for today
+            if (today.trades >= MAX_TRADES_PER_DAY) {
+                showChallengeMessage(`🚫 Max ${MAX_TRADES_PER_DAY} trades reached for today. Come back tomorrow.`, 'block');
+                return 'block';
+            }
+
+            // आजचा आतापर्यंतचा actual net loss किती आहे ते बघा
+            const todayNetLoss = today.pnl < 0 ? Math.abs(today.pnl) : 0;
+            // उरलेली limit = ₹5000 - आधीचा loss
+            const remainingLimit = MAX_RISK_PER_DAY - todayNetLoss;
+
+            // जर आधीच ₹5000 पेक्षा जास्त loss झाला असेल
+            if (remainingLimit <= 0) {
+                showChallengeMessage(`🔒 Daily loss limit of ₹${MAX_RISK_PER_DAY.toLocaleString('en-IN')} already reached.\nToday's loss: ₹${Math.round(todayNetLoss).toLocaleString('en-IN')}. No more trades today.`, 'block');
+                return 'block';
+            }
+
+            // नवीन trade चा SL risk + आजचा आधीचा loss = total potential loss
+            // हे ₹5000 पेक्षा जास्त असेल तर block करा
+            if (estimatedRiskINR > remainingLimit) {
+                showChallengeMessage(`❌ Order Rejected: SL risk ₹${Math.round(estimatedRiskINR).toLocaleString('en-IN')} exceeds remaining daily limit ₹${Math.round(remainingLimit).toLocaleString('en-IN')}.\n(Today's loss so far: ₹${Math.round(todayNetLoss).toLocaleString('en-IN')} | Total limit: ₹${MAX_RISK_PER_DAY.toLocaleString('en-IN')})\nReduce qty or tighten SL.`, 'block');
+                return 'block';
+            }
+
+            return 'ok';
+        }
+
+        function showChallengeMessage(msg, type) {
+            const w = document.getElementById('chal_warning');
+            w.innerText = msg;
+            w.style.background = type === 'warn' ? '#e67e00' : '#f23645';
+            w.style.display = 'block';
+            document.getElementById('challenge_overlay').classList.add('show');
+            updateChallengeUI();
+            // Reject sound
+            if (type === 'block') {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    // दोन beeps — harsh reject sound
+                    [0, 0.18].forEach(function(delay) {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(220, ctx.currentTime + delay);
+                        gain.gain.setValueAtTime(0.4, ctx.currentTime + delay);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.15);
+                        osc.start(ctx.currentTime + delay);
+                        osc.stop(ctx.currentTime + delay + 0.15);
+                    });
+                } catch(e) {}
+            }
+            // Auto-hide after 10 seconds
+            clearTimeout(window._chalWarnTimer);
+            window._chalWarnTimer = setTimeout(function() {
+                w.style.display = 'none';
+            }, 10000);
+        }
+
+        // Called when a trade opens — only increment trade count
+        function challengeOnTradeOpen() {
+            if (!challengeData || !challengeData.active) return;
+            if (getLockoutRemaining() > 0) return;
+            ensureTodayInChallenge();
+            const todayKey = getTodayKey();
+            if (challengeData.days[todayKey]) {
+                challengeData.days[todayKey].trades++;
+                saveChallenge();
+            }
+        }
+
+        // Called when a trade closes — track actual loss; trigger 24h lockout if net daily P&L ≤ -₹5,000
+        function challengeOnTradeClose(pnlINR) {
+            if (!challengeData || !challengeData.active) return;
+            ensureTodayInChallenge();
+            const todayKey = getTodayKey();
+            if (challengeData.days[todayKey]) {
+                challengeData.days[todayKey].pnl += pnlINR;
+                // riskUsed = net loss only (shown as positive number for display)
+                const netPnl = challengeData.days[todayKey].pnl;
+                challengeData.days[todayKey].riskUsed = netPnl < 0 ? Math.abs(netPnl) : 0;
+            }
+            challengeData.totalPnl += pnlINR;
+
+            // Lock only if net daily P&L goes below -₹5,000
+            const netDayPnl = challengeData.days[todayKey] ? challengeData.days[todayKey].pnl : 0;
+            if (netDayPnl <= -MAX_RISK_PER_DAY && !challengeData.lockoutUntil) {
+                challengeData.lockoutUntil = Date.now() + 24 * 60 * 60 * 1000;
+            }
+            // If P&L recovered above -5000 (e.g. a winning trade after a loss), cancel lockout
+            if (netDayPnl > -MAX_RISK_PER_DAY && challengeData.lockoutUntil) {
+                challengeData.lockoutUntil = null;
+            }
+
+            saveChallenge();
+            updateChallengeUI();
+        }
+
+        function getDayNumber() {
+            if (!challengeData || !challengeData.startDate) return 0;
+            const start = new Date(challengeData.startDate);
+            const now = new Date();
+            return Math.min(Math.floor((now - start) / 86400000) + 1, CHALLENGE_DAYS);
+        }
+
+        function updateChallengeUI() {
+            const startBtn = document.getElementById('chal_start_btn');
+            const resetBtn = document.getElementById('chal_reset_btn');
+            const congratsEl = document.getElementById('chal_congrats');
+            const failedEl = document.getElementById('chal_failed');
+
+            if (!challengeData || !challengeData.active) {
+                startBtn.style.display = 'block';
+                resetBtn.style.display = 'none';
+                congratsEl.style.display = 'none';
+                failedEl.style.display = 'none';
+                renderDayGrid([]);
+                document.getElementById('chal_total_pnl').innerText = '₹0';
+                document.getElementById('chal_day_count').innerText = '0 / 30';
+                document.getElementById('chal_days_left').innerText = '30';
+                document.getElementById('chal_today_trades').innerText = '0 / ' + MAX_TRADES_PER_DAY;
+                document.getElementById('chal_today_risk').innerText = '₹0 / ₹5,000';
+                document.getElementById('chal_today_pnl').innerText = '₹0';
+                document.getElementById('chal_profit_bar').style.width = '0%';
+                document.getElementById('chal_trade_bar').style.width = '0%';
+                document.getElementById('chal_risk_bar').style.width = '0%';
+                document.getElementById('chal_win_days').innerText = '0';
+                document.getElementById('chal_loss_days').innerText = '0';
+                document.getElementById('chal_best_day').innerText = '—';
+                document.getElementById('chal_worst_day').innerText = '—';
+                document.getElementById('chal_avg_pnl').innerText = '';
+                const rcEl2 = document.getElementById('chal_reset_count');
+                if (rcEl2) {
+                    const rc = parseInt(localStorage.getItem('NAFAA_RESET_COUNT') || '0');
+                    rcEl2.innerText = rc;
+                    rcEl2.style.color = rc === 0 ? '#089981' : rc <= 3 ? '#e67e00' : '#f23645';
+                }
+                document.getElementById('chal_needed_per_day').innerText = '₹6,667';
+                return;
+            }
+
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'block';
+
+            ensureTodayInChallenge();
+            const todayKey = getTodayKey();
+            const today = challengeData.days[todayKey] || { trades: 0, riskUsed: 0, pnl: 0 };
+            const totalPnl = challengeData.totalPnl || 0;
+            const dayNum = getDayNumber();
+            const daysLeft = Math.max(0, CHALLENGE_DAYS - dayNum + 1);
+            const remaining = CHALLENGE_TARGET - totalPnl;
+            const neededPerDay = daysLeft > 0 ? Math.ceil(remaining / daysLeft) : 0;
+
+            // Total P&L
+            const pnlEl = document.getElementById('chal_total_pnl');
+            pnlEl.innerText = (totalPnl >= 0 ? '+' : '') + '₹' + Math.round(totalPnl).toLocaleString('en-IN');
+            pnlEl.style.color = totalPnl >= 0 ? '#089981' : '#f23645';
+
+            // Progress bar
+            const pct = Math.min(100, Math.max(0, (totalPnl / CHALLENGE_TARGET) * 100));
+            document.getElementById('chal_profit_bar').style.width = pct + '%';
+            document.getElementById('chal_profit_bar').style.background = totalPnl >= 0 ? '#089981' : '#f23645';
+
+            document.getElementById('chal_day_count').innerText = dayNum + ' / 30';
+            document.getElementById('chal_days_left').innerText = daysLeft;
+            document.getElementById('chal_needed_per_day').innerText = '₹' + Math.max(0, neededPerDay).toLocaleString('en-IN');
+
+            // Today
+            const tradeEl = document.getElementById('chal_today_trades');
+            tradeEl.innerText = today.trades + ' / ' + MAX_TRADES_PER_DAY;
+            tradeEl.style.color = today.trades >= MAX_TRADES_PER_DAY ? '#f23645' : '#089981';
+            document.getElementById('chal_trade_bar').style.width = Math.min(100, (today.trades / MAX_TRADES_PER_DAY) * 100) + '%';
+
+            const riskEl = document.getElementById('chal_today_risk');
+            riskEl.innerText = '₹' + Math.round(today.riskUsed).toLocaleString('en-IN') + ' / ₹5,000';
+            riskEl.style.color = today.riskUsed >= MAX_RISK_PER_DAY ? '#f23645' : '#ffffff';
+            document.getElementById('chal_risk_bar').style.width = Math.min(100, (today.riskUsed / MAX_RISK_PER_DAY) * 100) + '%';
+            document.getElementById('chal_risk_bar').style.background = today.riskUsed >= MAX_RISK_PER_DAY ? '#f23645' : '#e67e00';
+
+            const todayPnlEl = document.getElementById('chal_today_pnl');
+            todayPnlEl.innerText = (today.pnl >= 0 ? '+' : '') + '₹' + Math.round(today.pnl).toLocaleString('en-IN');
+            todayPnlEl.style.color = today.pnl >= 0 ? '#089981' : '#f23645';
+
+            // Stats — only COMPLETED days (exclude today)
+            const dayList = Object.values(challengeData.days);
+            const todayKeyNow = getTodayKey();
+            const completedDays = dayList.filter(d => d.trades > 0 && d.date !== todayKeyNow);
+            const allTradedDays = dayList.filter(d => d.trades > 0);
+            const winDays = allTradedDays.filter(d => d.pnl > 0).length;
+            const lossDays = allTradedDays.filter(d => d.pnl < 0).length;
+            const bestDay = completedDays.length ? Math.max(...completedDays.map(d => d.pnl)) : null;
+            const worstDay = completedDays.length ? Math.min(...completedDays.map(d => d.pnl)) : null;
+
+            document.getElementById('chal_win_days').innerText = winDays;
+            document.getElementById('chal_loss_days').innerText = lossDays;
+
+            const bestEl = document.getElementById('chal_best_day');
+            if (bestDay !== null) {
+                bestEl.innerText = (bestDay >= 0 ? '+' : '') + '₹' + Math.round(bestDay).toLocaleString('en-IN');
+                bestEl.style.color = bestDay >= 0 ? '#089981' : '#f23645';
+            } else {
+                bestEl.innerText = '—';
+                bestEl.style.color = '#555';
+            }
+
+            const worstEl = document.getElementById('chal_worst_day');
+            if (worstDay !== null) {
+                worstEl.innerText = (worstDay >= 0 ? '+' : '') + '₹' + Math.round(worstDay).toLocaleString('en-IN');
+                worstEl.style.color = worstDay >= 0 ? '#089981' : '#f23645';
+            } else {
+                worstEl.innerText = '—';
+                worstEl.style.color = '#555';
+            }
+
+            // Avg Daily P&L (hidden row kept for compatibility, not shown)
+            document.getElementById('chal_avg_pnl').innerText = '';
+
+            // Reset count
+            const resetCount = parseInt(localStorage.getItem('NAFAA_RESET_COUNT') || '0');
+            const rcEl = document.getElementById('chal_reset_count');
+            if (rcEl) {
+                rcEl.innerText = resetCount;
+                rcEl.style.color = resetCount === 0 ? '#089981' : resetCount <= 3 ? '#e67e00' : '#f23645';
+            }
+
+            // Congrats
+            if (totalPnl >= CHALLENGE_TARGET) {
+                congratsEl.style.display = 'block';
+            }
+
+            // Lockout banner — show countdown if active
+            const lockMs = getLockoutRemaining();
+            if (lockMs > 0) {
+                failedEl.style.display = 'block';
+                failedEl.innerHTML = `🔒 TRADING LOCKED — Daily loss limit hit<br><span style="font-size:13px;letter-spacing:1px;" id="lockout_countdown">${formatCountdown(lockMs)}</span><br><span style="font-size:9px;opacity:0.7;">Unlocks in ${formatCountdown(lockMs)}</span>`;
+            } else if (challengeData.lockoutUntil && lockMs === 0) {
+                // Lockout expired — clear it so trading resumes
+                challengeData.lockoutUntil = null;
+                saveChallenge();
+                failedEl.style.display = 'none';
+            } else {
+                failedEl.style.display = 'none';
+            }
+
+            renderDayGrid(dayList);
+        }
+
+        function renderDayGrid(dayList) {
+            const grid = document.getElementById('chal_day_grid');
+            const todayKey = getTodayKey();
+            let html = '';
+            for (let i = 1; i <= CHALLENGE_DAYS; i++) {
+                // Find the day entry for day i from start
+                const startDate = challengeData && challengeData.startDate ? new Date(challengeData.startDate) : null;
+                let dayKey = '';
+                let cls = 'empty';
+                let label = i;
+                if (startDate) {
+                    const d = new Date(startDate);
+                    d.setDate(d.getDate() + (i - 1));
+                    dayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                    const entry = challengeData.days[dayKey];
+                    if (entry && entry.trades > 0) {
+                        cls = entry.pnl >= 0 ? 'win' : 'loss';
+                    } else if (dayKey <= todayKey && challengeData && challengeData.active) {
+                        cls = 'empty';
+                    }
+                    if (dayKey === todayKey) cls += ' today';
+                }
+                html += `<div class="day-dot ${cls}" title="Day ${i}">${i}</div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        function updateMiniBar() { /* mini bar removed */ }
+
+        // Live countdown ticker — updates every second when overlay is open
+        setInterval(function() {
+            if (!document.getElementById('challenge_overlay').classList.contains('show')) return;
+            if (!challengeData || !challengeData.lockoutUntil) return;
+            const lockMs = getLockoutRemaining();
+            const el = document.getElementById('lockout_countdown');
+            if (lockMs > 0 && el) {
+                el.innerText = formatCountdown(lockMs);
+                const failedEl = document.getElementById('chal_failed');
+                if (failedEl) failedEl.innerHTML = `🔒 TRADING LOCKED — Daily loss limit hit<br><span style="font-size:13px;letter-spacing:1px;" id="lockout_countdown">${formatCountdown(lockMs)}</span><br><span style="font-size:9px;opacity:0.7;">Unlocks in ${formatCountdown(lockMs)}</span>`;
+            } else if (lockMs === 0 && challengeData.lockoutUntil) {
+                challengeData.lockoutUntil = null;
+                saveChallenge();
+                updateChallengeUI();
+            }
+        }, 1000);
+
+        // Load on startup
+        setTimeout(function() { loadChallenge(); }, 500);
+    </script>
+
+
+    <!-- ── RESET CONFIRM MODAL ── -->
+    <div id="reset_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1e222d; border:1.5px solid #38bdf8; border-radius:12px; width:82%; max-width:320px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#f23645,#c0392b); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                <span style="font-size:20px;">⚠️</span>
+                <span style="color:#fff; font-weight:bold; font-size:14px; letter-spacing:0.5px;">RESET CHALLENGE</span>
+            </div>
+            <!-- Body -->
+            <div style="padding:18px;">
+                <p style="color:#e0e0e0; font-size:13px; line-height:1.6; margin:0;">Reset the challenge? <span style="color:#f23645; font-weight:bold;">All progress will be deleted.</span></p>
+            </div>
+            <!-- Divider -->
+            <div style="height:1px; background:rgba(240,185,11,0.15); margin:0 18px;"></div>
+            <!-- Buttons -->
+            <div style="display:flex; gap:10px; padding:14px 18px;">
+                <button onclick="closeResetModal()" style="flex:1; background:transparent; border:1.5px solid #555; color:#b2b5be; border-radius:6px; padding:10px; font-size:12px; font-weight:bold; cursor:pointer; letter-spacing:0.5px;">✕ CANCEL</button>
+                <button onclick="confirmReset()" style="flex:1; background:linear-gradient(135deg,#f23645,#c0392b); border:none; color:#fff; border-radius:6px; padding:10px; font-size:12px; font-weight:bold; cursor:pointer; letter-spacing:0.5px;">🔄 RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODIFY SL/TGT MODAL ── -->
+    <div id="modify_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1e222d; border:1.5px solid #38bdf8; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #38bdf8; padding:7px 12px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">✏️</span>
+                    <span style="color:#38bdf8; font-weight:bold; font-size:11px; letter-spacing:0.5px;">MODIFY ORDER</span>
+                </div>
+                <span id="modify_trade_info" style="color:#b2b5be; font-size:9px;"></span>
+            </div>
+            <!-- Body -->
+            <div style="padding:10px 12px;">
+                <!-- Current prices info -->
+                <div id="modify_current_info" style="background:#131722; border-radius:5px; padding:5px 10px; margin-bottom:8px; font-size:9px; color:#b2b5be; display:flex; justify-content:space-between;">
+                    <span>Entry: <span id="modify_entry_val" style="color:#fff; font-weight:bold;"></span></span>
+                    <span>LTP: <span id="modify_ltp_val" style="color:#38bdf8; font-weight:bold;"></span></span>
+                </div>
+                <!-- SL Input -->
+                <div style="margin-bottom:7px;">
+                    <label style="color:#f23645; font-size:9px; font-weight:bold; display:block; margin-bottom:3px;">🛑 Stop Loss Price</label>
+                    <input id="modify_sl_input" type="number" step="0.1"
+                        style="width:100%; background:#131722; border:1.5px solid #f23645; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
+                        placeholder="0 = No SL">
+                </div>
+                <!-- TGT Input -->
+                <div style="margin-bottom:8px;">
+                    <label style="color:#089981; font-size:9px; font-weight:bold; display:block; margin-bottom:3px;">🎯 Target Price</label>
+                    <input id="modify_tgt_input" type="number" step="0.1"
+                        style="width:100%; background:#131722; border:1.5px solid #089981; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
+                        placeholder="0 = No Target">
+                </div>
+                <!-- Buttons -->
+                <div style="display:flex; gap:10px;">
+                    <button onclick="closeModifyModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
+                    <button onclick="saveModify()" style="flex:1; background:linear-gradient(135deg,#38bdf8,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✅ SAVE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
