@@ -1,4 +1,4 @@
-name: Build APK and AAB
+name: Build Signed AAB
 
 on:
   push:
@@ -22,14 +22,21 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.1.1'
-          
-      - name: Build Debug APK and AAB
-        run: gradle assembleDebug bundleDebug
-        
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > btex.keystore
+
+      - name: Build Signed AAB
+        run: |
+          gradle bundleRelease \
+            -Pandroid.injected.signing.store.file=$PWD/btex.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v1.0.${{ github.run_number }}
-          files: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/bundle/debug/*.aab
+          files: app/build/outputs/bundle/release/*.aab
