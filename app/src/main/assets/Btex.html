@@ -309,7 +309,7 @@
                                 <span data-hi>प्रॉफिट टार्गेट</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Earn <span class="sp-chip sp-chip-gold">₹2,00,000</span> within 30 days to complete the challenge.</span>
+                                <span data-en>Earn <span class="sp-chip sp-chip-gold">₹2,00,000 / $2,395</span> within 30 days to complete the challenge.</span>
                                 <span data-hi>३० दिनों में <span class="sp-chip sp-chip-gold">₹2,00,000</span> कमाने पर चैलेंज पूरा होता है।</span>
                             </span>
                         </div>
@@ -337,7 +337,7 @@
                                 <span data-hi>डेली लॉस लॉकआउट</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>If net loss reaches <span class="sp-chip sp-chip-red">₹5,000 in a day</span>, trading is automatically locked until the next day.</span>
+                                <span data-en>If net loss reaches <span class="sp-chip sp-chip-red">₹5,000 / $60 in a day</span>, trading is automatically locked until the next day.</span>
                                 <span data-hi>एक दिन में <span class="sp-chip sp-chip-red">₹5,000</span> का नुकसान होने पर ट्रेडिंग अगले दिन तक अपने आप लॉक हो जाती है।</span>
                             </span>
                         </div>
@@ -351,7 +351,7 @@
                                 <span data-hi>रोज़ाना ज़रूरी प्रॉफिट</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>To hit the target on time, aim for at least <span class="sp-chip sp-chip-green">₹6,667 profit per day</span>.</span>
+                                <span data-en>To hit the target on time, aim for at least <span class="sp-chip sp-chip-green">₹6,667 / $80 profit per day</span>.</span>
                                 <span data-hi>टार्गेट समय पर पूरा करने के लिए रोज़ कम से कम <span class="sp-chip sp-chip-green">₹6,667 प्रॉफिट</span> बनाना होगा।</span>
                             </span>
                         </div>
@@ -393,7 +393,7 @@
                                 <span data-hi>जीत कैसे होती है?</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>When Total P&L ≥ ₹2,00,000 within 30 days, you'll see <strong style="color:#089981;">TARGET ACHIEVED!</strong></span>
+                                <span data-en>When Total P&L ≥ ₹2,00,000 / $2,395 within 30 days, you'll see <strong style="color:#089981;">TARGET ACHIEVED!</strong></span>
                                 <span data-hi>३० दिनों में Total P&L ≥ ₹2,00,000 होने पर <strong style="color:#089981;">TARGET ACHIEVED!</strong> दिखेगा।</span>
                             </span>
                         </div>
@@ -691,6 +691,37 @@
             </div>
         </div>
 
+        <!-- ACCORDION 6: Privacy Policy -->
+        <div class="sp-accordion" id="acc_privacy">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_privacy')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">🔐</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Privacy Policy</span>
+                        <span data-hi>प्राइवेसी पॉलिसी</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">📄</span>
+                        <div>
+                            <span class="sp-rule-desc">
+                                <span data-en>Read our full Privacy Policy to understand how your data is handled.</span>
+                                <span data-hi>आपका डेटा कैसे उपयोग होता है, यह जानने के लिए हमारी पूरी प्राइवेसी पॉलिसी पढ़ें।</span>
+                            </span>
+                        </div>
+                    </div>
+                    <button class="sp-action-btn" onclick="window.open('https://sites.google.com/view/btex-policy/home','_blank')">
+                        <span data-en>View Privacy Policy</span>
+                        <span data-hi>प्राइवेसी पॉलिसी देखें</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="sp-footer">Btex Trading App · v15</div>
     </div>
 
@@ -808,8 +839,8 @@
             <select id="strategy_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:1;" onchange="updateAssetStrategy()">
                 <option value="s1">S1: REVERSAL (5M)</option>
                 <option value="s1_5m">S1: REVERSAL (15M)</option>
-                <option value="s2">S2: EMA (5M)</option>
-                <option value="s2_5m">S2: EMA (15M)</option>
+                <option value="s2">🔒 S2: EMA (5M)</option>
+                <option value="s2_5m">🔒 S2: EMA (15M)</option>
                 <option value="s3_power">S3: POWER ZONE (15M)</option>
                 <option value="s4">S4: STRONG ZONE (5M)</option>
                 <option value="s6_struct">S6: STRUCTURE BREAK (15M)</option>
@@ -1544,9 +1575,23 @@
         }
 
         function updateAssetStrategy() {
+            const val = document.getElementById('strategy_choice').value;
+            if (val === 's2' || val === 's2_5m') {
+                const asset = document.getElementById('asset_choice').value;
+                document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
+                showPremiumLock();
+                return;
+            }
             const asset = document.getElementById('asset_choice').value;
-            assetSettings[asset].strategy = document.getElementById('strategy_choice').value;
+            assetSettings[asset].strategy = val;
             saveData();
+        }
+
+        function showPremiumLock() {
+            document.getElementById('premium_lock_modal').style.display = 'flex';
+        }
+        function closePremiumLock() {
+            document.getElementById('premium_lock_modal').style.display = 'none';
         }
 
         function closeAll() { trades.slice().forEach(t => closeSingle(t.id)); }
@@ -1738,7 +1783,7 @@
             <div class="chal-section-title">📈 Overall Progress</div>
             <div class="chal-stat-row">
                 <span class="chal-stat-label">Target Profit</span>
-                <span class="chal-stat-val" style="color:#38bdf8;">₹2,00,000</span>
+                <span class="chal-stat-val" style="color:#38bdf8;">₹2,00,000 / $2,395</span>
             </div>
             <div class="chal-stat-row">
                 <span class="chal-stat-label">Total P&L</span>
@@ -1833,6 +1878,14 @@
         const CHALLENGE_DAYS = 30;
         const MAX_TRADES_PER_DAY = 10;
         const MAX_RISK_PER_DAY = 5000;     // ₹5000
+
+        const USD_RATE = 83.5; // ₹1 = $1/83.5
+        function toUSD(inr) { return '$' + Math.round(Math.abs(inr) / USD_RATE).toLocaleString('en-US'); }
+        function fmtINRUSD(inr, showSign) {
+            const sign = showSign ? (inr >= 0 ? '+' : '-') : (inr < 0 ? '-' : '');
+            const absInr = Math.abs(inr);
+            return sign + '₹' + Math.round(absInr).toLocaleString('en-IN') + ' / ' + toUSD(absInr);
+        }
 
         let challengeData = null;
 
@@ -2069,12 +2122,12 @@
                 congratsEl.style.display = 'none';
                 failedEl.style.display = 'none';
                 renderDayGrid([]);
-                document.getElementById('chal_total_pnl').innerText = '₹0';
+                document.getElementById('chal_total_pnl').innerText = '₹0 / $0';
                 document.getElementById('chal_day_count').innerText = '0 / 30';
                 document.getElementById('chal_days_left').innerText = '30';
                 document.getElementById('chal_today_trades').innerText = '0 / ' + MAX_TRADES_PER_DAY;
-                document.getElementById('chal_today_risk').innerText = '₹0 / ₹5,000';
-                document.getElementById('chal_today_pnl').innerText = '₹0';
+                document.getElementById('chal_today_risk').innerText = '₹0 / $0  —  Limit: ₹5,000 / $60';
+                document.getElementById('chal_today_pnl').innerText = '₹0 / $0';
                 document.getElementById('chal_profit_bar').style.width = '0%';
                 document.getElementById('chal_trade_bar').style.width = '0%';
                 document.getElementById('chal_risk_bar').style.width = '0%';
@@ -2089,7 +2142,7 @@
                     rcEl2.innerText = rc;
                     rcEl2.style.color = rc === 0 ? '#089981' : rc <= 3 ? '#e67e00' : '#f23645';
                 }
-                document.getElementById('chal_needed_per_day').innerText = '₹6,667';
+                document.getElementById('chal_needed_per_day').innerText = '₹6,667 / $80';
                 return;
             }
 
@@ -2107,7 +2160,7 @@
 
             // Total P&L
             const pnlEl = document.getElementById('chal_total_pnl');
-            pnlEl.innerText = (totalPnl >= 0 ? '+' : '') + '₹' + Math.round(totalPnl).toLocaleString('en-IN');
+            pnlEl.innerText = fmtINRUSD(totalPnl, true);
             pnlEl.style.color = totalPnl >= 0 ? '#089981' : '#f23645';
 
             // Progress bar
@@ -2117,7 +2170,7 @@
 
             document.getElementById('chal_day_count').innerText = dayNum + ' / 30';
             document.getElementById('chal_days_left').innerText = daysLeft;
-            document.getElementById('chal_needed_per_day').innerText = '₹' + Math.max(0, neededPerDay).toLocaleString('en-IN');
+            document.getElementById('chal_needed_per_day').innerText = '₹' + Math.max(0, neededPerDay).toLocaleString('en-IN') + ' / ' + toUSD(Math.max(0, neededPerDay));
 
             // Today
             const tradeEl = document.getElementById('chal_today_trades');
@@ -2126,13 +2179,13 @@
             document.getElementById('chal_trade_bar').style.width = Math.min(100, (today.trades / MAX_TRADES_PER_DAY) * 100) + '%';
 
             const riskEl = document.getElementById('chal_today_risk');
-            riskEl.innerText = '₹' + Math.round(today.riskUsed).toLocaleString('en-IN') + ' / ₹5,000';
+            riskEl.innerText = '₹' + Math.round(today.riskUsed).toLocaleString('en-IN') + ' / ' + toUSD(today.riskUsed) + '  —  Limit: ₹5,000 / $60';
             riskEl.style.color = today.riskUsed >= MAX_RISK_PER_DAY ? '#f23645' : '#ffffff';
             document.getElementById('chal_risk_bar').style.width = Math.min(100, (today.riskUsed / MAX_RISK_PER_DAY) * 100) + '%';
             document.getElementById('chal_risk_bar').style.background = today.riskUsed >= MAX_RISK_PER_DAY ? '#f23645' : '#e67e00';
 
             const todayPnlEl = document.getElementById('chal_today_pnl');
-            todayPnlEl.innerText = (today.pnl >= 0 ? '+' : '') + '₹' + Math.round(today.pnl).toLocaleString('en-IN');
+            todayPnlEl.innerText = fmtINRUSD(today.pnl, true);
             todayPnlEl.style.color = today.pnl >= 0 ? '#089981' : '#f23645';
 
             // Stats — only COMPLETED days (exclude today)
@@ -2150,7 +2203,7 @@
 
             const bestEl = document.getElementById('chal_best_day');
             if (bestDay !== null) {
-                bestEl.innerText = (bestDay >= 0 ? '+' : '') + '₹' + Math.round(bestDay).toLocaleString('en-IN');
+                bestEl.innerText = fmtINRUSD(bestDay, true);
                 bestEl.style.color = bestDay >= 0 ? '#089981' : '#f23645';
             } else {
                 bestEl.innerText = '—';
@@ -2159,7 +2212,7 @@
 
             const worstEl = document.getElementById('chal_worst_day');
             if (worstDay !== null) {
-                worstEl.innerText = (worstDay >= 0 ? '+' : '') + '₹' + Math.round(worstDay).toLocaleString('en-IN');
+                worstEl.innerText = fmtINRUSD(worstDay, true);
                 worstEl.style.color = worstDay >= 0 ? '#089981' : '#f23645';
             } else {
                 worstEl.innerText = '—';
@@ -2249,6 +2302,32 @@
         setTimeout(function() { loadChallenge(); }, 500);
     </script>
 
+
+    <!-- ── PREMIUM LOCK MODAL ── -->
+    <div id="premium_lock_modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:linear-gradient(160deg,#1a1500,#0d0d0d); border:1.5px solid #c9a227; border-radius:14px; width:84%; max-width:310px; overflow:hidden; box-shadow:0 0 40px rgba(201,162,39,0.25), 0 8px 32px rgba(0,0,0,0.8);">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#c9a227,#7a5c00); padding:16px 18px 12px; text-align:center; position:relative;">
+                <div style="font-size:28px; line-height:1;">🔒</div>
+                <div style="color:#fff; font-size:13px; font-weight:bold; letter-spacing:1.5px; margin-top:6px; text-transform:uppercase;">Paid Premium Strategy</div>
+                <div style="position:absolute; top:10px; right:12px; color:rgba(255,255,255,0.5); font-size:18px; cursor:pointer; line-height:1;" onclick="closePremiumLock()">✕</div>
+            </div>
+            <!-- Gold divider -->
+            <div style="height:1px; background:linear-gradient(90deg,transparent,#c9a227,transparent);"></div>
+            <!-- Body -->
+            <div style="padding:18px 20px; text-align:center;">
+                <p style="color:#e8c96a; font-size:11px; font-weight:bold; letter-spacing:0.5px; margin:0 0 6px;">This strategy is locked.</p>
+                <p style="color:#a89060; font-size:10px; line-height:1.6; margin:0 0 16px;">To unlock this, contact Support:</p>
+                <div style="background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.4); border-radius:7px; padding:10px 14px; display:inline-block;">
+                    <span style="color:#c9a227; font-size:11px; font-weight:bold; letter-spacing:0.5px;">📧 Supportnafa@gmail.com</span>
+                </div>
+            </div>
+            <!-- Footer button -->
+            <div style="padding:0 20px 18px;">
+                <button onclick="closePremiumLock()" style="width:100%; background:linear-gradient(135deg,#c9a227,#7a5c00); border:none; color:#000; border-radius:7px; padding:11px; font-size:12px; font-weight:bold; cursor:pointer; letter-spacing:0.8px;">GOT IT</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── RESET CONFIRM MODAL ── -->
     <div id="reset_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
