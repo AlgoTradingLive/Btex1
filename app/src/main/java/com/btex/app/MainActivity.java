@@ -6,10 +6,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 import com.google.android.gms.ads.AdError;
-import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.FullScreenContentCallback;
@@ -34,19 +32,6 @@ public class MainActivity extends Activity {
 
         // Banner ad
         AdView bannerAdView = findViewById(R.id.bannerAdView);
-        bannerAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
-                Toast.makeText(MainActivity.this,
-                        "Banner failed: " + adError.getMessage(),
-                        Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onAdLoaded() {
-                Toast.makeText(MainActivity.this, "Banner loaded", Toast.LENGTH_SHORT).show();
-            }
-        });
         bannerAdView.loadAd(new AdRequest.Builder().build());
 
         // Interstitial ad (pre-loaded, ready for challenge start/reset)
