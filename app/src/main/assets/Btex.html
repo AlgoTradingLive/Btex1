@@ -1936,6 +1936,7 @@
             document.getElementById('chal_start_btn').style.display = 'none';
             document.getElementById('chal_reset_btn').style.display = 'block';
             updateMiniBar();
+            notifyKodular('SHOW_INTERSTITIAL_AD');
         }
 
         function resetChallenge() {
@@ -1962,6 +1963,7 @@
             document.getElementById('chal_reset_btn').style.display = 'none';
             updateChallengeUI();
             updateMiniBar();
+            notifyKodular('SHOW_INTERSTITIAL_AD');
         }
 
         function openChallenge() {
