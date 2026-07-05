@@ -7,6 +7,9 @@
         android:icon="@drawable/logo"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-6724873553204610~6243916665"/>
         <activity android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait">
