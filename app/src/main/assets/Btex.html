@@ -407,8 +407,8 @@
                                 <span data-hi>इनाम — 15,000 कॉइन्स</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Challenge winner gets <span class="sp-chip sp-chip-gold">15,000 Coins*</span> = <span class="sp-chip sp-chip-green">₹150 Google Play Voucher FREE!</span> Coins are awarded after manual verification.</span>
-                                <span data-hi>चैलेंज विजेता को <span class="sp-chip sp-chip-gold">15,000 Coins*</span> मिलेंगे = <span class="sp-chip sp-chip-green">₹150 Google Play Voucher FREE!</span> मैनुअल वेरिफिकेशन के बाद कॉइन्स दिए जाएंगे।</span>
+                                <span data-en>Challenge winner gets <span class="sp-chip sp-chip-gold">15,000 Coins*</span>. Coins are awarded after manual verification.</span>
+                                <span data-hi>चैलेंज विजेता को <span class="sp-chip sp-chip-gold">15,000 Coins*</span> मिलेंगे। मैनुअल वेरिफिकेशन के बाद कॉइन्स दिए जाएंगे।</span>
                             </span>
                         </div>
                     </div>
@@ -714,7 +714,7 @@
                             </span>
                         </div>
                     </div>
-                    <button class="sp-action-btn" onclick="window.open('https://sites.google.com/view/btex-policy/home','_blank')">
+                    <button class="sp-action-btn" onclick="openPrivacyPolicy()">
                         <span data-en>View Privacy Policy</span>
                         <span data-hi>प्राइवेसी पॉलिसी देखें</span>
                     </button>
@@ -2352,6 +2352,18 @@
             </div>
         </div>
     </div>
+
+    <!-- ── PRIVACY POLICY: same-window navigation ── -->
+    <!-- Google Sites blocks being shown inside an iframe (refuses to connect), so instead of
+         opening a new tab/window (which left no way back except closing the app), we navigate
+         the SAME window to the policy page. This keeps it in the normal back-history, so the
+         device back button / browser back arrow / Kodular WebViewer.GoBack takes the user
+         straight back to the app — no need to close it. -->
+    <script>
+        function openPrivacyPolicy() {
+            window.location.href = 'https://sites.google.com/view/btex-policy/home';
+        }
+    </script>
 
     <!-- ── MODIFY SL/TGT MODAL ── -->
     <div id="modify_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
