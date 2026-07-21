@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "com.btex.app"
-    compileSdkVersion 35
+    compileSdkVersion 36
     defaultConfig {
         applicationId "com.btex.app"
         minSdkVersion 24
-        targetSdkVersion 35
-        versionCode 6
-        versionName "5.6"
+        targetSdkVersion 36
+        versionCode 7
+        versionName "5.7"
     }
     buildTypes {
         debug {
