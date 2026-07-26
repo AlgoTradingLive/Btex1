@@ -114,14 +114,14 @@
         .history-table { width: 100%; border-collapse: collapse; font-size: 9px; }
         .history-table th { color: #b2b5be; padding: 6px 4px; border-bottom: 1px solid #2a2e39; background: #1e222d; }
         .history-table td { padding: 6px 4px; border-bottom: 1px solid #2a2e39; text-align: center; font-weight: bold; }
-        #s4_monitor { position: absolute; top: 45px; right: 10px; z-index: 1005; background: rgba(20, 24, 35, 0.95); border: 1px solid #38bdf8; padding: 5px 8px; border-radius: 5px; font-size: 9px; display: none; width: fit-content; max-width: 220px; }
+        #s4_monitor { position: absolute; top: 90px; right: 10px; z-index: 1005; background: rgba(20, 24, 35, 0.95); border: 1px solid #38bdf8; padding: 5px 8px; border-radius: 5px; font-size: 9px; display: none; width: fit-content; max-width: 220px; }
 
         /* ── CANDLE SIGNAL MONITOR (Pin Bar / Hammer / Doji) ── */
-        #candle_signal_monitor { position: absolute; top: 8px; left: 8px; z-index: 1005; background: rgba(12,13,16,0.85); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+        #candle_signal_monitor { position: absolute; top: 8px; right: 10px; z-index: 1005; background: rgba(12,13,16,0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
         .csig-row { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #b2b5be; font-weight: bold; white-space: nowrap; }
         .csig-tf { width: 22px; }
         .csig-lbl { color: #f0b90b; font-size: 8px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
-        .csig-dot { width: 9px; height: 9px; border-radius: 50%; background: #444; flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+        .csig-dot { width: 11px; height: 11px; border-radius: 50%; background: #444; flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
         .csig-dot.watching { background: #f0b90b; box-shadow: 0 0 6px #f0b90b; }
         .csig-dot.blink-green { animation: csigBlinkGreen 0.6s infinite; }
         .csig-dot.blink-red { animation: csigBlinkRed 0.6s infinite; }
