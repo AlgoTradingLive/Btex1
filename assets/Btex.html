@@ -1017,13 +1017,23 @@
             initTradingView();
         }
 
+        // ── UI throttle: प्रत्येक websocket tick ला जड DOM rebuild टाळण्यासाठी ──
+        let lastUIRefresh = 0;
+        const UI_REFRESH_INTERVAL_MS = 350; // दर 350ms ला जास्तीत जास्त एकदा UI redraw
+
         function connectAllSockets() {
             ["btcusdt", "ethusdt", "paxgusdt"].forEach(asset => {
                 let ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@ticker`);
                 ws.onmessage = (e) => { 
                     prices[asset.toUpperCase()] = parseFloat(JSON.parse(e.data).c); 
-                    checkExits(); refreshUI(); 
-                    checkSignalBreakouts();
+                    // price नेहमी instant update होते, त्यामुळे strategies/SL-TGT वर परिणाम नाही
+                    checkExits();
+                    const now = Date.now();
+                    if (now - lastUIRefresh >= UI_REFRESH_INTERVAL_MS) {
+                        lastUIRefresh = now;
+                        refreshUI();
+                        checkSignalBreakouts();
+                    }
                 };
             });
         }
