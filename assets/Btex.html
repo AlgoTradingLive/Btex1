@@ -116,6 +116,19 @@
         .history-table td { padding: 6px 4px; border-bottom: 1px solid #2a2e39; text-align: center; font-weight: bold; }
         #s4_monitor { position: absolute; top: 45px; right: 10px; z-index: 1005; background: rgba(20, 24, 35, 0.95); border: 1px solid #38bdf8; padding: 5px 8px; border-radius: 5px; font-size: 9px; display: none; width: fit-content; max-width: 220px; }
 
+        /* ── CANDLE SIGNAL MONITOR (Pin Bar / Hammer / Doji) ── */
+        #candle_signal_monitor { position: absolute; top: 8px; left: 8px; z-index: 1005; background: rgba(12,13,16,0.85); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+        .csig-row { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #b2b5be; font-weight: bold; white-space: nowrap; }
+        .csig-tf { width: 22px; }
+        .csig-lbl { color: #f0b90b; font-size: 8px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+        .csig-dot { width: 9px; height: 9px; border-radius: 50%; background: #444; flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+        .csig-dot.watching { background: #f0b90b; box-shadow: 0 0 6px #f0b90b; }
+        .csig-dot.blink-green { animation: csigBlinkGreen 0.6s infinite; }
+        .csig-dot.blink-red { animation: csigBlinkRed 0.6s infinite; }
+        @keyframes csigBlinkGreen { 0%,100% { background:#089981; box-shadow:0 0 12px #089981; } 50% { background:#0d3a30; box-shadow:0 0 2px #089981; } }
+        @keyframes csigBlinkRed { 0%,100% { background:#f23645; box-shadow:0 0 12px #f23645; } 50% { background:#3a0d10; box-shadow:0 0 2px #f23645; } }
+        .csig-banner { position: fixed; top: 58px; left: 50%; transform: translateX(-50%); z-index: 10000; border-radius: 8px; padding: 9px 16px; font-size: 11px; font-weight: bold; box-shadow: 0 4px 16px rgba(0,0,0,0.6); max-width: 92vw; text-align: center; transition: opacity 0.8s; }
+
         /* 30 DAY CHALLENGE STYLES */
         #challenge_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
         #challenge_overlay.show { display:flex; }
@@ -763,6 +776,11 @@
             <div id="s4_st_val" style="font-size:10px; font-family:monospace; font-weight:bold; line-height:1.3;">---</div>
             <div style="color:#aaa; font-size:7px; line-height:1.2;">BUF: <span id="s4_zone_val" style="color:#38bdf8; font-family:monospace;">---</span></div>
         </div>
+
+        <div id="candle_signal_monitor">
+            <div class="csig-row"><span class="csig-dot" id="signal_light_5m"></span><span class="csig-tf">5M</span><span class="csig-lbl" id="signal_label_5m"></span></div>
+            <div class="csig-row"><span class="csig-dot" id="signal_light_15m"></span><span class="csig-tf">15M</span><span class="csig-lbl" id="signal_label_15m"></span></div>
+        </div>
         
         
         <div id="active_positions_overlay"></div>
@@ -904,7 +922,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
+        function initApp() { loadData(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); scanCandleSignal('5'); scanCandleSignal('15'); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1005,9 +1023,157 @@
                 ws.onmessage = (e) => { 
                     prices[asset.toUpperCase()] = parseFloat(JSON.parse(e.data).c); 
                     checkExits(); refreshUI(); 
+                    checkSignalBreakouts();
                 };
             });
         }
+
+        // ==========================================
+        // CANDLE SIGNAL ENGINE — Pin Bar / Hammer / Doji (5M & 15M)
+        // Logic: पॅटर्न कॅण्डल बंद झाल्यावर ओळखतो, नंतर त्या कॅण्डलचा
+        // high (bullish) किंवा low (bearish) तुटला की ब्रेकआउट कन्फर्म
+        // होऊन चार्टवरचा लाईट ब्लिंक होतो + अलर्ट मेसेज येतो.
+        // ==========================================
+        const patternNamesMr = { hammer: 'Hammer (Pin Bar)', shooting_star: 'Shooting Star (Pin Bar)', doji: 'Doji' };
+        let candleSignalState = {
+            '5': { pending: null, lastOpenTime: null, asset: null },
+            '15': { pending: null, lastOpenTime: null, asset: null }
+        };
+
+        function classifyCandle(candle) {
+            const body = Math.abs(candle.c - candle.o);
+            const range = candle.h - candle.l;
+            if (range <= 0) return null;
+            const upperWick = candle.h - Math.max(candle.o, candle.c);
+            const lowerWick = Math.min(candle.o, candle.c) - candle.l;
+
+            // Doji — body खूप लहान, wicks जवळपास सारखे
+            if (body / range < 0.1) return 'doji';
+
+            // Hammer / Bullish Pin Bar — लांब lower wick, छोटा upper wick
+            if (lowerWick >= body * 2 && lowerWick >= range * 0.55 && upperWick <= body * 0.6) return 'hammer';
+
+            // Shooting Star / Bearish Pin Bar — लांब upper wick, छोटा lower wick
+            if (upperWick >= body * 2 && upperWick >= range * 0.55 && lowerWick <= body * 0.6) return 'shooting_star';
+
+            return null;
+        }
+
+        function updateSignalLight(tf, state, patternType) {
+            const light = document.getElementById('signal_light_' + tf + 'm');
+            const label = document.getElementById('signal_label_' + tf + 'm');
+            if (!light) return;
+            light.classList.remove('watching');
+            if (state === 'watching') {
+                light.classList.add('watching');
+                if (label) label.innerText = patternNamesMr[patternType] || '';
+            } else if (state === 'idle') {
+                if (label) label.innerText = '';
+            }
+        }
+
+        async function scanCandleSignal(tf) {
+            try {
+                const asset = document.getElementById('asset_choice').value;
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${tf}m&limit=5`);
+                const data = await res.json();
+                if (!data || data.length < 3) return;
+                const closed = data[data.length - 2]; // शेवटची पूर्ण बंद झालेली कॅण्डल
+                const candle = {
+                    o: parseFloat(closed[1]), h: parseFloat(closed[2]),
+                    l: parseFloat(closed[3]), c: parseFloat(closed[4]),
+                    t: closed[0]
+                };
+
+                const state = candleSignalState[tf];
+
+                // Asset बदलली असेल तर आधीचा सिग्नल रिसेट करा
+                if (state.asset !== asset) {
+                    state.asset = asset;
+                    state.pending = null;
+                    state.lastOpenTime = null;
+                    updateSignalLight(tf, 'idle');
+                }
+
+                // नवीन कॅण्डल बंद झाली का?
+                if (state.lastOpenTime !== candle.t) {
+                    state.lastOpenTime = candle.t;
+                    const pattern = classifyCandle(candle);
+                    if (pattern) {
+                        state.pending = {
+                            type: pattern, high: candle.h, low: candle.l,
+                            time: candle.t, asset: asset, tf: tf,
+                            expiresAt: Date.now() + (parseInt(tf) * 60000 * 3)
+                        };
+                        updateSignalLight(tf, 'watching', pattern);
+                    } else if (!state.pending) {
+                        updateSignalLight(tf, 'idle');
+                    }
+                }
+
+                // जुना (न तुटलेला) सिग्नल एक्सपायर करा
+                if (state.pending && Date.now() > state.pending.expiresAt) {
+                    state.pending = null;
+                    updateSignalLight(tf, 'idle');
+                }
+            } catch (e) {}
+        }
+
+        function checkSignalBreakouts() {
+            ['5', '15'].forEach(tf => {
+                const state = candleSignalState[tf];
+                const p = state.pending;
+                if (!p) return;
+                const currentAsset = document.getElementById('asset_choice') ? document.getElementById('asset_choice').value : null;
+                if (p.asset !== currentAsset) return;
+                const price = prices[p.asset];
+                if (!price) return;
+
+                const canBull = (p.type === 'hammer' || p.type === 'doji');
+                const canBear = (p.type === 'shooting_star' || p.type === 'doji');
+
+                if (canBull && price > p.high) {
+                    fireSignalAlert(tf, 'bullish', p.type, p.asset);
+                    state.pending = null;
+                } else if (canBear && price < p.low) {
+                    fireSignalAlert(tf, 'bearish', p.type, p.asset);
+                    state.pending = null;
+                }
+            });
+        }
+
+        function fireSignalAlert(tf, direction, patternType, asset) {
+            const light = document.getElementById('signal_light_' + tf + 'm');
+            const label = document.getElementById('signal_label_' + tf + 'm');
+            if (light) {
+                light.classList.remove('watching', 'blink-green', 'blink-red');
+                void light.offsetWidth; // animation restart साठी reflow
+                light.classList.add(direction === 'bullish' ? 'blink-green' : 'blink-red');
+                setTimeout(() => { light.classList.remove('blink-green', 'blink-red'); }, 12000);
+            }
+            if (label) label.innerText = direction === 'bullish' ? '🔺 Breakout' : '🔻 Breakdown';
+
+            const assetName = asset.replace('USDT', '');
+            const dirIcon = direction === 'bullish' ? '🟢⬆️' : '🔴⬇️';
+            const levelWord = direction === 'bullish' ? 'high' : 'low';
+            const msg = `${dirIcon} ${assetName} ${tf}M: ${patternNamesMr[patternType]} ${levelWord} broken! ${direction === 'bullish' ? 'Bullish' : 'Bearish'} signal.`;
+            showSignalBanner(msg, direction);
+        }
+
+        function showSignalBanner(msg, direction) {
+            const color = direction === 'bullish' ? '#089981' : '#f23645';
+            const toast = document.createElement('div');
+            toast.className = 'csig-banner';
+            toast.innerText = msg;
+            toast.style.background = 'rgba(20,22,28,0.97)';
+            toast.style.color = color;
+            toast.style.border = `1.5px solid ${color}`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; }, 6000);
+            setTimeout(() => toast.remove(), 6900);
+        }
+
+        setInterval(() => { scanCandleSignal('5'); scanCandleSignal('15'); }, 15000);
 
         async function dualEngine() {
             Object.keys(assetSettings).forEach(asset => runStrategyForAsset(asset));
@@ -1572,6 +1738,7 @@
             const asset = document.getElementById('asset_choice').value;
             document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
             initTradingView(); refreshUI(); syncSharkQty();
+            scanCandleSignal('5'); scanCandleSignal('15');
         }
 
         function updateAssetStrategy() {
