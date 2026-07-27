@@ -1322,7 +1322,8 @@
                 if (result === 'block') return; // Hard block — do not place trade
             }
 
-            const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true) };
+            const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
+            const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true), tf: tfNow };
             trades.push(trade); saveData(); refreshUI();
             notifyKodular("TRADE_OPEN|" + asset + "|" + side + "|" + stratName);
 
@@ -1382,7 +1383,7 @@
                 let t = trades[idx]; const lp = prices[t.asset] || t.entry;
                 let pnlINR = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty * 83.50;
                 balance += pnlINR; 
-                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual });
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
                 if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
 
@@ -1430,6 +1431,12 @@
             }).join('');
         }
 
+        // Converts the raw user_tf select value ('1','5','15','60','240','D') into a short label
+        function tfLabel(tf) {
+            const map = { '1': '1m', '5': '5m', '15': '15m', '60': '1H', '240': '4H', 'D': 'D' };
+            return map[tf] || '';
+        }
+
         // Shared row-builder — used by the History tab AND the Manual/Auto Trade History modal
         function buildHistoryRowHTML(h, rate, sym) {
             const pnlDisp = h.pnl * rate;
@@ -1450,8 +1457,10 @@
                 buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
                 bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
             }
+            const sideLetter = h.side === 'BUY' ? 'B' : 'S';
+            const tfPart = h.tf ? '/' + tfLabel(h.tf) : '';
             return `<tr>
-                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}</td>
+                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}/${sideLetter}${tfPart}</td>
                 <td>${buyPrice}</td>
                 <td>${bTime}</td>
                 <td>${sellPrice}</td>
