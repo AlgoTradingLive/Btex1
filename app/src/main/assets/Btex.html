@@ -691,6 +691,41 @@
             </div>
         </div>
 
+        <!-- ACCORDION: Trade History -->
+        <div class="sp-accordion" id="acc_tradehistory">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_tradehistory')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">📜</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Trade History</span>
+                        <span data-hi>ट्रेड हिस्ट्री</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💾</span>
+                        <div>
+                            <span class="sp-rule-desc">
+                                <span data-en>Your latest 100 closed trades are saved here, split by Manual and Auto.</span>
+                                <span data-hi>आपके नवीनतम 100 बंद ट्रेड्स इथे Manual आणि Auto असे वेगळे साठवले जातात.</span>
+                            </span>
+                        </div>
+                    </div>
+                    <button class="sp-action-btn" onclick="closeSidePanel(); openTradeHistory('manual');">
+                        <span data-en>📘 Manual Trade History</span>
+                        <span data-hi>📘 Manual ट्रेड हिस्ट्री</span>
+                    </button>
+                    <button class="sp-action-btn" style="margin-top:8px;" onclick="closeSidePanel(); openTradeHistory('auto');">
+                        <span data-en>🤖 Auto Trade History</span>
+                        <span data-hi>🤖 Auto ट्रेड हिस्ट्री</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- ACCORDION 6: Privacy Policy -->
         <div class="sp-accordion" id="acc_privacy">
             <div class="sp-accordion-head" onclick="toggleAccordion('acc_privacy')">
@@ -1348,6 +1383,7 @@
                 let pnlINR = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty * 83.50;
                 balance += pnlINR; 
                 history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual });
+                if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
 
                 // Challenge P&L — only for explicitly flagged manual trades
@@ -1394,6 +1430,37 @@
             }).join('');
         }
 
+        // Shared row-builder — used by the History tab AND the Manual/Auto Trade History modal
+        function buildHistoryRowHTML(h, rate, sym) {
+            const pnlDisp = h.pnl * rate;
+            // openTime = trade open वेळ (id = timestamp), closeTime = h.time (close वेळ)
+            const openTime = h.openTime ? new Date(h.openTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            const closeTime = h.time ? new Date(h.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            // BUY trade: BUY=entry price, B/Time=open time, SELL=exit price, S/Time=close time
+            // SELL trade: SELL=entry price, S/Time=open time, BUY=exit (cover) price, B/Time=close time
+            let buyPrice, sellPrice, bTime, sTime;
+            if (h.side === 'BUY') {
+                buyPrice = `<span style="color:#089981;">${h.entry.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                sellPrice = `<span style="color:#f23645;">${h.exit.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            } else {
+                sellPrice = `<span style="color:#f23645;">${h.entry.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            }
+            return `<tr>
+                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}</td>
+                <td>${buyPrice}</td>
+                <td>${bTime}</td>
+                <td>${sellPrice}</td>
+                <td>${sTime}</td>
+                <td>${h.qty || '-'}</td>
+                <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+            </tr>`;
+        }
+
         function renderHistory() { 
             const curr = document.getElementById('currency_mode').value;
             const rate = (curr === 'USD') ? (1 / 83.50) : 1;
@@ -1404,35 +1471,8 @@
                 tbody.innerHTML = '<tr><td colspan="7" style="color:#555; padding:12px; text-align:center;">No trade history</td></tr>';
                 return;
             }
-            tbody.innerHTML = history.slice(0, 20).map(h => {
-                const pnlDisp = h.pnl * rate;
-                // openTime = trade open वेळ (id = timestamp), closeTime = h.time (close वेळ)
-                const openTime = h.openTime ? new Date(h.openTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
-                const closeTime = h.time ? new Date(h.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
-                // BUY trade: BUY=entry price, B/Time=open time, SELL=exit price, S/Time=close time
-                // SELL trade: SELL=entry price, S/Time=open time, BUY=exit (cover) price, B/Time=close time
-                let buyPrice, sellPrice, bTime, sTime;
-                if (h.side === 'BUY') {
-                    buyPrice = `<span style="color:#089981;">${h.entry.toFixed(1)}</span>`;
-                    bTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
-                    sellPrice = `<span style="color:#f23645;">${h.exit.toFixed(1)}</span>`;
-                    sTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
-                } else {
-                    sellPrice = `<span style="color:#f23645;">${h.entry.toFixed(1)}</span>`;
-                    sTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
-                    buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
-                    bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
-                }
-                return `<tr>
-                    <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}</td>
-                    <td>${buyPrice}</td>
-                    <td>${bTime}</td>
-                    <td>${sellPrice}</td>
-                    <td>${sTime}</td>
-                    <td>${h.qty || '-'}</td>
-                    <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
-                </tr>`;
-            }).join('');
+            // Tab always shows only the latest 20 — keeps it simple, no scrolling/confusion for the user
+            tbody.innerHTML = history.slice(0, 20).map(h => buildHistoryRowHTML(h, rate, sym)).join('');
         }
 
         function switchTab(tab) {
@@ -1634,7 +1674,8 @@
         function loadData() { 
             let s = localStorage.getItem('DELTA_ULTRA_S7'); 
             if(s) { 
-                let p = JSON.parse(s); balance = p.bal; trades = p.trds; history = p.hist; 
+                let p = JSON.parse(s); balance = p.bal; trades = p.trds; history = p.hist || []; 
+                if (history.length > 100) history.length = 100; // safety trim for older saved data
                 if(p.settings) assetSettings = p.settings;
                 document.getElementById('auto_mode').checked = p.auto || false;
                 renderHistory(); refreshUI();
@@ -2451,6 +2492,77 @@
                 modal.style.display = 'none';
             }
         });
+    </script>
+
+    <!-- ── TRADE HISTORY MODAL (Manual / Auto, separate from main tab) ── -->
+    <div id="trade_history_modal" style="display:none; position:fixed; inset:0; background:#0c0d10; z-index:9999; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:10px; background:#1a1d28; border-bottom:1px solid #2a2e39; padding:10px 12px; flex-shrink:0;">
+            <button onclick="closeTradeHistoryModal()" style="background:#1e222d; color:#38bdf8; border:1px solid #444; border-radius:6px; width:34px; height:32px; font-size:16px; font-weight:bold; cursor:pointer;">←</button>
+            <span style="color:#fff; font-weight:bold; font-size:13px; letter-spacing:0.5px;">Trade History</span>
+        </div>
+        <!-- Manual / Auto sub-tabs -->
+        <div style="display:flex; background:#1e222d; border-bottom:1px solid #2a2e39; flex-shrink:0;">
+            <button id="th_tab_manual" onclick="switchTradeHistoryType('manual')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">📘 Manual</button>
+            <button id="th_tab_auto" onclick="switchTradeHistoryType('auto')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">🤖 Auto</button>
+        </div>
+        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+            <table class="history-table">
+                <thead><tr><th>Asset</th><th>Buy</th><th>B/Time</th><th>Sell</th><th>S/Time</th><th>Qty</th><th>P&L</th></tr></thead>
+                <tbody id="trade_history_modal_body"></tbody>
+            </table>
+            <div style="text-align:center; padding:12px;">
+                <button id="th_load_more_btn" onclick="loadMoreTradeHistory()" style="display:none; background:#1e222d; color:#38bdf8; border:1px solid #444; border-radius:6px; padding:8px 20px; font-size:10px; font-weight:bold; cursor:pointer;">⬇ Load More</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Trade History modal — reads from the same capped `history` array (latest 100 trades),
+        // just filtered by isManual. Rendered lazily (25 rows at a time) so it stays fast
+        // even with 100 rows, and it never touches the main chart/tab screen.
+        let thCurrentType = 'manual';
+        let thRenderCount = 25;
+        const TH_PAGE_SIZE = 25;
+
+        function openTradeHistory(type) {
+            thCurrentType = type;
+            thRenderCount = TH_PAGE_SIZE;
+            renderTradeHistoryModal();
+            document.getElementById('trade_history_modal').style.display = 'flex';
+        }
+        function closeTradeHistoryModal() {
+            document.getElementById('trade_history_modal').style.display = 'none';
+        }
+        function switchTradeHistoryType(type) {
+            thCurrentType = type;
+            thRenderCount = TH_PAGE_SIZE;
+            renderTradeHistoryModal();
+        }
+        function loadMoreTradeHistory() {
+            thRenderCount += TH_PAGE_SIZE;
+            renderTradeHistoryModal();
+        }
+        function renderTradeHistoryModal() {
+            document.getElementById('th_tab_manual').style.color = thCurrentType === 'manual' ? '#38bdf8' : '#b2b5be';
+            document.getElementById('th_tab_manual').style.borderBottom = thCurrentType === 'manual' ? '2px solid #38bdf8' : '2px solid transparent';
+            document.getElementById('th_tab_auto').style.color = thCurrentType === 'auto' ? '#38bdf8' : '#b2b5be';
+            document.getElementById('th_tab_auto').style.borderBottom = thCurrentType === 'auto' ? '2px solid #38bdf8' : '2px solid transparent';
+
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
+            const sym = (curr === 'USD') ? ' USD' : ' INR';
+            const tbody = document.getElementById('trade_history_modal_body');
+            const loadMoreBtn = document.getElementById('th_load_more_btn');
+
+            const filtered = history.filter(h => (thCurrentType === 'manual') ? h.isManual === true : h.isManual !== true);
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color:#555; padding:12px; text-align:center;">No ' + thCurrentType + ' trades yet</td></tr>';
+                loadMoreBtn.style.display = 'none';
+                return;
+            }
+            const slice = filtered.slice(0, thRenderCount);
+            tbody.innerHTML = slice.map(h => buildHistoryRowHTML(h, rate, sym)).join('');
+            loadMoreBtn.style.display = (filtered.length > thRenderCount) ? 'inline-block' : 'none';
+        }
     </script>
 
     <!-- ── MODIFY SL/TGT MODAL ── -->
