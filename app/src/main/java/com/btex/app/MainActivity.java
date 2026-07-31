@@ -11,7 +11,7 @@ import android.widget.FrameLayout;
 
 import com.applovin.sdk.AppLovinSdk;
 import com.applovin.sdk.AppLovinSdkInitializationConfiguration;
-import com.applovin.mediation.AppLovinMediationProvider;
+import com.applovin.sdk.AppLovinMediationProvider;
 import com.applovin.mediation.MaxAd;
 import com.applovin.mediation.MaxAdViewAdListener;
 import com.applovin.mediation.MaxAdListener;
