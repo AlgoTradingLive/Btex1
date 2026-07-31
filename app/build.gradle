@@ -19,5 +19,6 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.0'
-    implementation 'com.google.android.gms:play-services-ads:23.6.0'
+    // AdMob dependency काढलं — implementation 'com.google.android.gms:play-services-ads:23.6.0'
+    implementation 'com.applovin:applovin-sdk:+'
 }
