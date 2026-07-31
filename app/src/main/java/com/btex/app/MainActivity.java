@@ -2,40 +2,40 @@ package com.btex.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
-import com.google.android.gms.ads.AdError;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.FullScreenContentCallback;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.applovin.sdk.AppLovinSdk;
+import com.applovin.mediation.MaxAd;
+import com.applovin.mediation.MaxAdListener;
+import com.applovin.mediation.MaxError;
+import com.applovin.mediation.ads.MaxAdView;
+import com.applovin.mediation.ads.MaxInterstitialAd;
 
 public class MainActivity extends Activity {
 
-    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-6724873553204610/6527857237";
+    // Approval नंतर dashboard मधून मिळालेले खरे Ad Unit ID इथे टाका
+    private static final String BANNER_AD_UNIT_ID = "YOUR_BANNER_AD_UNIT_ID";
+    private static final String INTERSTITIAL_AD_UNIT_ID = "YOUR_INTERSTITIAL_AD_UNIT_ID";
 
-    private InterstitialAd interstitialAd;
+    private MaxInterstitialAd interstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // AdMob init
-        MobileAds.initialize(this, initializationStatus -> { });
-
-        // Banner ad
-        AdView bannerAdView = findViewById(R.id.bannerAdView);
-        bannerAdView.loadAd(new AdRequest.Builder().build());
-
-        // Interstitial ad (pre-loaded, ready for challenge start/reset)
-        loadInterstitialAd();
+        // AppLovin MAX init
+        AppLovinSdk.getInstance(this).setMediationProvider("max");
+        AppLovinSdk.getInstance(this).initializeSdk(configuration -> {
+            // SDK ready — इथून पुढे banner/interstitial load करता येईल
+            setupBannerAd();
+            loadInterstitialAd();
+        });
 
         WebView webView = findViewById(R.id.webview);
         WebSettings settings = webView.getSettings();
@@ -51,38 +51,62 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/Btex.html");
     }
 
+    private void setupBannerAd() {
+        FrameLayout container = findViewById(R.id.bannerAdContainer);
+        MaxAdView bannerAdView = new MaxAdView(BANNER_AD_UNIT_ID, this);
+        bannerAdView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        container.addView(bannerAdView);
+        bannerAdView.setListener(new MaxAdListener() {
+            @Override
+            public void onAdLoaded(MaxAd ad) { }
+            @Override
+            public void onAdDisplayed(MaxAd ad) { }
+            @Override
+            public void onAdHidden(MaxAd ad) { }
+            @Override
+            public void onAdClicked(MaxAd ad) { }
+            @Override
+            public void onAdLoadFailed(String adUnitId, MaxError error) { }
+            @Override
+            public void onAdDisplayFailed(MaxAd ad, MaxError error) { }
+        });
+        bannerAdView.loadAd();
+    }
+
     private void loadInterstitialAd() {
-        InterstitialAd.load(this, INTERSTITIAL_AD_UNIT_ID, new AdRequest.Builder().build(),
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(InterstitialAd ad) {
-                        interstitialAd = ad;
-                        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                interstitialAd = null;
-                                loadInterstitialAd(); // पुढच्या वेळेसाठी परत load कर
-                            }
+        interstitialAd = new MaxInterstitialAd(INTERSTITIAL_AD_UNIT_ID, this);
+        interstitialAd.setListener(new MaxAdListener() {
+            @Override
+            public void onAdLoaded(MaxAd ad) { }
 
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(AdError adError) {
-                                interstitialAd = null;
-                                loadInterstitialAd();
-                            }
-                        });
-                    }
+            @Override
+            public void onAdDisplayed(MaxAd ad) { }
 
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        interstitialAd = null;
-                    }
-                });
+            @Override
+            public void onAdHidden(MaxAd ad) {
+                loadInterstitialAd(); // पुढच्या वेळेसाठी परत load कर
+            }
+
+            @Override
+            public void onAdClicked(MaxAd ad) { }
+
+            @Override
+            public void onAdLoadFailed(String adUnitId, MaxError error) { }
+
+            @Override
+            public void onAdDisplayFailed(MaxAd ad, MaxError error) {
+                loadInterstitialAd();
+            }
+        });
+        interstitialAd.loadAd();
     }
 
     private void showInterstitialAd() {
         runOnUiThread(() -> {
-            if (interstitialAd != null) {
-                interstitialAd.show(MainActivity.this);
+            if (interstitialAd != null && interstitialAd.isReady()) {
+                interstitialAd.showAd();
             }
         });
     }
