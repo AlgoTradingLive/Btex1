@@ -10,13 +10,19 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import com.applovin.sdk.AppLovinSdk;
+import com.applovin.sdk.AppLovinSdkInitializationConfiguration;
+import com.applovin.mediation.AppLovinMediationProvider;
 import com.applovin.mediation.MaxAd;
+import com.applovin.mediation.MaxAdViewAdListener;
 import com.applovin.mediation.MaxAdListener;
 import com.applovin.mediation.MaxError;
 import com.applovin.mediation.ads.MaxAdView;
 import com.applovin.mediation.ads.MaxInterstitialAd;
 
 public class MainActivity extends Activity {
+
+    // Approval नंतर dashboard मधून मिळालेला खरा SDK Key इथे टाका
+    private static final String SDK_KEY = "YOUR_APPLOVIN_SDK_KEY_HERE";
 
     // Approval नंतर dashboard मधून मिळालेले खरे Ad Unit ID इथे टाका
     private static final String BANNER_AD_UNIT_ID = "YOUR_BANNER_AD_UNIT_ID";
@@ -29,9 +35,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // AppLovin MAX init
-        AppLovinSdk.getInstance(this).setMediationProvider("max");
-        AppLovinSdk.getInstance(this).initializeSdk(configuration -> {
+        // AppLovin MAX init (नवीन SDK ची initialization पद्धत)
+        AppLovinSdkInitializationConfiguration initConfig =
+                AppLovinSdkInitializationConfiguration.builder(SDK_KEY, this)
+                        .setMediationProvider(AppLovinMediationProvider.MAX)
+                        .build();
+        AppLovinSdk.getInstance(this).initialize(initConfig, sdkConfiguration -> {
             // SDK ready — इथून पुढे banner/interstitial load करता येईल
             setupBannerAd();
             loadInterstitialAd();
@@ -58,7 +67,7 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         container.addView(bannerAdView);
-        bannerAdView.setListener(new MaxAdListener() {
+        bannerAdView.setListener(new MaxAdViewAdListener() {
             @Override
             public void onAdLoaded(MaxAd ad) { }
             @Override
@@ -71,6 +80,10 @@ public class MainActivity extends Activity {
             public void onAdLoadFailed(String adUnitId, MaxError error) { }
             @Override
             public void onAdDisplayFailed(MaxAd ad, MaxError error) { }
+            @Override
+            public void onAdExpanded(MaxAd ad) { }
+            @Override
+            public void onAdCollapsed(MaxAd ad) { }
         });
         bannerAdView.loadAd();
     }
