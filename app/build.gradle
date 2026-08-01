@@ -7,12 +7,17 @@ android {
         applicationId "com.btex.app"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 9
-        versionName "5.9"
+        versionCode 11
+        versionName "5.11"
     }
     buildTypes {
         debug {
             minifyEnabled false
+        }
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }
