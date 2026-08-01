@@ -7,23 +7,16 @@ android {
         applicationId "com.btex.app"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 11
-        versionName "5.11"
+        versionCode 12
+        versionName "5.12"
     }
     buildTypes {
         debug {
             minifyEnabled false
         }
     }
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging = false
-        }
-    }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.0'
-    // AdMob dependency काढलं — implementation 'com.google.android.gms:play-services-ads:23.6.0'
-    implementation 'com.applovin:applovin-sdk:+'
 }
