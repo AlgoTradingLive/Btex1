@@ -108,8 +108,18 @@
         .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
         .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
         #auto_mode:checked + .toggle { background: #089981; }
+        #funded_mode_toggle:checked + .toggle { background: #f0b90b; }
         #auto_mode:checked + .toggle::after { left: 18px; }
+        #funded_mode_toggle:checked + .toggle::after { left: 18px; }
         #auto_mode { display: none; }
+        #funded_mode_toggle { display: none; }
+        @keyframes toggleModePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(240,185,11,0.7); }
+            70%  { box-shadow: 0 0 0 8px rgba(240,185,11,0); }
+            100% { box-shadow: 0 0 0 0 rgba(240,185,11,0); }
+        }
+        .toggle-pulse { animation: toggleModePulse 0.9s ease-out 3; border-radius: 10px; }
+        .toggle-locked { opacity: 0.4; }
         .small-close-btn { background: #f23645; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
         .history-table { width: 100%; border-collapse: collapse; font-size: 9px; }
         .history-table th { color: #b2b5be; padding: 6px 4px; border-bottom: 1px solid #2a2e39; background: #1e222d; }
@@ -119,6 +129,8 @@
         /* 30 DAY CHALLENGE STYLES */
         #challenge_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
         #challenge_overlay.show { display:flex; }
+        #funded_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
+        #funded_overlay.show { display:flex; }
         .chal-box { background:#131722; border:2px solid #38bdf8; border-radius:12px; padding:16px; width:92%; max-width:360px; max-height:88vh; overflow-y:auto; }
         .chal-title { color:#38bdf8; font-size:14px; font-weight:bold; text-align:center; margin-bottom:10px; letter-spacing:1px; }
         .chal-progress-bar { width:100%; height:10px; background:#2a2e39; border-radius:5px; margin:4px 0 10px; overflow:hidden; }
@@ -435,6 +447,169 @@
             </div>
         </div>
 
+        <!-- ACCORDION 1B: Funded Account Challenge Rules -->
+        <div class="sp-accordion" id="acc_funded">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_funded')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">💰</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Funded Account Rules</span>
+                        <span data-hi>फंडेड अकाउंट — नियम</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💸</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>No Upfront Fee</span>
+                                <span data-hi>कोई अपफ्रंट फीस नहीं</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Real prop-firm challenges charge an upfront fee to attempt them. Here you practice for free and save that <span class="sp-chip sp-chip-green">$35 upfront fee</span>.</span>
+                                <span data-hi>असली प्रॉप-फर्म चैलेंज में अटेम्प्ट के लिए अपफ्रंट फीस लगती है। यहां आप फ्री में प्रैक्टिस करते हैं और वो <span class="sp-chip sp-chip-green">$35 अपफ्रंट फीस</span> बचाते हैं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🏁</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>2-Step Challenge</span>
+                                <span data-hi>2-स्टेप चैलेंज</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Clear <span class="sp-chip sp-chip-gold">Step 1: $500 profit (10%)</span>, then <span class="sp-chip sp-chip-gold">Step 2: 5% profit</span> of your new balance to get funded.</span>
+                                <span data-hi><span class="sp-chip sp-chip-gold">Step 1: $500 प्रॉफिट (10%)</span> पूरा करें, फिर नए बैलेंस पर <span class="sp-chip sp-chip-gold">Step 2: 5% प्रॉफिट</span> कमाएं तो फंडेड मिलेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💵</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Starting Balance</span>
+                                <span data-hi>शुरुआती बैलेंस</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Every challenge starts with a virtual <span class="sp-chip sp-chip-gold">$5,000</span> account.</span>
+                                <span data-hi>हर चैलेंज <span class="sp-chip sp-chip-gold">$5,000</span> के वर्चुअल अकाउंट से शुरू होता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🪙</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Asset &amp; Quantity Limit</span>
+                                <span data-hi>एसेट और क्वांटिटी लिमिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Trade <span class="sp-chip sp-chip-gold">BTC/USDT only</span>. Total open quantity across all positions can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span>.</span>
+                                <span data-hi>सिर्फ <span class="sp-chip sp-chip-gold">BTC/USDT</span> ट्रेड करें। सभी ओपन पोज़िशन्स की कुल क्वांटिटी कभी भी <span class="sp-chip sp-chip-gold">0.14 BTC</span> से ज़्यादा नहीं हो सकती।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🛡️</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Max Overall Loss</span>
+                                <span data-hi>मैक्स ओवरऑल लॉस</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If total loss from the starting balance reaches <span class="sp-chip sp-chip-red">$500 (10%)</span>, the challenge fails immediately.</span>
+                                <span data-hi>शुरुआती बैलेंस से कुल नुकसान <span class="sp-chip sp-chip-red">$500 (10%)</span> तक पहुंचते ही चैलेंज तुरंत फेल हो जाता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔒</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Daily Loss Limit</span>
+                                <span data-hi>डेली लॉस लिमिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If net loss in a single day reaches <span class="sp-chip sp-chip-red">$250 (5%)</span>, the challenge fails — regardless of the overall balance.</span>
+                                <span data-hi>एक ही दिन में नुकसान <span class="sp-chip sp-chip-red">$250 (5%)</span> तक पहुंचने पर चैलेंज फेल हो जाता है, चाहे ओवरऑल बैलेंस कुछ भी हो।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">⏱️</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Unlimited Time</span>
+                                <span data-hi>अनलिमिटेड टाइम</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>No deadline — take as many days as you need to clear both steps.</span>
+                                <span data-hi>कोई डेडलाइन नहीं — दोनों स्टेप पूरे करने के लिए जितने दिन चाहिए उतने ले सकते हैं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔄</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Retry Anytime</span>
+                                <span data-hi>कभी भी रीट्राई करें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If you fail, tap <span class="sp-chip sp-chip-gold">Retry With New Challenge</span> to start a fresh $5,000 account instantly.</span>
+                                <span data-hi>फेल होने पर <span class="sp-chip sp-chip-gold">Retry With New Challenge</span> दबाकर तुरंत नया $5,000 अकाउंट शुरू करें।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎉</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Get Funded</span>
+                                <span data-hi>फंडेड कैसे बनें?</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Clear Step 2 without breaking any risk limit and you'll see <strong style="color:#089981;">CHALLENGE PASSED! FUNDED!</strong></span>
+                                <span data-hi>बिना किसी रिस्क लिमिट को तोड़े Step 2 पूरा करने पर <strong style="color:#089981;">CHALLENGE PASSED! FUNDED!</strong> दिखेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🤖</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Auto Mode Disabled</span>
+                                <span data-hi>ऑटो मोड बंद रहता है</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Auto Mode stays <span class="sp-chip sp-chip-red">OFF</span> during the Funded Challenge — only manual trades count. Switch back to <span class="sp-chip sp-chip-green">Real Balance</span> to use Auto Mode again.</span>
+                                <span data-hi>Funded Challenge के दौरान Auto Mode <span class="sp-chip sp-chip-red">बंद</span> ही रहता है — सिर्फ मैनुअल ट्रेड ही गिने जाते हैं। Auto Mode दोबारा चालू करने के लिए <span class="sp-chip sp-chip-green">Real Balance</span> पर वापस जाएं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="sp-action-btn" onclick="closeSidePanel(); openFundedChallenge();">
+                        <span data-en>Open Funded Dashboard</span>
+                        <span data-hi>फंडेड डैशबोर्ड खोलें</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- ACCORDION 2: Auto Mode & Strategies -->
         <div class="sp-accordion" id="acc_strategies">
             <div class="sp-accordion-head" onclick="toggleAccordion('acc_strategies')">
@@ -709,8 +884,8 @@
                         <span class="sp-rule-emoji">💾</span>
                         <div>
                             <span class="sp-rule-desc">
-                                <span data-en>Your latest 100 closed trades are saved here, split by Manual and Auto.</span>
-                                <span data-hi>आपके नवीनतम 100 बंद ट्रेड्स इथे Manual आणि Auto असे वेगळे साठवले जातात.</span>
+                                <span data-en>Your latest 100 closed trades are saved here, split by Manual, Auto and Funded.</span>
+                                <span data-hi>आपके नवीनतम 100 बंद ट्रेड्स इथे Manual, Auto आणि Funded असे वेगळे साठवले जातात.</span>
                             </span>
                         </div>
                     </div>
@@ -721,6 +896,10 @@
                     <button class="sp-action-btn" style="margin-top:8px;" onclick="closeSidePanel(); openTradeHistory('auto');">
                         <span data-en>🤖 Auto Trade History</span>
                         <span data-hi>🤖 Auto ट्रेड हिस्ट्री</span>
+                    </button>
+                    <button class="sp-action-btn" style="margin-top:8px;" onclick="closeSidePanel(); openTradeHistory('funded');">
+                        <span data-en>💰 Funded Trade History</span>
+                        <span data-hi>💰 Funded ट्रेड हिस्ट्री</span>
                     </button>
                 </div>
             </div>
@@ -788,6 +967,7 @@
             </select>
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
+        <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
         <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
     </div>
 
@@ -812,12 +992,12 @@
                     <option value="150">150x</option>
                 </select>
                 <select id="mtp_order_type" class="mtp-pill" onchange="sharkSetOrderType(this.value)">
-                    <option value="Market">Market</option>
-                    <option value="Limit" selected>Limit</option>
+                    <option value="Market" selected>Market</option>
+                    <option value="Limit">Limit</option>
                     <option value="Stop Limit">Stop Lmt</option>
                     <option value="Stop Market">Stop Mkt</option>
                 </select>
-                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Price" oninput="syncSharkQty()">
+                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Mkt" disabled oninput="syncSharkQty()">
                 <input type="number" id="manual_qty" class="qty-input mtp-qty" value="1" min="1" placeholder="Qty" oninput="syncSharkQty()">
                 <input type="number" id="manual_sl_input" class="qty-input mtp-sltp" placeholder="SL" oninput="updateTradePreview()">
                 <input type="number" id="manual_target_input" class="qty-input mtp-sltp" placeholder="TP" oninput="updateTradePreview()">
@@ -835,8 +1015,14 @@
     </div>
 
     <div class="status-panel">
+        <div class="row" style="padding:3px 8px; gap:4px; border-bottom:1px solid #2a2e39;">
+            <span style="font-size:9px; font-weight:bold; color:#b2b5be;">Real</span>
+            <input type="checkbox" id="funded_mode_toggle" onchange="toggleTradingMode()">
+            <label for="funded_mode_toggle" class="toggle" id="funded_mode_toggle_label"></label>
+            <span style="font-size:9px; font-weight:bold; color:#38bdf8;">Funded Challenge</span>
+        </div>
         <div class="row">
-            <span style="color:#b2b5be;"><span style="color:#f0b90b">Real</span> Balance</span>
+            <span style="color:#b2b5be;" id="balance_label"><span style="color:#f0b90b">Real</span> Balance</span>
             <div style="display:flex; align-items:center; gap:6px;">
                 <select id="currency_mode" class="strat-select" onchange="refreshUI()" style="padding: 1px 3px; font-size: 9px; height: 18px; min-width: 45px;">
                     <option value="INR">INR</option>
@@ -868,8 +1054,8 @@
         <div class="controls-row" style="padding:3px 8px; gap:4px;">
             <select id="asset_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:0 0 auto;" onchange="switchMarket(); updateTradePreview();">
                 <option value="BTCUSDT">BTC/USDT</option>
-                <option value="ETHUSDT">ETH/USDT</option>
-                <option value="PAXGUSDT">GOLD</option>
+                <option value="ETHUSDT" id="asset_opt_eth">ETH/USDT</option>
+                <option value="PAXGUSDT" id="asset_opt_gold">GOLD</option>
             </select>
             <select id="strategy_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:1;" onchange="updateAssetStrategy()">
                 <option value="s1">S1: REVERSAL (5M)</option>
@@ -882,8 +1068,8 @@
             </select>
             <div style="display:flex; align-items:center; gap:4px; flex:0 0 auto;">
                 <span style="font-size:8px; font-weight:bold; color:#b2b5be;">AUTO</span>
-                <input type="checkbox" id="auto_mode" onchange="saveData()">
-                <label for="auto_mode" class="toggle"></label>
+                <input type="checkbox" id="auto_mode" onchange="handleAutoModeToggle()">
+                <label for="auto_mode" class="toggle" id="auto_mode_label"></label>
             </div>
         </div>
         <!-- AdSense Banner -->
@@ -904,7 +1090,7 @@
         <!-- History Tab -->
         <div class="tab-content" id="tab_history">
             <table class="history-table">
-                <thead><tr><th>ASSET/STR</th><th>BUY</th><th>B/TIME</th><th>SELL</th><th>S/TIME</th><th>QTY</th><th>P&L</th></tr></thead>
+                <thead><tr><th>ASSET/STR</th><th>BUY</th><th>B/TIME</th><th>SELL</th><th>S/TIME</th><th>QTY</th><th>FEE</th><th>P&L</th></tr></thead>
                 <tbody id="history_body"></tbody>
             </table>
         </div>
@@ -951,6 +1137,18 @@
             toast.style.transition = 'opacity 0.8s';
         }
 
+        // Generic short-lived toast for quick feedback messages
+        function showToast(msg, color) {
+            const c = color || '#38bdf8';
+            const toast = document.createElement('div');
+            toast.innerText = msg;
+            toast.style.cssText = `position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(30,34,45,0.97);color:${c};border:1px solid ${c};border-radius:20px;padding:7px 16px;font-size:11px;font-weight:bold;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:90vw;overflow:hidden;text-overflow:ellipsis;`;
+            document.body.appendChild(toast);
+            toast.style.transition = 'opacity 0.8s';
+            setTimeout(() => toast.style.opacity = '0', 2500);
+            setTimeout(() => toast.remove(), 3300);
+        }
+
         // ── SIDE PANEL FUNCTIONS ──
         function openSidePanel() {
             document.getElementById('side_panel').classList.add('open');
@@ -963,6 +1161,13 @@
         function toggleAccordion(id) {
             const el = document.getElementById(id);
             el.classList.toggle('open');
+        }
+        function openFundedRules() {
+            closeFundedChallenge();
+            openSidePanel();
+            const el = document.getElementById('acc_funded');
+            if (el && !el.classList.contains('open')) el.classList.add('open');
+            setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
         }
         function setLang(lang) {
             document.body.classList.remove('lang-en', 'lang-hi');
@@ -1311,8 +1516,16 @@
 
         // ✅ FIX 1: handleTrade - stratName + isManual parameter add केला
         function handleTrade(asset, side, sl, tgt, stratName, qty, isManual) {
+            // ✅ FIX: Limit order असेल तर entered limit price वापर risk calc साठी, live price नाही
+            let curP;
+            if (isManual && sharkOrderType === 'Limit') {
+                const priceInputEl = document.getElementById('sp_price_input');
+                const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
+                curP = (enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+            } else {
+                curP = prices[asset] || 0;
+            }
             // Calculate estimated SL-based risk in INR
-            const curP = prices[asset] || 0;
             let riskPerUnit = sl > 0 ? Math.abs(curP - sl) : 0;
             let estimatedRiskINR = riskPerUnit * (qty || 1) * USDT_INR;
 
@@ -1343,10 +1556,39 @@
 
         function refreshUI() {
             if (!balance || balance < 100) balance = 1286000.00;
-            let totalP_USD = 0, btcP_USD = 0, ethP_USD = 0, goldP_USD = 0;
             const currency = document.getElementById('currency_mode').value;
             const rate = (currency === 'INR') ? 83.50 : 1;
             const symbol = (currency === 'INR') ? ' INR' : ' USD';
+
+            if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
+                // ── Funded Challenge mode: show virtual balance/P&L only ──
+                let fTotalP_USD = 0;
+                const fTrades = (fundedChallengeData && fundedChallengeData.trades) ? fundedChallengeData.trades : [];
+                fTrades.forEach(t => {
+                    const lp = prices[t.asset] || t.entry;
+                    fTotalP_USD += (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                });
+                document.getElementById('btc_pnl_val').innerText = (fTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('btc_pnl_val').style.color = fTotalP_USD >= 0 ? "#089981" : "#f23645";
+                document.getElementById('eth_pnl_val').innerText = '-';
+                document.getElementById('eth_pnl_val').style.color = "#555";
+                document.getElementById('gold_pnl_val').innerText = '-';
+                document.getElementById('gold_pnl_val').style.color = "#555";
+                document.getElementById('total_pnl').innerText = (fTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('total_pnl').style.color = fTotalP_USD >= 0 ? "#089981" : "#f23645";
+
+                const fBal = fundedChallengeData ? fundedChallengeData.balance : FUNDED_START_BALANCE;
+                let displayBal = (fBal + fTotalP_USD);
+                if (currency === 'INR') displayBal = displayBal * 83.50;
+                document.getElementById('displayBalance').innerText = displayBal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+
+                renderFundedPositions();
+                renderFundedHistory();
+                setTimeout(fixTabHeight, 0);
+                return;
+            }
+
+            let totalP_USD = 0, btcP_USD = 0, ethP_USD = 0, goldP_USD = 0;
 
             // Calculate PnL totals
             trades.forEach(t => {
@@ -1376,14 +1618,21 @@
             setTimeout(fixTabHeight, 0);
         }
 
+        // ── Brokerage fee: 0.06% of entry notional (entry price × qty), applied app-wide on close ──
+        const FEE_RATE = 0.0006;
+
         // ✅ FIX 2: closeSingle
         function closeSingle(id) {
             let idx = trades.findIndex(t => t.id === id);
             if(idx > -1) {
                 let t = trades[idx]; const lp = prices[t.asset] || t.entry;
-                let pnlINR = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty * 83.50;
+                let grossPnlUSD = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                let feeUSD = t.entry * t.qty * FEE_RATE;
+                let netPnlUSD = grossPnlUSD - feeUSD;
+                let pnlINR = netPnlUSD * 83.50;
+                let feeINR = feeUSD * 83.50;
                 balance += pnlINR; 
-                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
                 if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
 
@@ -1408,6 +1657,8 @@
                 const lp = prices[t.asset] || t.entry;
                 const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
                 const pnlDisp = pnlUSD * rate;
+                const feeUSD = t.entry * t.qty * FEE_RATE;
+                const feeDisp = feeUSD * rate;
                 let buyCol, sellCol;
                 if (t.side === 'BUY') {
                     buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
@@ -1425,7 +1676,10 @@
                     <td>${buyCol}</td>
                     <td>${sellCol}</td>
                     <td>${t.qty}</td>
-                    <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+                    <td>
+                        <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
+                        <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
+                    </td>
                     <td style="display:flex;gap:3px;align-items:center;justify-content:center;">${t.isManual ? `<button onclick="openModify(${t.id})" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button>` : ''}<button onclick="closeSingle(${t.id})" class="exit-btn">EXIT</button></td>
                 </tr>`;
             }).join('');
@@ -1459,6 +1713,7 @@
             }
             const sideLetter = h.side === 'BUY' ? 'B' : 'S';
             const tfPart = h.tf ? '/' + tfLabel(h.tf) : '';
+            const feeDisp = (h.fee || 0) * rate;
             return `<tr>
                 <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}/${sideLetter}${tfPart}</td>
                 <td>${buyPrice}</td>
@@ -1466,6 +1721,7 @@
                 <td>${sellPrice}</td>
                 <td>${sTime}</td>
                 <td>${h.qty || '-'}</td>
+                <td style="color:#f23645; font-size:8px;">-${feeDisp.toFixed(2)}${sym}</td>
                 <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
             </tr>`;
         }
@@ -1530,7 +1786,15 @@
         function updateTradePreview() {
             const assetEl = document.getElementById('asset_choice');
             const asset = assetEl ? assetEl.value : 'BTCUSDT';
-            const curP = prices[asset] || 0;
+            // ✅ FIX: Limit order असेल तर entered limit price वापर, Market असेल तर live price वापर
+            let curP;
+            if (sharkOrderType === 'Limit') {
+                const priceInputEl = document.getElementById('sp_price_input');
+                const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
+                curP = (enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+            } else {
+                curP = prices[asset] || 0;
+            }
             const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
             const sl = parseFloat(document.getElementById('manual_sl_input').value) || 0;
             const tgt = parseFloat(document.getElementById('manual_target_input').value) || 0;
@@ -1576,6 +1840,10 @@
         }
 
         function manualTrade(side) {
+            if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
+                fundedManualTrade(side);
+                return;
+            }
             const asset = document.getElementById('asset_choice').value;
             const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
             const slInput = document.getElementById('manual_sl_input').value;
@@ -1593,7 +1861,7 @@
         }
 
         // ── Shark Exchange-style compact order bar ──
-        let sharkOrderType = 'Limit';
+        let sharkOrderType = 'Market';
 
         function sharkSetOrderType(type) {
             sharkOrderType = type;
@@ -1647,9 +1915,13 @@
 
         // ── MODIFY ORDER ──
         let modifyTradeId = null;
+        let modifyIsFunded = false;
 
-        function openModify(id) {
-            const t = trades.find(t => t.id === id);
+        function openModify(id, isFunded) {
+            modifyIsFunded = !!isFunded;
+            const t = modifyIsFunded
+                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === id)
+                : trades.find(t => t.id === id);
             if (!t) return;
             modifyTradeId = id;
             const lp = prices[t.asset] || t.entry;
@@ -1664,22 +1936,41 @@
         function closeModifyModal() {
             document.getElementById('modify_modal_overlay').style.display = 'none';
             modifyTradeId = null;
+            modifyIsFunded = false;
         }
 
         function saveModify() {
             if (!modifyTradeId) return;
-            const t = trades.find(t => t.id === modifyTradeId);
+            const t = modifyIsFunded
+                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === modifyTradeId)
+                : trades.find(t => t.id === modifyTradeId);
             if (!t) return;
             const newSL = parseFloat(document.getElementById('modify_sl_input').value) || 0;
             const newTGT = parseFloat(document.getElementById('modify_tgt_input').value) || 0;
             t.sl = newSL;
             t.tgt = newTGT;
-            saveData();
+            if (modifyIsFunded) {
+                saveFundedChallenge();
+            } else {
+                saveData();
+            }
             refreshUI();
             closeModifyModal();
         }
 
         function saveData() { localStorage.setItem('DELTA_ULTRA_S7', JSON.stringify({ bal: balance, trds: trades, hist: history, settings: assetSettings, auto: document.getElementById('auto_mode').checked })); }
+
+        // Guards the AUTO toggle: Auto Mode trades always post to the Real balance, so it's
+        // blocked while Funded Challenge mode is active (funded trades must be manual).
+        function handleAutoModeToggle() {
+            const cb = document.getElementById('auto_mode');
+            if (cb.checked && typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
+                cb.checked = false;
+                showToast('🚫 Auto Mode is disabled during Funded Challenge. Switch to Real to use it.', '#f23645');
+                return;
+            }
+            saveData();
+        }
         function loadData() { 
             let s = localStorage.getItem('DELTA_ULTRA_S7'); 
             if(s) { 
@@ -1918,6 +2209,552 @@
             <button class="chal-btn chal-btn-close" onclick="closeChallenge()">✕ CLOSE</button>
         </div>
     </div>
+
+    <!-- ── FUNDED ACCOUNT CHALLENGE MODAL ── -->
+    <div id="funded_overlay">
+        <div class="chal-box">
+            <div class="chal-title">FUNDED ACCOUNT CHALLENGE</div>
+
+            <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
+                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💰 2-STEP HIGH STAKES CHALLENGE</div>
+                <div style="font-size: 11px; color: #b2b5be; margin-top:3px;">BTC/USDT only · Max Qty 0.14 · Unlimited Time</div>
+                <div style="font-size: 10px; color: #089981; margin-top:4px; font-weight:bold;">💸 Save $35 Upfront Fee — Practice Free</div>
+            </div>
+
+            <div id="fc_warning" class="chal-warning-banner"></div>
+
+            <!-- Step Indicator -->
+            <div class="chal-section-title">🏁 Step Progress</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Current Step</span>
+                <span class="chal-stat-val" id="fc_step_label" style="color:#f0b90b;">Step 1</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Profit Target</span>
+                <span class="chal-stat-val" id="fc_target_val" style="color:#38bdf8;">$500 (10%)</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Step Profit So Far</span>
+                <span class="chal-stat-val" id="fc_step_profit">$0</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_step_bar" style="background:#089981; width:0%;"></div>
+            </div>
+
+            <!-- Balance -->
+            <div class="chal-section-title">💵 Account</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Starting Balance</span>
+                <span class="chal-stat-val" id="fc_start_balance">$5,000</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Current Balance</span>
+                <span class="chal-stat-val" id="fc_current_balance">$5,000</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Total P&L</span>
+                <span class="chal-stat-val" id="fc_total_pnl">$0</span>
+            </div>
+
+            <!-- Risk Limits -->
+            <div class="chal-section-title">🛡️ Risk Limits</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Max Loss</span>
+                <span class="chal-stat-val" id="fc_max_loss">$0 / $500</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_maxloss_bar" style="background:#f23645; width:0%;"></div>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Daily Loss</span>
+                <span class="chal-stat-val" id="fc_daily_loss">$0 / $250</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_dailyloss_bar" style="background:#f23645; width:0%;"></div>
+            </div>
+
+            <div id="fc_passed" style="display:none; text-align:center; padding:10px; background:rgba(8,153,129,0.15); border:1px solid #089981; border-radius:6px; margin-top:8px; font-size:11px; color:#089981; font-weight:bold;">
+                🎉 CHALLENGE PASSED! FUNDED! 🎉
+            </div>
+            <div id="fc_failed" style="display:none; text-align:center; padding:10px; background:rgba(242,54,69,0.15); border:1px solid #f23645; border-radius:6px; margin-top:8px; font-size:11px; color:#f23645; font-weight:bold; line-height:1.6;">
+                ❌ You lost the challenge. But we saved your fees of $35 which you may have given to pass the funded account.
+            </div>
+
+            <button class="chal-btn chal-btn-start" id="fc_start_btn" onclick="startFundedChallenge()">🚀 START CHALLENGE</button>
+            <button class="chal-btn chal-btn-reset" id="fc_retry_btn" style="display:none;" onclick="retryFundedChallenge()">🔄 RETRY WITH NEW CHALLENGE</button>
+            <button class="chal-btn chal-btn-reset" onclick="openFundedRules()">📜 RULES</button>
+            <button class="chal-btn chal-btn-close" onclick="closeFundedChallenge()">✕ CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // FUNDED ACCOUNT CHALLENGE SYSTEM
+        // =============================================
+        const FUNDED_KEY = 'BTEX_FUNDED_CHALLENGE_V1';
+        const FUNDED_START_BALANCE = 5000;      // $5,000
+        const FUNDED_MAX_LOSS = 500;            // $500 total
+        const FUNDED_DAILY_LOSS = 250;           // 5% of $5,000
+        const FUNDED_STEP1_TARGET = 500;         // 10% of $5,000
+        const FUNDED_STEP2_PCT = 0.05;           // 5% of balance at start of step 2
+        const FUNDED_MAX_QTY = 0.14;             // BTC
+        const FUNDED_ASSET = 'BTCUSDT';
+
+        let fundedChallengeData = null; // { active, failed, passed, step, startBalance, balance, stepStartBalance, step2Target, totalPnl, days:{}, trades:[], history:[] }
+        let tradingMode = 'real'; // 'real' | 'funded'
+
+        function getFundedTodayKey() { return getTodayKey(); }
+
+        function loadFundedChallenge() {
+            const saved = localStorage.getItem(FUNDED_KEY);
+            if (saved) fundedChallengeData = JSON.parse(saved);
+        }
+
+        function saveFundedChallenge() {
+            localStorage.setItem(FUNDED_KEY, JSON.stringify(fundedChallengeData));
+        }
+
+        function ensureFundedToday() {
+            if (!fundedChallengeData) return;
+            const k = getFundedTodayKey();
+            if (!fundedChallengeData.days[k]) fundedChallengeData.days[k] = { pnl: 0 };
+        }
+
+        function startFundedChallenge() {
+            fundedChallengeData = {
+                active: true,
+                failed: false,
+                passed: false,
+                step: 1,
+                startBalance: FUNDED_START_BALANCE,
+                balance: FUNDED_START_BALANCE,
+                stepStartBalance: FUNDED_START_BALANCE,
+                step2Target: 0,
+                totalPnl: 0,
+                days: {},
+                trades: [],
+                history: []
+            };
+            ensureFundedToday();
+            saveFundedChallenge();
+            updateFundedUI();
+            activateFundedTradingMode();
+            notifyKodular('SHOW_INTERSTITIAL_AD');
+        }
+
+        // Auto-switches the Real/Funded toggle into Funded mode and gives it a brief
+        // pulse animation so the user notices the mode changed.
+        function activateFundedTradingMode() {
+            const cb = document.getElementById('funded_mode_toggle');
+            if (cb && !cb.checked) {
+                cb.checked = true;
+                toggleTradingMode();
+            }
+            const lbl = document.getElementById('funded_mode_toggle_label');
+            if (lbl) {
+                lbl.classList.remove('toggle-pulse');
+                void lbl.offsetWidth; // restart animation if already running
+                lbl.classList.add('toggle-pulse');
+                setTimeout(() => lbl.classList.remove('toggle-pulse'), 2800);
+            }
+        }
+
+        function retryFundedChallenge() {
+            startFundedChallenge();
+        }
+
+        function openFundedChallenge() {
+            loadFundedChallenge();
+            updateFundedUI();
+            document.getElementById('funded_overlay').classList.add('show');
+        }
+
+        function closeFundedChallenge() {
+            document.getElementById('funded_overlay').classList.remove('show');
+        }
+
+        function showFundedMessage(msg, type) {
+            const w = document.getElementById('fc_warning');
+            w.innerText = msg;
+            w.style.background = type === 'warn' ? '#e67e00' : '#f23645';
+            w.style.display = 'block';
+            document.getElementById('funded_overlay').classList.add('show');
+            updateFundedUI();
+            clearTimeout(window._fcWarnTimer);
+            window._fcWarnTimer = setTimeout(function() { w.style.display = 'none'; }, 10000);
+        }
+
+        // Called before opening a funded-mode trade. Returns true if allowed.
+        function fundedCheckTrade(asset, qty) {
+            if (!fundedChallengeData || !fundedChallengeData.active) {
+                showFundedMessage('🚫 Start the Funded Account Challenge first.', 'block');
+                return false;
+            }
+            if (fundedChallengeData.failed || fundedChallengeData.passed) {
+                showFundedMessage('🔒 Challenge is over. Tap Retry to start a new one.', 'block');
+                return false;
+            }
+            if (asset !== FUNDED_ASSET) {
+                showFundedMessage('🚫 Funded Challenge allows BTC/USDT trades only.', 'block');
+                return false;
+            }
+            if (qty > FUNDED_MAX_QTY) {
+                showFundedMessage(`🚫 Max qty allowed is ${FUNDED_MAX_QTY} BTC.`, 'block');
+                return false;
+            }
+            const openQty = (fundedChallengeData.trades || []).reduce((sum, t) => sum + (t.qty || 0), 0);
+            if (openQty + qty > FUNDED_MAX_QTY + 1e-9) {
+                const remaining = Math.max(0, FUNDED_MAX_QTY - openQty);
+                showFundedMessage(`🚫 Total open qty limit is ${FUNDED_MAX_QTY} BTC. You can only add ${remaining.toFixed(2)} BTC more.`, 'block');
+                return false;
+            }
+            return true;
+        }
+
+        function fundedManualTrade(side) {
+            const asset = FUNDED_ASSET; // locked
+            let qty = parseFloat(document.getElementById('manual_qty').value) || 0.01;
+            if (qty > FUNDED_MAX_QTY) qty = FUNDED_MAX_QTY;
+            const _openQty = (fundedChallengeData && fundedChallengeData.trades ? fundedChallengeData.trades : []).reduce((sum, t) => sum + (t.qty || 0), 0);
+            const _remainingQty = Math.max(0, FUNDED_MAX_QTY - _openQty);
+            if (_remainingQty <= 0) {
+                showFundedMessage(`🚫 Total open qty limit is ${FUNDED_MAX_QTY} BTC already reached. Close a position first.`, 'block');
+                return;
+            }
+            if (qty > _remainingQty) qty = _remainingQty;
+            const slInput = document.getElementById('manual_sl_input').value;
+            const tgtInput = document.getElementById('manual_target_input').value;
+            const slPrice = slInput ? parseFloat(slInput) : 0;
+            const tgtPrice = tgtInput ? parseFloat(tgtInput) : 0;
+
+            if (!fundedCheckTrade(asset, qty)) return;
+
+            const priceInputEl = document.getElementById('sp_price_input');
+            const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
+            const entryPrice = (sharkOrderType === 'Limit' && enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+
+            const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
+            const trade = { id: Date.now(), side: side, entry: entryPrice, qty: qty, sl: slPrice, tgt: tgtPrice, strat: 'FUNDED', asset: asset, time: Date.now(), tf: tfNow };
+            fundedChallengeData.trades.push(trade);
+            saveFundedChallenge();
+            refreshUI();
+
+            document.getElementById('manual_sl_input').value = "";
+            document.getElementById('manual_target_input').value = "";
+            document.getElementById('sl_preview').innerText = '';
+            document.getElementById('tgt_preview').innerText = '';
+        }
+
+        function fundedCheckExits() {
+            if (!fundedChallengeData || !fundedChallengeData.active || !fundedChallengeData.trades) return;
+            fundedChallengeData.trades.slice().forEach(t => {
+                const lp = prices[t.asset]; if (!lp) return;
+                if (t.sl > 0 && ((t.side === 'BUY' && lp <= t.sl) || (t.side === 'SELL' && lp >= t.sl))) fundedCloseSingle(t.id);
+                if (t.tgt > 0 && ((t.side === 'BUY' && lp >= t.tgt) || (t.side === 'SELL' && lp <= t.tgt))) fundedCloseSingle(t.id);
+            });
+        }
+
+        function fundedCloseSingle(id, forceExitPrice) {
+            if (!fundedChallengeData) return;
+            let idx = fundedChallengeData.trades.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            let t = fundedChallengeData.trades[idx];
+            const lp = forceExitPrice || prices[t.asset] || t.entry;
+            let grossPnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+            let feeUSD = t.entry * t.qty * FEE_RATE;
+            let netPnlUSD = grossPnlUSD - feeUSD;
+
+            fundedChallengeData.balance += netPnlUSD;
+            fundedChallengeData.totalPnl += netPnlUSD;
+            ensureFundedToday();
+            const k = getFundedTodayKey();
+            fundedChallengeData.days[k].pnl += netPnlUSD;
+
+            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+            if (fundedChallengeData.history.length > 100) fundedChallengeData.history.length = 100;
+            fundedChallengeData.trades.splice(idx, 1);
+
+            fundedCheckLimits();
+            saveFundedChallenge();
+            refreshUI();
+            updateFundedUI();
+        }
+
+        function fundedCheckLimits() {
+            if (!fundedChallengeData || fundedChallengeData.failed || fundedChallengeData.passed) return;
+            const totalLoss = fundedChallengeData.startBalance - fundedChallengeData.balance;
+            const k = getFundedTodayKey();
+            ensureFundedToday();
+            const todayLoss = fundedChallengeData.days[k].pnl < 0 ? Math.abs(fundedChallengeData.days[k].pnl) : 0;
+
+            if (totalLoss >= FUNDED_MAX_LOSS || todayLoss >= FUNDED_DAILY_LOSS) {
+                fundedFail();
+                return;
+            }
+
+            // Step progress
+            if (fundedChallengeData.step === 1) {
+                const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+                if (stepProfit >= FUNDED_STEP1_TARGET) {
+                    fundedChallengeData.step = 2;
+                    fundedChallengeData.stepStartBalance = fundedChallengeData.balance;
+                    fundedChallengeData.step2Target = fundedChallengeData.balance * FUNDED_STEP2_PCT;
+                }
+            } else if (fundedChallengeData.step === 2) {
+                const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+                if (stepProfit >= fundedChallengeData.step2Target) {
+                    fundedPass();
+                }
+            }
+        }
+
+        function fundedFail() {
+            // Force-close all open funded positions at current market price
+            if (fundedChallengeData.trades && fundedChallengeData.trades.length) {
+                fundedChallengeData.trades.slice().forEach(t => {
+                    const lp = prices[t.asset] || t.entry;
+                    let grossPnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                    let feeUSD = t.entry * t.qty * FEE_RATE;
+                    let netPnlUSD = grossPnlUSD - feeUSD;
+                    fundedChallengeData.balance += netPnlUSD;
+                    fundedChallengeData.totalPnl += netPnlUSD;
+                    fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+                });
+                fundedChallengeData.trades = [];
+            }
+            fundedChallengeData.active = false;
+            fundedChallengeData.failed = true;
+            saveFundedChallenge();
+            showFundedMessage('❌ You lost the challenge. But we saved your fees of $35 which you may have given to pass the funded account.', 'block');
+            refreshUI();
+            updateFundedUI();
+        }
+
+        function fundedPass() {
+            fundedChallengeData.active = false;
+            fundedChallengeData.passed = true;
+            saveFundedChallenge();
+            updateFundedUI();
+        }
+
+        function updateFundedUI() {
+            const startBtn = document.getElementById('fc_start_btn');
+            const retryBtn = document.getElementById('fc_retry_btn');
+            const passedEl = document.getElementById('fc_passed');
+            const failedEl = document.getElementById('fc_failed');
+
+            if (!fundedChallengeData || (!fundedChallengeData.active && !fundedChallengeData.failed && !fundedChallengeData.passed)) {
+                startBtn.style.display = 'block';
+                retryBtn.style.display = 'none';
+                passedEl.style.display = 'none';
+                failedEl.style.display = 'none';
+                document.getElementById('fc_step_label').innerText = 'Step 1';
+                document.getElementById('fc_target_val').innerText = '$500 (10%)';
+                document.getElementById('fc_step_profit').innerText = '$0';
+                document.getElementById('fc_step_bar').style.width = '0%';
+                document.getElementById('fc_start_balance').innerText = '$' + FUNDED_START_BALANCE.toLocaleString('en-US');
+                document.getElementById('fc_current_balance').innerText = '$' + FUNDED_START_BALANCE.toLocaleString('en-US');
+                document.getElementById('fc_total_pnl').innerText = '$0';
+                document.getElementById('fc_max_loss').innerText = '$0 / $' + FUNDED_MAX_LOSS;
+                document.getElementById('fc_maxloss_bar').style.width = '0%';
+                document.getElementById('fc_daily_loss').innerText = '$0 / $' + FUNDED_DAILY_LOSS;
+                document.getElementById('fc_dailyloss_bar').style.width = '0%';
+                return;
+            }
+
+            if (fundedChallengeData.failed) {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+                failedEl.style.display = 'block';
+                passedEl.style.display = 'none';
+            } else if (fundedChallengeData.passed) {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+                passedEl.style.display = 'block';
+                failedEl.style.display = 'none';
+            } else {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'none';
+                passedEl.style.display = 'none';
+                failedEl.style.display = 'none';
+            }
+
+            const stepLabelEl = document.getElementById('fc_step_label');
+            const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+            if (fundedChallengeData.step === 1) {
+                stepLabelEl.innerText = 'Step 1';
+                document.getElementById('fc_target_val').innerText = '$' + FUNDED_STEP1_TARGET + ' (10%)';
+                document.getElementById('fc_step_bar').style.width = Math.min(100, Math.max(0, (stepProfit / FUNDED_STEP1_TARGET) * 100)) + '%';
+            } else {
+                stepLabelEl.innerText = 'Step 2';
+                const t2 = fundedChallengeData.step2Target || 1;
+                document.getElementById('fc_target_val').innerText = '$' + t2.toFixed(2) + ' (5%)';
+                document.getElementById('fc_step_bar').style.width = Math.min(100, Math.max(0, (stepProfit / t2) * 100)) + '%';
+            }
+            document.getElementById('fc_step_profit').innerText = (stepProfit >= 0 ? '+$' : '-$') + Math.abs(stepProfit).toFixed(2);
+            document.getElementById('fc_step_bar').style.background = stepProfit >= 0 ? '#089981' : '#f23645';
+
+            document.getElementById('fc_start_balance').innerText = '$' + fundedChallengeData.startBalance.toLocaleString('en-US');
+            document.getElementById('fc_current_balance').innerText = '$' + fundedChallengeData.balance.toFixed(2);
+            const totalPnlEl = document.getElementById('fc_total_pnl');
+            totalPnlEl.innerText = (fundedChallengeData.totalPnl >= 0 ? '+$' : '-$') + Math.abs(fundedChallengeData.totalPnl).toFixed(2);
+            totalPnlEl.style.color = fundedChallengeData.totalPnl >= 0 ? '#089981' : '#f23645';
+
+            const totalLoss = Math.max(0, fundedChallengeData.startBalance - fundedChallengeData.balance);
+            document.getElementById('fc_max_loss').innerText = '$' + totalLoss.toFixed(2) + ' / $' + FUNDED_MAX_LOSS;
+            document.getElementById('fc_maxloss_bar').style.width = Math.min(100, (totalLoss / FUNDED_MAX_LOSS) * 100) + '%';
+
+            ensureFundedToday();
+            const k = getFundedTodayKey();
+            const todayLoss = Math.max(0, -(fundedChallengeData.days[k] ? fundedChallengeData.days[k].pnl : 0));
+            document.getElementById('fc_daily_loss').innerText = '$' + todayLoss.toFixed(2) + ' / $' + FUNDED_DAILY_LOSS;
+            document.getElementById('fc_dailyloss_bar').style.width = Math.min(100, (todayLoss / FUNDED_DAILY_LOSS) * 100) + '%';
+        }
+
+        // ── Funded Challenge Positions & History rendering (separate from real trades) ──
+        function renderFundedPositions() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1; // funded pnl stored in raw USD
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('positions_body');
+            if (!tbody) return;
+            const fTrades = (fundedChallengeData && fundedChallengeData.trades) ? fundedChallengeData.trades : [];
+            if (fTrades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open funded positions</td></tr>';
+                return;
+            }
+            tbody.innerHTML = fTrades.map(t => {
+                const lp = prices[t.asset] || t.entry;
+                const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                const pnlDisp = pnlUSD * rate;
+                const feeUSD = t.entry * t.qty * FEE_RATE;
+                const feeDisp = feeUSD * rate;
+                let buyCol, sellCol;
+                if (t.side === 'BUY') {
+                    buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    sellCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                } else {
+                    sellCol = `<span style="color:#f23645;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                }
+                return `<tr>
+                    <td style="text-align:left; padding-left:6px;">${t.asset.replace('USDT','')}/${t.strat}</td>
+                    <td>${buyCol}</td>
+                    <td>${sellCol}</td>
+                    <td>${t.qty}</td>
+                    <td>
+                        <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
+                        <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
+                    </td>
+                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, true)" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="fundedCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function buildFundedHistoryRowHTML(h, rate, sym) {
+            const pnlDisp = h.pnl * rate;
+            const openTime = h.openTime ? new Date(h.openTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            const closeTime = h.time ? new Date(h.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            let buyPrice, sellPrice, bTime, sTime;
+            if (h.side === 'BUY') {
+                buyPrice = `<span style="color:#089981;">${h.entry.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                sellPrice = `<span style="color:#f23645;">${h.exit.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            } else {
+                sellPrice = `<span style="color:#f23645;">${h.entry.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            }
+            const sideLetter = h.side === 'BUY' ? 'B' : 'S';
+            const feeDisp = (h.fee || 0) * rate;
+            return `<tr>
+                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}/${sideLetter}</td>
+                <td>${buyPrice}</td>
+                <td>${bTime}</td>
+                <td>${sellPrice}</td>
+                <td>${sTime}</td>
+                <td>${h.qty || '-'}</td>
+                <td style="color:#f23645; font-size:8px;">-${feeDisp.toFixed(2)}${sym}</td>
+                <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+            </tr>`;
+        }
+
+        function renderFundedHistory() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1;
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('history_body');
+            if (!tbody) return;
+            const fHistory = (fundedChallengeData && fundedChallengeData.history) ? fundedChallengeData.history : [];
+            if (fHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No funded challenge trade history</td></tr>';
+                return;
+            }
+            tbody.innerHTML = fHistory.slice(0, 20).map(h => buildFundedHistoryRowHTML(h, rate, sym)).join('');
+        }
+
+        // ── Real / Funded Challenge trading mode toggle ──
+        function toggleTradingMode() {
+            const on = document.getElementById('funded_mode_toggle').checked;
+            tradingMode = on ? 'funded' : 'real';
+
+            const assetSel = document.getElementById('asset_choice');
+            const ethOpt = document.getElementById('asset_opt_eth');
+            const goldOpt = document.getElementById('asset_opt_gold');
+            const qtyInput = document.getElementById('manual_qty');
+            const balLabel = document.getElementById('balance_label');
+
+            if (tradingMode === 'funded') {
+                assetSel.value = 'BTCUSDT';
+                ethOpt.disabled = true;
+                goldOpt.disabled = true;
+                qtyInput.setAttribute('max', FUNDED_MAX_QTY);
+                if (parseFloat(qtyInput.value) > FUNDED_MAX_QTY) qtyInput.value = FUNDED_MAX_QTY;
+                balLabel.innerHTML = '<span style="color:#f0b90b">Funded Challenge</span> Balance';
+                switchMarket();
+                loadFundedChallenge();
+
+                // Auto Mode always trades the Real balance, so force it off while Funded mode is active
+                const autoCb = document.getElementById('auto_mode');
+                const autoLbl = document.getElementById('auto_mode_label');
+                if (autoCb && autoCb.checked) {
+                    autoCb.checked = false;
+                    saveData();
+                    if (autoLbl) {
+                        autoLbl.classList.remove('toggle-pulse');
+                        void autoLbl.offsetWidth;
+                        autoLbl.classList.add('toggle-pulse');
+                        setTimeout(() => autoLbl.classList.remove('toggle-pulse'), 2800);
+                    }
+                }
+                if (autoLbl) autoLbl.classList.add('toggle-locked');
+            } else {
+                const autoLbl2 = document.getElementById('auto_mode_label');
+                if (autoLbl2) autoLbl2.classList.remove('toggle-locked');
+                ethOpt.disabled = false;
+                goldOpt.disabled = false;
+                qtyInput.removeAttribute('max');
+                balLabel.innerHTML = '<span style="color:#f0b90b">Real</span> Balance';
+            }
+            refreshUI();
+        }
+
+        // Load funded challenge on startup
+        setTimeout(function() { loadFundedChallenge(); }, 500);
+
+        // Funded trades exit checker — always runs in background regardless of active mode
+        setInterval(function() {
+            if (fundedChallengeData && fundedChallengeData.trades && fundedChallengeData.trades.length > 0) {
+                fundedCheckExits();
+            }
+        }, 5000);
+    </script>
 
     <script>
         // =============================================
@@ -2509,14 +3346,15 @@
             <button onclick="closeTradeHistoryModal()" style="background:#1e222d; color:#38bdf8; border:1px solid #444; border-radius:6px; width:34px; height:32px; font-size:16px; font-weight:bold; cursor:pointer;">←</button>
             <span style="color:#fff; font-weight:bold; font-size:13px; letter-spacing:0.5px;">Trade History</span>
         </div>
-        <!-- Manual / Auto sub-tabs -->
+        <!-- Manual / Auto / Funded sub-tabs -->
         <div style="display:flex; background:#1e222d; border-bottom:1px solid #2a2e39; flex-shrink:0;">
             <button id="th_tab_manual" onclick="switchTradeHistoryType('manual')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">📘 Manual</button>
             <button id="th_tab_auto" onclick="switchTradeHistoryType('auto')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">🤖 Auto</button>
+            <button id="th_tab_funded" onclick="switchTradeHistoryType('funded')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">💰 Funded</button>
         </div>
         <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;">
             <table class="history-table">
-                <thead><tr><th>Asset</th><th>Buy</th><th>B/Time</th><th>Sell</th><th>S/Time</th><th>Qty</th><th>P&L</th></tr></thead>
+                <thead><tr><th>Asset</th><th>Buy</th><th>B/Time</th><th>Sell</th><th>S/Time</th><th>Qty</th><th>Fee</th><th>P&L</th></tr></thead>
                 <tbody id="trade_history_modal_body"></tbody>
             </table>
             <div style="text-align:center; padding:12px;">
@@ -2555,13 +3393,31 @@
             document.getElementById('th_tab_manual').style.borderBottom = thCurrentType === 'manual' ? '2px solid #38bdf8' : '2px solid transparent';
             document.getElementById('th_tab_auto').style.color = thCurrentType === 'auto' ? '#38bdf8' : '#b2b5be';
             document.getElementById('th_tab_auto').style.borderBottom = thCurrentType === 'auto' ? '2px solid #38bdf8' : '2px solid transparent';
+            document.getElementById('th_tab_funded').style.color = thCurrentType === 'funded' ? '#f0b90b' : '#b2b5be';
+            document.getElementById('th_tab_funded').style.borderBottom = thCurrentType === 'funded' ? '2px solid #f0b90b' : '2px solid transparent';
 
             const curr = document.getElementById('currency_mode').value;
-            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
-            const sym = (curr === 'USD') ? ' USD' : ' INR';
             const tbody = document.getElementById('trade_history_modal_body');
             const loadMoreBtn = document.getElementById('th_load_more_btn');
 
+            if (thCurrentType === 'funded') {
+                // Funded history is stored in raw USD (unlike real history, which is stored in INR)
+                const rate = (curr === 'INR') ? 83.50 : 1;
+                const sym = (curr === 'INR') ? ' INR' : ' USD';
+                const fHistory = (fundedChallengeData && fundedChallengeData.history) ? fundedChallengeData.history : [];
+                if (fHistory.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No funded trades yet</td></tr>';
+                    loadMoreBtn.style.display = 'none';
+                    return;
+                }
+                const slice = fHistory.slice(0, thRenderCount);
+                tbody.innerHTML = slice.map(h => buildFundedHistoryRowHTML(h, rate, sym)).join('');
+                loadMoreBtn.style.display = (fHistory.length > thRenderCount) ? 'inline-block' : 'none';
+                return;
+            }
+
+            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
+            const sym = (curr === 'USD') ? ' USD' : ' INR';
             const filtered = history.filter(h => (thCurrentType === 'manual') ? h.isManual === true : h.isManual !== true);
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="color:#555; padding:12px; text-align:center;">No ' + thCurrentType + ' trades yet</td></tr>';
