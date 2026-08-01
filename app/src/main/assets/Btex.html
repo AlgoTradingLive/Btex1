@@ -2745,8 +2745,13 @@
             refreshUI();
         }
 
-        // Load funded challenge on startup
-        setTimeout(function() { loadFundedChallenge(); }, 500);
+        // Load funded challenge on startup, and auto-restore Funded mode if a challenge is still in progress
+        setTimeout(function() {
+            loadFundedChallenge();
+            if (fundedChallengeData && fundedChallengeData.active && !fundedChallengeData.failed && !fundedChallengeData.passed) {
+                activateFundedTradingMode();
+            }
+        }, 500);
 
         // Funded trades exit checker — always runs in background regardless of active mode
         setInterval(function() {
