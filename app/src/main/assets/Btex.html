@@ -993,11 +993,8 @@
                 </select>
                 <select id="mtp_order_type" class="mtp-pill" onchange="sharkSetOrderType(this.value)">
                     <option value="Market" selected>Market</option>
-                    <option value="Limit">Limit</option>
-                    <option value="Stop Limit">Stop Lmt</option>
-                    <option value="Stop Market">Stop Mkt</option>
                 </select>
-                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Mkt" disabled oninput="syncSharkQty()">
+                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Mkt" disabled oninput="syncSharkQty()" style="display:none;">
                 <input type="number" id="manual_qty" class="qty-input mtp-qty" value="1" min="1" placeholder="Qty" oninput="syncSharkQty()">
                 <input type="number" id="manual_sl_input" class="qty-input mtp-sltp" placeholder="SL" oninput="updateTradePreview()">
                 <input type="number" id="manual_target_input" class="qty-input mtp-sltp" placeholder="TP" oninput="updateTradePreview()">
@@ -2429,9 +2426,10 @@
 
             if (!fundedCheckTrade(asset, qty)) return;
 
-            const priceInputEl = document.getElementById('sp_price_input');
-            const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
-            const entryPrice = (sharkOrderType === 'Limit' && enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+            // Always fill at live market price — same behavior as real trading.
+            // (The Limit price field is not an actual pending order anywhere in this app;
+            // it must never be used as the fill price, or trades open miles away from market.)
+            const entryPrice = prices[asset] || 0;
 
             const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
             const trade = { id: Date.now(), side: side, entry: entryPrice, qty: qty, sl: slPrice, tgt: tgtPrice, strat: 'FUNDED', asset: asset, time: Date.now(), tf: tfNow };
