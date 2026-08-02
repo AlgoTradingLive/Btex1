@@ -105,6 +105,90 @@
         .pnl-chip { flex: 1; padding: 4px 2px; border-radius: 4px; background: #0c0d10; border: 1px solid #333; text-align: center; font-size: 8.5px; min-width: 60px; }
         .controls-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 15px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 8px; flex-shrink: 0; }
         .strat-select { background: #0c0d10; color: #38bdf8; border: 1px solid #444; padding: 4px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+
+        /* ── Custom Strategy Selector (professional dropdown) ── */
+        .strategy-select-btn {
+            background: #0c0d10; color: #38bdf8; border: 1px solid #444; border-radius: 4px;
+            font-size: 9px; padding: 2px 6px; flex: 1; height: 22px; box-sizing: border-box;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            cursor: pointer; font-weight: bold; letter-spacing: 0.2px;
+        }
+        .strategy-select-btn .cur-strat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .strategy-select-btn .strat-caret { flex-shrink: 0; font-size: 8px; color: #38bdf8; transition: transform 0.2s; }
+        #strategy_modal_overlay {
+            display: none; position: fixed; inset: 0; z-index: 3000;
+            background: rgba(0,0,0,0.72); align-items: center; justify-content: center; padding: 18px;
+        }
+        #strategy_modal_overlay.open { display: flex; }
+        .strat-modal-box {
+            width: 100%; max-width: 340px; max-height: 82vh; display: flex; flex-direction: column;
+            background: #131722; border: 1px solid rgba(56,189,248,0.45); border-radius: 14px;
+            overflow: hidden; box-shadow: 0 0 34px rgba(56,189,248,0.18), 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .strat-modal-header {
+            position: relative; text-align: center; padding: 14px 34px 12px;
+            border-bottom: 1px solid #2a2e39; flex-shrink: 0;
+        }
+        .strat-modal-title {
+            color: #38bdf8; font-size: 13px; font-weight: 800; letter-spacing: 1.8px;
+            text-transform: uppercase;
+        }
+        .strat-modal-title-underline {
+            width: 46px; height: 2px; margin: 7px auto 0; border-radius: 2px;
+            background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        }
+        .strat-modal-close {
+            position: absolute; top: 9px; right: 10px; background: none; border: none;
+            color: #888; font-size: 17px; line-height: 1; cursor: pointer; padding: 4px;
+        }
+        .strat-modal-close:hover { color: #f23645; }
+        .strat-modal-list { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 0; }
+        .strat-modal-item {
+            display: flex; align-items: center; gap: 11px; padding: 11px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+        }
+        .strat-modal-item:last-child { border-bottom: none; }
+        .strat-modal-item:active { background: rgba(56,189,248,0.08); }
+        .strat-bullet {
+            width: 5px; height: 5px; border-radius: 50%; background: #667; flex-shrink: 0;
+        }
+        .strat-modal-item.selected .strat-bullet { background: #38bdf8; }
+        .strat-lock-icon { display: none; flex-shrink: 0; font-size: 12px; width: 5px; text-align: center; }
+        .strat-modal-item.locked .strat-bullet { display: none; }
+        .strat-modal-item.locked .strat-lock-icon { display: inline-block; width: auto; }
+        .strat-modal-item-label {
+            flex: 1; font-size: 11px; font-weight: 700; color: #d1d4dc; letter-spacing: 0.3px;
+        }
+        .strat-modal-item.selected .strat-modal-item-label { color: #38bdf8; }
+        .strat-radio {
+            width: 16px; height: 16px; border-radius: 50%; border: 2px solid #555;
+            flex-shrink: 0; position: relative;
+        }
+        .strat-modal-item.selected .strat-radio { border-color: #38bdf8; }
+        .strat-modal-item.selected .strat-radio::after {
+            content: ''; position: absolute; inset: 2.5px; border-radius: 50%; background: #38bdf8;
+        }
+        #tf_select_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 3px;
+            font-size: 9px; font-weight: bold; height: 22px; padding: 0 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+        }
+        #tf_select_btn .tf-caret { font-size: 7px; }
+        #ind_select_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 3px;
+            font-size: 9px; font-weight: bold; height: 22px; padding: 0 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        }
+        #ind_select_btn .tf-caret { font-size: 7px; }
+        .strat-checkbox {
+            width: 15px; height: 15px; border-radius: 4px; border: 2px solid #555;
+            flex-shrink: 0; position: relative; box-sizing: border-box;
+        }
+        .strat-modal-item.selected .strat-checkbox { border-color: #38bdf8; background: #38bdf8; }
+        .strat-modal-item.selected .strat-checkbox::after {
+            content: ''; position: absolute; left: 4px; top: 0px; width: 4px; height: 8px;
+            border: solid #0c0d10; border-width: 0 2px 2px 0; transform: rotate(45deg);
+        }
         .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
         .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
         #auto_mode:checked + .toggle { background: #089981; }
@@ -944,7 +1028,7 @@
         <button id="hamburger_btn" onclick="openSidePanel()" title="Menu">☰</button>
         <div class="top-bar-sep"></div>
         <div id="chart_controls">
-            <select id="user_tf" class="chart-select" onchange="updateUserPreferences()">
+            <select id="user_tf" style="display:none;" onchange="updateUserPreferences()">
                 <option value="1">1m</option>
                 <option value="5">5m</option>
                 <option value="15">15m</option>
@@ -952,19 +1036,128 @@
                 <option value="240">4H</option>
                 <option value="D">D</option>
             </select>
-            <select id="user_ind" class="chart-select" onchange="updateUserPreferences()">
-                <option value="">None</option>
-                <option value="EMA9">E9</option>
-                <option value="EMA21">E21</option>
-                <option value="EMA50">E50</option>
-                <option value="EMA200">E200</option>
-                <option value="RSI@tv-basicstudies">RSI</option>
-                <option value="SuperTrend@tv-basicstudies">ST</option>
-                <option value="BB@tv-basicstudies">BB</option>
-                <option value="VWAP@tv-basicstudies">VWAP</option>
-                <option value="MACD@tv-basicstudies">MACD</option>
-                <option value="Volume@tv-basicstudies">Vol</option>
-            </select>
+            <button type="button" id="tf_select_btn" onclick="openTFModal()">
+                <span id="tf_select_display">5m</span><span class="tf-caret">▼</span>
+            </button>
+
+            <div id="tf_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeTFModal();">
+                <div class="strat-modal-box" style="max-width:260px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Timeframe</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeTFModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="tf_modal_list">
+                        <div class="strat-modal-item" data-value="1" onclick="selectTFModal('1')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Minute</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="5" onclick="selectTFModal('5')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">5 Minutes</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="15" onclick="selectTFModal('15')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">15 Minutes</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="60" onclick="selectTFModal('60')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Hour</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="240" onclick="selectTFModal('240')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">4 Hours</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="D" onclick="selectTFModal('D')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Day</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:none;">
+                <input type="checkbox" class="ind-checkbox" value="EMA9" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA21" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA50" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA200" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="RSI@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="SuperTrend@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="BB@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="VWAP@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="MACD@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="Volume@tv-basicstudies" onchange="updateUserPreferences()">
+            </div>
+            <button type="button" id="ind_select_btn" onclick="openIndModal()">
+                <span id="ind_select_display">Indicators</span><span class="tf-caret">▼</span>
+            </button>
+
+            <div id="ind_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeIndModal();">
+                <div class="strat-modal-box" style="max-width:280px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Indicators</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeIndModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="ind_modal_list">
+                        <div class="strat-modal-item" data-value="EMA9" onclick="toggleIndModal('EMA9', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 9</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA21" onclick="toggleIndModal('EMA21', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 21</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA50" onclick="toggleIndModal('EMA50', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 50</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA200" onclick="toggleIndModal('EMA200', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 200</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="RSI@tv-basicstudies" onclick="toggleIndModal('RSI@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">RSI</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="SuperTrend@tv-basicstudies" onclick="toggleIndModal('SuperTrend@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">SuperTrend</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="BB@tv-basicstudies" onclick="toggleIndModal('BB@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">Bollinger Bands</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="VWAP@tv-basicstudies" onclick="toggleIndModal('VWAP@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">VWAP</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="MACD@tv-basicstudies" onclick="toggleIndModal('MACD@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">MACD</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="Volume@tv-basicstudies" onclick="toggleIndModal('Volume@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">Volume</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
         <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
@@ -1054,15 +1247,84 @@
                 <option value="ETHUSDT" id="asset_opt_eth">ETH/USDT</option>
                 <option value="PAXGUSDT" id="asset_opt_gold">GOLD</option>
             </select>
-            <select id="strategy_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:1;" onchange="updateAssetStrategy()">
+            <select id="strategy_choice" style="display:none;" onchange="updateAssetStrategy()">
                 <option value="s1">S1: REVERSAL (5M)</option>
                 <option value="s1_5m">S1: REVERSAL (15M)</option>
-                <option value="s2">🔒 S2: EMA (5M)</option>
-                <option value="s2_5m">🔒 S2: EMA (15M)</option>
+                <option value="s2">S2: EMA (5M)</option>
+                <option value="s2_5m">S2: EMA (15M)</option>
                 <option value="s3_power">S3: POWER ZONE (15M)</option>
                 <option value="s4">S4: STRONG ZONE (5M)</option>
                 <option value="s6_struct">S6: STRUCTURE BREAK (15M)</option>
+                <option value="s7_1m">S7: SCALPING (1M)</option>
+                <option value="s7_5m">S7: SCALPING (5M)</option>
+                <option value="s7_triple">S7: SCALPING (15M)</option>
             </select>
+            <button type="button" id="strategy_select_btn" class="strategy-select-btn" onclick="openStrategyModal()">
+                <span class="cur-strat-name" id="strategy_select_display">S1: REVERSAL (5M)</span>
+                <span class="strat-caret">▼</span>
+            </button>
+
+            <div id="strategy_modal_overlay" onclick="if(event.target===this) closeStrategyModal();">
+                <div class="strat-modal-box">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Strategy</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeStrategyModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="strategy_modal_list">
+                        <div class="strat-modal-item" data-value="s1" onclick="selectStrategyModal('s1')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S1: REVERSAL (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s1_5m" onclick="selectStrategyModal('s1_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S1: REVERSAL (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item locked" data-value="s2" onclick="selectStrategyModal('s2')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S2: EMA (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item locked" data-value="s2_5m" onclick="selectStrategyModal('s2_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S2: EMA (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s3_power" onclick="selectStrategyModal('s3_power')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S3: POWER ZONE (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s4" onclick="selectStrategyModal('s4')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S4: STRONG ZONE (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s6_struct" onclick="selectStrategyModal('s6_struct')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S6: STRUCTURE BREAK (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_1m" onclick="selectStrategyModal('s7_1m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (1M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_5m" onclick="selectStrategyModal('s7_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_triple" onclick="selectStrategyModal('s7_triple')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div style="display:flex; align-items:center; gap:4px; flex:0 0 auto;">
                 <span style="font-size:8px; font-weight:bold; color:#b2b5be;">AUTO</span>
                 <input type="checkbox" id="auto_mode" onchange="handleAutoModeToggle()">
@@ -1122,7 +1384,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
+        function initApp() { loadData(); syncStrategyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1177,32 +1439,92 @@
 
         function updateUserPreferences() {
             const tf = document.getElementById('user_tf').value;
-            const ind = document.getElementById('user_ind').value;
+            const checkedInds = [...document.querySelectorAll('.ind-checkbox:checked')].map(cb => cb.value);
             localStorage.setItem('PREF_TF', tf);
-            localStorage.setItem('PREF_IND', ind);
+            localStorage.setItem('PREF_IND', JSON.stringify(checkedInds));
             initTradingView();
+        }
+
+        // ── Custom Timeframe Selector modal ──
+        const TF_LABELS = { "1": "1m", "5": "5m", "15": "15m", "60": "1H", "240": "4H", "D": "D" };
+        function openTFModal() {
+            syncTFModalUI();
+            document.getElementById('tf_modal_overlay').style.display = 'flex';
+        }
+        function closeTFModal() {
+            document.getElementById('tf_modal_overlay').style.display = 'none';
+        }
+        function selectTFModal(val) {
+            document.getElementById('user_tf').value = val;
+            updateUserPreferences();
+            syncTFModalUI();
+            closeTFModal();
+        }
+        function syncTFModalUI() {
+            const val = document.getElementById('user_tf').value;
+            document.querySelectorAll('#tf_modal_list .strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const display = document.getElementById('tf_select_display');
+            if (display) display.textContent = TF_LABELS[val] || val;
+        }
+
+        // ── Custom Indicators Selector modal (multi-select) ──
+        function openIndModal() {
+            syncIndModalUI();
+            document.getElementById('ind_modal_overlay').style.display = 'flex';
+        }
+        function closeIndModal() {
+            document.getElementById('ind_modal_overlay').style.display = 'none';
+        }
+        function toggleIndModal(value, rowEl) {
+            const cb = document.querySelector('.ind-checkbox[value="' + value + '"]');
+            if (!cb) return;
+            cb.checked = !cb.checked;
+            rowEl.classList.toggle('selected', cb.checked);
+            updateUserPreferences();
+            syncIndBtnLabel();
+        }
+        function syncIndModalUI() {
+            document.querySelectorAll('#ind_modal_list .strat-modal-item').forEach(function(el) {
+                const val = el.getAttribute('data-value');
+                const cb = document.querySelector('.ind-checkbox[value="' + val + '"]');
+                el.classList.toggle('selected', !!(cb && cb.checked));
+            });
+            syncIndBtnLabel();
+        }
+        function syncIndBtnLabel() {
+            const n = document.querySelectorAll('.ind-checkbox:checked').length;
+            const display = document.getElementById('ind_select_display');
+            if (display) display.textContent = n > 0 ? ('Indicators (' + n + ')') : 'Indicators';
         }
 
         function initTradingView() {
             const savedTF = localStorage.getItem('PREF_TF') || "5";
-            const savedInd = localStorage.getItem('PREF_IND') || "";
+            let savedInds = [];
+            try { savedInds = JSON.parse(localStorage.getItem('PREF_IND') || "[]"); } catch(e) { savedInds = []; }
 
             document.getElementById('user_tf').value = savedTF;
-            document.getElementById('user_ind').value = savedInd;
+            syncTFModalUI();
+            // प्रत्येक checkbox ला त्याची saved स्थिती (checked/unchecked) परत लावतो
+            document.querySelectorAll('.ind-checkbox').forEach(cb => {
+                cb.checked = savedInds.includes(cb.value);
+            });
+            syncIndModalUI();
 
             // Container clear करा — नाहीतर multiple widgets stack होतात
             const container = document.getElementById('tradingview_widget');
             container.innerHTML = '';
 
             let studiesList = [];
-            if (savedInd) {
-                if (savedInd === "EMA9") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 9 } });
-                else if (savedInd === "EMA21") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 21 } });
-                else if (savedInd === "EMA50") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 50 } });
-                else if (savedInd === "EMA200") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 200 } });
+            savedInds.forEach(savedInd => {
+                if (savedInd === "EMA9") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 9 }, overrides: { "Plot.color": "#00E5FF" } });
+                else if (savedInd === "EMA21") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 21 }, overrides: { "Plot.color": "#FFEB3B" } });
+                else if (savedInd === "EMA50") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 50 }, overrides: { "Plot.color": "#40C4FF" } });
+                else if (savedInd === "EMA200") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 200 }, overrides: { "Plot.color": "#F23645" } });
                 else if (savedInd === "SuperTrend@tv-basicstudies") studiesList.push("STD;Supertrend");
                 else studiesList.push(savedInd);
-            }
+            });
 
             new TradingView.widget({
                 "autosize": true,
@@ -1504,6 +1826,63 @@
                                     settings.lastTime = lastT;
                                 }
                             }
+                        }
+                    }
+                }
+
+                // ➕ S7: TRIPLE-EMA (1M / 5M / 15M) — नवीन strategy, तिन्ही टाइमफ्रेमवर एकच लॉजिक
+                // नियम: 21/50/200 EMA च्या पूर्ण वर बंद झालेली हिरवी कॅन्डल (Low कुठल्याही EMA ला टच नाही) => BUY
+                //        21/50/200 EMA च्या पूर्ण खाली बंद झालेली लाल कॅन्डल (High कुठल्याही EMA ला टच नाही) => SELL
+                //        Exit फक्त उलट सिग्नल आल्यावरच (कुठलाही ठराविक SL/Target नाही)
+                else if (strat === 's7_1m' || strat === 's7_5m' || strat === 's7_triple') {
+                    // टाइमफ्रेम: s7_1m => 1 मिनिट, s7_5m => 5 मिनिट, s7_triple => 15 मिनिट
+                    let _tfT = (strat === 's7_1m') ? '1m' : (strat === 's7_5m') ? '5m' : '15m';
+                    let _stratLabelT = (strat === 's7_1m') ? 'S7-SCALPING-1M' : (strat === 's7_5m') ? 'S7-SCALPING-5M' : 'S7-SCALPING-15M';
+                    // EMA200 अचूक यावा म्हणून जास्तीत जास्त इतिहास (250 candles) आणतो
+                    let res15t = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${_tfT}&limit=250`);
+                    let data15t = await res15t.json();
+
+                    let closesT = data15t.map(d => parseFloat(d[4]));
+                    // शेवटची (अजून चालू असलेली) कॅन्डल सोडून, त्याआधीची पूर्ण बंद झालेली कॅन्डल वापरतो
+                    let ptrT = data15t.length - 2;
+                    let k0t = {
+                        o: parseFloat(data15t[ptrT][1]),
+                        h: parseFloat(data15t[ptrT][2]),
+                        l: parseFloat(data15t[ptrT][3]),
+                        c: parseFloat(data15t[ptrT][4]),
+                        t: data15t[ptrT][0]
+                    };
+
+                    let closesUpToK0 = closesT.slice(0, ptrT + 1);
+                    let ema21t = calculateEMA(closesUpToK0, 21);
+                    let ema50t = calculateEMA(closesUpToK0, 50);
+                    let ema200t = calculateEMA(closesUpToK0, 200);
+
+                    let maxEmaT = Math.max(ema21t, ema50t, ema200t);
+                    let minEmaT = Math.min(ema21t, ema50t, ema200t);
+
+                    let isGreenT = k0t.c > k0t.o;
+                    let isRedT = k0t.c < k0t.o;
+
+                    let buySignalT = isGreenT && k0t.c > maxEmaT && k0t.l > maxEmaT;
+                    let sellSignalT = isRedT && k0t.c < minEmaT && k0t.h < minEmaT;
+
+                    if (k0t.t !== settings.lastTime) {
+                        if (buySignalT) {
+                            let existingSellT = trades.find(t => t.asset === asset && t.side === 'SELL');
+                            if (existingSellT) closeSingle(existingSellT.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'BUY')) {
+                                handleTrade(asset, 'BUY', 0, 0, _stratLabelT, qty);
+                            }
+                            settings.lastTime = k0t.t;
+                        }
+                        else if (sellSignalT) {
+                            let existingBuyT = trades.find(t => t.asset === asset && t.side === 'BUY');
+                            if (existingBuyT) closeSingle(existingBuyT.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'SELL')) {
+                                handleTrade(asset, 'SELL', 0, 0, _stratLabelT, qty);
+                            }
+                            settings.lastTime = k0t.t;
                         }
                     }
                 }
@@ -1885,6 +2264,7 @@
         function switchMarket() {
             const asset = document.getElementById('asset_choice').value;
             document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
+            syncStrategyModalUI();
             initTradingView(); refreshUI(); syncSharkQty();
         }
 
@@ -1894,11 +2274,39 @@
                 const asset = document.getElementById('asset_choice').value;
                 document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
                 showPremiumLock();
+                syncStrategyModalUI();
                 return;
             }
             const asset = document.getElementById('asset_choice').value;
             assetSettings[asset].strategy = val;
             saveData();
+            syncStrategyModalUI();
+        }
+
+        // ── Custom Strategy Selector modal ──
+        function openStrategyModal() {
+            syncStrategyModalUI();
+            document.getElementById('strategy_modal_overlay').classList.add('open');
+        }
+        function closeStrategyModal() {
+            document.getElementById('strategy_modal_overlay').classList.remove('open');
+        }
+        function selectStrategyModal(val) {
+            const sel = document.getElementById('strategy_choice');
+            sel.value = val;
+            updateAssetStrategy();
+            closeStrategyModal();
+        }
+        function syncStrategyModalUI() {
+            const val = document.getElementById('strategy_choice').value;
+            document.querySelectorAll('.strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const activeItem = document.querySelector('.strat-modal-item[data-value="' + val + '"]');
+            const display = document.getElementById('strategy_select_display');
+            if (activeItem && display) {
+                display.textContent = activeItem.querySelector('.strat-modal-item-label').textContent;
+            }
         }
 
         function showPremiumLock() {
@@ -1977,6 +2385,7 @@
                 document.getElementById('auto_mode').checked = p.auto || false;
                 renderHistory(); refreshUI();
             } 
+            syncStrategyModalUI();
         }
 
         document.addEventListener("visibilitychange", function() {
