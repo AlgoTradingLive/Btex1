@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
     <script>
         function notifyKodular(str) { if (window.AppInventor) { window.AppInventor.setWebViewString(str); } }
 
@@ -189,6 +189,7 @@
             content: ''; position: absolute; left: 4px; top: 0px; width: 4px; height: 8px;
             border: solid #0c0d10; border-width: 0 2px 2px 0; transform: rotate(45deg);
         }
+        .strat-modal-item.disabled { opacity: 0.35; pointer-events: none; }
         .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
         .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
         #auto_mode:checked + .toggle { background: #089981; }
@@ -1242,11 +1243,42 @@
         </div>
 
         <div class="controls-row" style="padding:3px 8px; gap:4px;">
-            <select id="asset_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:0 0 auto;" onchange="switchMarket(); updateTradePreview();">
+            <select id="asset_choice" style="display:none;" onchange="switchMarket(); updateTradePreview();">
                 <option value="BTCUSDT">BTC/USDT</option>
                 <option value="ETHUSDT" id="asset_opt_eth">ETH/USDT</option>
                 <option value="PAXGUSDT" id="asset_opt_gold">GOLD</option>
             </select>
+            <button type="button" id="asset_select_btn" class="strategy-select-btn" style="flex:0 0 auto; min-width:76px;" onclick="openAssetModal()">
+                <span class="cur-strat-name" id="asset_select_display">BTC/USDT</span>
+                <span class="strat-caret">▼</span>
+            </button>
+
+            <div id="asset_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeAssetModal();">
+                <div class="strat-modal-box" style="max-width:260px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Asset</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeAssetModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="asset_modal_list">
+                        <div class="strat-modal-item" data-value="BTCUSDT" onclick="selectAssetModal('BTCUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">BTC/USDT</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="ETHUSDT" id="asset_modal_item_eth" onclick="selectAssetModal('ETHUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">ETH/USDT</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="PAXGUSDT" id="asset_modal_item_gold" onclick="selectAssetModal('PAXGUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">GOLD</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <select id="strategy_choice" style="display:none;" onchange="updateAssetStrategy()">
                 <option value="s1">S1: REVERSAL (5M)</option>
                 <option value="s1_5m">S1: REVERSAL (15M)</option>
@@ -1384,7 +1416,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); syncStrategyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
+        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1838,8 +1870,8 @@
                     // टाइमफ्रेम: s7_1m => 1 मिनिट, s7_5m => 5 मिनिट, s7_triple => 15 मिनिट
                     let _tfT = (strat === 's7_1m') ? '1m' : (strat === 's7_5m') ? '5m' : '15m';
                     let _stratLabelT = (strat === 's7_1m') ? 'S7-SCALPING-1M' : (strat === 's7_5m') ? 'S7-SCALPING-5M' : 'S7-SCALPING-15M';
-                    // EMA200 अचूक यावा म्हणून जास्तीत जास्त इतिहास (250 candles) आणतो
-                    let res15t = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${_tfT}&limit=250`);
+                    // EMA200 अचूक यावा म्हणून जास्तीत जास्त इतिहास (500 candles) आणतो
+                    let res15t = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${_tfT}&limit=500`);
                     let data15t = await res15t.json();
 
                     let closesT = data15t.map(d => parseFloat(d[4]));
@@ -1854,9 +1886,9 @@
                     };
 
                     let closesUpToK0 = closesT.slice(0, ptrT + 1);
-                    let ema21t = calculateEMA(closesUpToK0, 21);
-                    let ema50t = calculateEMA(closesUpToK0, 50);
-                    let ema200t = calculateEMA(closesUpToK0, 200);
+                    let ema21t = calculateEMAAccurate(closesUpToK0, 21);
+                    let ema50t = calculateEMAAccurate(closesUpToK0, 50);
+                    let ema200t = calculateEMAAccurate(closesUpToK0, 200);
 
                     let maxEmaT = Math.max(ema21t, ema50t, ema200t);
                     let minEmaT = Math.min(ema21t, ema50t, ema200t);
@@ -2137,6 +2169,18 @@
             return ema;
         }
 
+        // ➕ S7 साठी अधिक अचूक EMA — पहिल्या close ऐवजी पहिल्या `period` candles च्या SMA पासून सुरुवात करतो,
+        // त्यामुळे TradingView च्या चार्टवरील खऱ्या EMA च्या खूप जवळ result मिळतो (विशेषतः EMA200 साठी)
+        function calculateEMAAccurate(pArr, period) {
+            if (pArr.length < period) return calculateEMA(pArr, period); // पुरेसा data नसेल तर जुनी पद्धत वापर
+            let sum = 0;
+            for (let i = 0; i < period; i++) sum += pArr[i];
+            let ema = sum / period; // SMA सुरुवात
+            const k = 2 / (period + 1);
+            for (let i = period; i < pArr.length; i++) { ema = pArr[i] * k + ema * (1 - k); }
+            return ema;
+        }
+
         function calculateSupertrendRMA(data, period, mult) {
             let tr = [], hl2 = [];
             for (let i = 0; i < data.length; i++) {
@@ -2261,10 +2305,46 @@
             updateTradePreview();
         }
 
+        // ── Custom Asset Selector modal ──
+        function openAssetModal() {
+            syncAssetModalUI();
+            document.getElementById('asset_modal_overlay').style.display = 'flex';
+        }
+        function closeAssetModal() {
+            document.getElementById('asset_modal_overlay').style.display = 'none';
+        }
+        function selectAssetModal(val) {
+            const item = document.querySelector('#asset_modal_list .strat-modal-item[data-value="' + val + '"]');
+            if (item && item.classList.contains('disabled')) return;
+            document.getElementById('asset_choice').value = val;
+            switchMarket();
+            updateTradePreview();
+            syncAssetModalUI();
+            closeAssetModal();
+        }
+        function syncAssetModalUI() {
+            const val = document.getElementById('asset_choice').value;
+            document.querySelectorAll('#asset_modal_list .strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const ethOpt = document.getElementById('asset_opt_eth');
+            const goldOpt = document.getElementById('asset_opt_gold');
+            const ethItem = document.getElementById('asset_modal_item_eth');
+            const goldItem = document.getElementById('asset_modal_item_gold');
+            if (ethItem) ethItem.classList.toggle('disabled', !!(ethOpt && ethOpt.disabled));
+            if (goldItem) goldItem.classList.toggle('disabled', !!(goldOpt && goldOpt.disabled));
+            const activeItem = document.querySelector('#asset_modal_list .strat-modal-item[data-value="' + val + '"]');
+            const display = document.getElementById('asset_select_display');
+            if (activeItem && display) {
+                display.textContent = activeItem.querySelector('.strat-modal-item-label').textContent;
+            }
+        }
+
         function switchMarket() {
             const asset = document.getElementById('asset_choice').value;
             document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
             syncStrategyModalUI();
+            syncAssetModalUI();
             initTradingView(); refreshUI(); syncSharkQty();
         }
 
@@ -3149,6 +3229,7 @@
                 qtyInput.removeAttribute('max');
                 balLabel.innerHTML = '<span style="color:#f0b90b">Real</span> Balance';
             }
+            syncAssetModalUI();
             refreshUI();
         }
 
