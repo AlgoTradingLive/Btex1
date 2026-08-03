@@ -568,8 +568,8 @@
                                 <span data-hi>कोई अपफ्रंट फीस नहीं</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Real prop-firm challenges charge an upfront fee to attempt them. Here you practice for free and save that <span class="sp-chip sp-chip-green">$35 upfront fee</span>.</span>
-                                <span data-hi>असली प्रॉप-फर्म चैलेंज में अटेम्प्ट के लिए अपफ्रंट फीस लगती है। यहां आप फ्री में प्रैक्टिस करते हैं और वो <span class="sp-chip sp-chip-green">$35 अपफ्रंट फीस</span> बचाते हैं।</span>
+                                <span data-en>Real prop-firm challenges charge an upfront fee to attempt them. Here you practice for free and save that <span class="sp-chip sp-chip-green">$35 upfront fee</span>. All the rules below (profit targets, loss limits, quantity caps) are modeled on an actual prop firm's real rules, so you get genuine practice for the real thing.</span>
+                                <span data-hi>असली प्रॉप-फर्म चैलेंज में अटेम्प्ट के लिए अपफ्रंट फीस लगती है। यहां आप फ्री में प्रैक्टिस करते हैं और वो <span class="sp-chip sp-chip-green">$35 अपफ्रंट फीस</span> बचाते हैं। नीचे दिए गए सभी नियम (प्रॉफिट टार्गेट, लॉस लिमिट, क्वांटिटी कैप) एक असली प्रॉप फर्म के नियमों पर आधारित हैं, ताकि आपको असली चैलेंज की सही प्रैक्टिस मिले।</span>
                             </span>
                         </div>
                     </div>
@@ -610,8 +610,8 @@
                                 <span data-hi>एसेट और क्वांटिटी लिमिट</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Trade <span class="sp-chip sp-chip-gold">BTC/USDT only</span>. Total open quantity across all positions can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span>.</span>
-                                <span data-hi>सिर्फ <span class="sp-chip sp-chip-gold">BTC/USDT</span> ट्रेड करें। सभी ओपन पोज़िशन्स की कुल क्वांटिटी कभी भी <span class="sp-chip sp-chip-gold">0.14 BTC</span> से ज़्यादा नहीं हो सकती।</span>
+                                <span data-en>Trade <span class="sp-chip sp-chip-gold">BTC, ETH or GOLD</span>. Total open quantity per asset can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span> / <span class="sp-chip sp-chip-gold">2.8 ETH</span> / <span class="sp-chip sp-chip-gold">0.50 GOLD</span>.</span>
+                                <span data-hi><span class="sp-chip sp-chip-gold">BTC, ETH या GOLD</span> ट्रेड करें। हर एसेट की ओपन पोज़िशन्स की कुल क्वांटिटी कभी भी <span class="sp-chip sp-chip-gold">0.14 BTC</span> / <span class="sp-chip sp-chip-gold">2.8 ETH</span> / <span class="sp-chip sp-chip-gold">0.50 GOLD</span> से ज़्यादा नहीं हो सकती।</span>
                             </span>
                         </div>
                     </div>
@@ -2420,6 +2420,7 @@
             document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
             syncStrategyModalUI();
             syncAssetModalUI();
+            updateFundedQtyMax();
             initTradingView(); refreshUI(); syncSharkQty();
         }
 
@@ -2778,7 +2779,7 @@
 
             <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
                 <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💰 2-STEP HIGH STAKES CHALLENGE</div>
-                <div style="font-size: 11px; color: #b2b5be; margin-top:3px;">BTC/USDT only · Max Qty 0.14 · Unlimited Time</div>
+                <div style="font-size: 11px; color: #b2b5be; margin-top:3px;">BTC (0.14) · ETH (2.8) · GOLD (0.50) · Unlimited Time</div>
                 <div style="font-size: 10px; color: #089981; margin-top:4px; font-weight:bold;">💸 Save $35 Upfront Fee — Practice Free</div>
             </div>
 
@@ -2858,8 +2859,9 @@
         const FUNDED_DAILY_LOSS = 250;           // 5% of $5,000
         const FUNDED_STEP1_TARGET = 500;         // 10% of $5,000
         const FUNDED_STEP2_PCT = 0.05;           // 5% of balance at start of step 2
-        const FUNDED_MAX_QTY = 0.14;             // BTC
-        const FUNDED_ASSET = 'BTCUSDT';
+        const FUNDED_MAX_QTY_MAP = { BTCUSDT: 0.14, ETHUSDT: 2.8, PAXGUSDT: 0.50 }; // per-asset max qty
+        const FUNDED_ASSETS = ['BTCUSDT', 'ETHUSDT', 'PAXGUSDT'];
+        const FUNDED_ASSET = 'BTCUSDT'; // default/back-compat reference
 
         let fundedChallengeData = null; // { active, failed, passed, step, startBalance, balance, stepStartBalance, step2Target, totalPnl, days:{}, trades:[], history:[] }
         let tradingMode = 'real'; // 'real' | 'funded'
@@ -2955,31 +2957,35 @@
                 showFundedMessage('🔒 Challenge is over. Tap Retry to start a new one.', 'block');
                 return false;
             }
-            if (asset !== FUNDED_ASSET) {
-                showFundedMessage('🚫 Funded Challenge allows BTC/USDT trades only.', 'block');
+            if (!FUNDED_ASSETS.includes(asset)) {
+                showFundedMessage('🚫 Funded Challenge allows BTC, ETH and GOLD trades only.', 'block');
                 return false;
             }
-            if (qty > FUNDED_MAX_QTY) {
-                showFundedMessage(`🚫 Max qty allowed is ${FUNDED_MAX_QTY} BTC.`, 'block');
+            const maxQty = FUNDED_MAX_QTY_MAP[asset];
+            const label = asset.replace('USDT','').replace('PAXG','GOLD');
+            if (qty > maxQty) {
+                showFundedMessage(`🚫 Max qty allowed is ${maxQty} ${label}.`, 'block');
                 return false;
             }
-            const openQty = (fundedChallengeData.trades || []).reduce((sum, t) => sum + (t.qty || 0), 0);
-            if (openQty + qty > FUNDED_MAX_QTY + 1e-9) {
-                const remaining = Math.max(0, FUNDED_MAX_QTY - openQty);
-                showFundedMessage(`🚫 Total open qty limit is ${FUNDED_MAX_QTY} BTC. You can only add ${remaining.toFixed(2)} BTC more.`, 'block');
+            const openQty = (fundedChallengeData.trades || []).filter(t => t.asset === asset).reduce((sum, t) => sum + (t.qty || 0), 0);
+            if (openQty + qty > maxQty + 1e-9) {
+                const remaining = Math.max(0, maxQty - openQty);
+                showFundedMessage(`🚫 Total open qty limit is ${maxQty} ${label}. You can only add ${remaining.toFixed(2)} ${label} more.`, 'block');
                 return false;
             }
             return true;
         }
 
         function fundedManualTrade(side) {
-            const asset = FUNDED_ASSET; // locked
+            const asset = document.getElementById('asset_choice').value;
+            const maxQty = FUNDED_MAX_QTY_MAP[asset] || FUNDED_MAX_QTY_MAP[FUNDED_ASSET];
+            const label = asset.replace('USDT','').replace('PAXG','GOLD');
             let qty = parseFloat(document.getElementById('manual_qty').value) || 0.01;
-            if (qty > FUNDED_MAX_QTY) qty = FUNDED_MAX_QTY;
-            const _openQty = (fundedChallengeData && fundedChallengeData.trades ? fundedChallengeData.trades : []).reduce((sum, t) => sum + (t.qty || 0), 0);
-            const _remainingQty = Math.max(0, FUNDED_MAX_QTY - _openQty);
+            if (qty > maxQty) qty = maxQty;
+            const _openQty = (fundedChallengeData && fundedChallengeData.trades ? fundedChallengeData.trades : []).filter(t => t.asset === asset).reduce((sum, t) => sum + (t.qty || 0), 0);
+            const _remainingQty = Math.max(0, maxQty - _openQty);
             if (_remainingQty <= 0) {
-                showFundedMessage(`🚫 Total open qty limit is ${FUNDED_MAX_QTY} BTC already reached. Close a position first.`, 'block');
+                showFundedMessage(`🚫 Total open qty limit is ${maxQty} ${label} already reached. Close a position first.`, 'block');
                 return;
             }
             if (qty > _remainingQty) qty = _remainingQty;
@@ -3261,6 +3267,17 @@
             tbody.innerHTML = fHistory.slice(0, 20).map(h => buildFundedHistoryRowHTML(h, rate, sym)).join('');
         }
 
+        // Keeps the manual qty input's max in sync with whichever asset (BTC/ETH/GOLD)
+        // is selected while Funded Challenge mode is active.
+        function updateFundedQtyMax() {
+            if (tradingMode !== 'funded') return;
+            const asset = document.getElementById('asset_choice').value;
+            const qtyInput = document.getElementById('manual_qty');
+            const maxQty = FUNDED_MAX_QTY_MAP[asset] || FUNDED_MAX_QTY_MAP[FUNDED_ASSET];
+            qtyInput.setAttribute('max', maxQty);
+            if (parseFloat(qtyInput.value) > maxQty) qtyInput.value = maxQty;
+        }
+
         // ── Real / Funded Challenge trading mode toggle ──
         function toggleTradingMode() {
             const on = document.getElementById('funded_mode_toggle').checked;
@@ -3273,11 +3290,9 @@
             const balLabel = document.getElementById('balance_label');
 
             if (tradingMode === 'funded') {
-                assetSel.value = 'BTCUSDT';
-                ethOpt.disabled = true;
-                goldOpt.disabled = true;
-                qtyInput.setAttribute('max', FUNDED_MAX_QTY);
-                if (parseFloat(qtyInput.value) > FUNDED_MAX_QTY) qtyInput.value = FUNDED_MAX_QTY;
+                ethOpt.disabled = false;
+                goldOpt.disabled = false;
+                updateFundedQtyMax();
                 balLabel.innerHTML = '<span style="color:#f0b90b">Funded Challenge</span> Balance';
                 switchMarket();
                 loadFundedChallenge();
