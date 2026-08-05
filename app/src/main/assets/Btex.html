@@ -2021,6 +2021,7 @@
             const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
             const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true), tf: tfNow };
             trades.push(trade); saveData(); refreshUI();
+            serverOpenTrade(trade, 'btex_real'); // mirror to always-on server so SL/Target executes even if app closes
             notifyKodular("TRADE_OPEN|" + asset + "|" + side + "|" + stratName);
 
             // Record trade count in challenge — manual only
@@ -2105,19 +2106,21 @@
         const FEE_RATE = 0.0006;
 
         // ✅ FIX 2: closeSingle
-        function closeSingle(id) {
+        function closeSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
             let idx = trades.findIndex(t => t.id === id);
             if(idx > -1) {
-                let t = trades[idx]; const lp = prices[t.asset] || t.entry;
+                let t = trades[idx]; const lp = forceExitPrice || prices[t.asset] || t.entry;
                 let grossPnlUSD = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
                 let feeUSD = t.entry * t.qty * FEE_RATE;
                 let netPnlUSD = grossPnlUSD - feeUSD;
                 let pnlINR = netPnlUSD * 83.50;
                 let feeINR = feeUSD * 83.50;
                 balance += pnlINR; 
-                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), isManual: t.isManual, tf: t.tf });
                 if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
+
+                if (!skipServerNotify) serverManualClose(t.id, lp);
 
                 // Challenge P&L — only for explicitly flagged manual trades
                 if (t.isManual === true && typeof challengeOnTradeClose === 'function') {
@@ -2850,6 +2853,85 @@
     </div>
 
     <script>
+        // ── Server sync (always-on pending order executor) ──
+        // Same shared Render backend used by Nafa — trades are tagged with
+        // 'btex_' prefixed account modes so both apps' data stays separate
+        // in the one database. If the server is unreachable, every function
+        // below fails silently — local SL/Target checking keeps working
+        // exactly as before, so nothing breaks when offline.
+        const SERVER_URL = 'https://nafa-kfqj.onrender.com';
+        const SERVER_API_KEY = 'nafa_prod_key_8x7k2m9qz1';
+
+        async function serverOpenTrade(trade, accountMode) {
+            try {
+                await fetch(`${SERVER_URL}/api/trades`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({
+                        id: String(trade.id),
+                        account_mode: accountMode || 'btex_funded',
+                        asset: trade.asset,
+                        side: trade.side,
+                        qty: trade.qty,
+                        entry_price: trade.entry,
+                        sl_price: trade.sl || 0,
+                        tgt_price: trade.tgt || 0,
+                        strategy: trade.strat,
+                        timeframe: trade.tf,
+                        fee: (trade.entry * trade.qty * FEE_RATE)
+                    })
+                });
+            } catch (err) {
+                console.warn('[serverSync] could not register trade with server (will keep working locally):', err.message);
+            }
+        }
+
+        async function serverManualClose(id, exitPrice) {
+            try {
+                await fetch(`${SERVER_URL}/api/trades/${id}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ exit_price: exitPrice })
+                });
+            } catch (err) {
+                console.warn('[serverSync] could not notify server of close:', err.message);
+            }
+        }
+
+        // Called on app start (and periodically): catches up on any trade that
+        // the SERVER closed via SL/Target while this app was completely closed.
+        // Covers BOTH trading systems: Funded Challenge trades AND Real-mode /
+        // 30 Day Challenge trades (manual + auto-strategy).
+        async function serverSyncClosedTrades() {
+            await syncClosedForMode('btex_funded', fundedChallengeData ? fundedChallengeData.trades : null,
+                (id, exitPrice, closeTime) => fundedCloseSingle(id, exitPrice, true, closeTime));
+            await syncClosedForMode('btex_real', (typeof trades !== 'undefined') ? trades : null,
+                (id, exitPrice, closeTime) => closeSingle(id, exitPrice, true, closeTime));
+        }
+
+        async function syncClosedForMode(accountMode, localTradesArr, applyCloseFn) {
+            if (!localTradesArr || localTradesArr.length === 0) return;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/trades?status=CLOSED&account_mode=${accountMode}`, {
+                    headers: { 'x-api-key': SERVER_API_KEY }
+                });
+                if (!res.ok) return;
+                const closedOnServer = await res.json();
+                const closedIds = new Set(closedOnServer.map(t => t.id));
+                localTradesArr.slice().forEach(localTrade => {
+                    if (closedIds.has(String(localTrade.id))) {
+                        const serverTrade = closedOnServer.find(t => t.id === String(localTrade.id));
+                        console.log(`[serverSync:${accountMode}] applying server-side exit that happened while app was closed:`, serverTrade.exit_reason);
+                        applyCloseFn(localTrade.id, serverTrade.exit_price, serverTrade.close_time);
+                    }
+                });
+            } catch (err) {
+                console.warn(`[serverSync:${accountMode}] could not sync closed trades:`, err.message);
+            }
+        }
+    </script>
+
+    <script>
         // =============================================
         // FUNDED ACCOUNT CHALLENGE SYSTEM
         // =============================================
@@ -3006,6 +3088,7 @@
             fundedChallengeData.trades.push(trade);
             saveFundedChallenge();
             refreshUI();
+            serverOpenTrade(trade, 'btex_funded'); // mirror to always-on server so SL/Target executes even if app closes
 
             document.getElementById('manual_sl_input').value = "";
             document.getElementById('manual_target_input').value = "";
@@ -3022,7 +3105,7 @@
             });
         }
 
-        function fundedCloseSingle(id, forceExitPrice) {
+        function fundedCloseSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
             if (!fundedChallengeData) return;
             let idx = fundedChallengeData.trades.findIndex(t => t.id === id);
             if (idx === -1) return;
@@ -3038,9 +3121,11 @@
             const k = getFundedTodayKey();
             fundedChallengeData.days[k].pnl += netPnlUSD;
 
-            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), tf: t.tf });
             if (fundedChallengeData.history.length > 100) fundedChallengeData.history.length = 100;
             fundedChallengeData.trades.splice(idx, 1);
+
+            if (!skipServerNotify) serverManualClose(t.id, lp);
 
             fundedCheckLimits();
             saveFundedChallenge();
@@ -3329,13 +3414,15 @@
             if (fundedChallengeData && fundedChallengeData.active && !fundedChallengeData.failed && !fundedChallengeData.passed) {
                 activateFundedTradingMode();
             }
+            serverSyncClosedTrades(); // catch up on any SL/Target that the server executed while app was closed
         }, 500);
 
-        // Funded trades exit checker — always runs in background regardless of active mode
+        // Trades exit checker — always runs in background regardless of active mode
         setInterval(function() {
-            if (fundedChallengeData && fundedChallengeData.trades && fundedChallengeData.trades.length > 0) {
-                fundedCheckExits();
-            }
+            const hasFundedOpen = fundedChallengeData && fundedChallengeData.trades && fundedChallengeData.trades.length > 0;
+            const hasRealOpen = (typeof trades !== 'undefined') && trades.length > 0;
+            if (hasFundedOpen) fundedCheckExits();
+            if (hasFundedOpen || hasRealOpen) serverSyncClosedTrades();
         }, 5000);
     </script>
 
