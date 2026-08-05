@@ -2,7 +2,7 @@ name: Build Signed AAB
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, server-backend ]
 
 jobs:
   build:
@@ -46,7 +46,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.${{ github.run_number }}
+          tag_name: v1.0.${{ github.run_number }}-${{ github.run_attempt }}
+          name: Build ${{ github.run_number }} (${{ github.ref_name }})
           files: |
             app/build/outputs/bundle/release/*.aab
             app/build/outputs/apk/release/*.apk
