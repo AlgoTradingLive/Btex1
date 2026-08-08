@@ -243,6 +243,37 @@
         .chal-warning-banner { background:#f23645; color:#fff; font-size:9px; font-weight:bold; text-align:center; padding:4px; border-radius:4px; margin-bottom:6px; display:none; }
         .chal-section-title { color:#38bdf8; font-size:9px; font-weight:bold; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.5px; }
 
+        /* ── Profit Battle (new) — reuses .chal-* above for the lobby box, these are battle-specific ── */
+        #battle_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
+        #battle_overlay.show { display:flex; }
+        /* Live battle status bar — sits above the chart. Chart + the normal manual
+           trade panel stay visible/usable; trades placed there count as battle trades. */
+        #battle_live_bar { display:none; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1450; background:#131722; border-bottom:2px solid #f0b90b; padding:5px 8px; font-size:9px; }
+        #battle_live_bar.show { display:block; }
+        /* Minimized state: instead of the full-width bar sitting at top:0 (which
+           covers the timeframe/indicator toolbar underneath), shrink down to a
+           small pill tucked in the top-right corner, just below that toolbar,
+           so the tools stay usable. Tap it to expand back to the full bar. */
+        #battle_live_bar.mini-corner {
+            top: 38px; left: auto; right: 6px; width: auto;
+            border-bottom: none; border: 1px solid #f0b90b; border-radius: 20px;
+            padding: 3px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        /* Professional in-app alert modal for battle messages (replaces native alert()) */
+        #battle_alert_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10500; align-items:center; justify-content:center; }
+        #battle_alert_overlay.show { display:flex; }
+        .battle-alert-box { background:#131722; border:2px solid #f0b90b; border-radius:12px; padding:18px 16px; width:88%; max-width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
+        .battle-alert-box.tone-error { border-color:#f23645; }
+        .battle-alert-box.tone-success { border-color:#089981; }
+        .battle-alert-icon { font-size:26px; margin-bottom:8px; display:block; }
+        .battle-alert-msg { color:#eaecef; font-size:12.5px; line-height:1.5; margin-bottom:14px; white-space:pre-line; }
+        .battle-alert-ok-btn { width:100%; padding:9px; border-radius:6px; border:none; font-size:11px; font-weight:bold; cursor:pointer; background:#f0b90b; color:#000; }
+        .battle-alert-box.tone-error .battle-alert-ok-btn { background:#f23645; color:#fff; }
+        .battle-alert-box.tone-success .battle-alert-ok-btn { background:#089981; color:#fff; }
+        .battle-alert-copy-row { display:flex; gap:6px; margin-bottom:14px; }
+        .battle-alert-copy-input { flex:1; background:#1e222d; border:1px solid #444; color:#b2b5be; font-size:10px; padding:8px 6px; border-radius:6px; }
+        .battle-alert-copy-btn { background:#2a2e39; color:#f0b90b; border:1px solid #f0b90b; border-radius:6px; padding:0 12px; font-size:10px; font-weight:bold; cursor:pointer; }
+
         /* ── HAMBURGER SIDE PANEL ── */
         #side_panel_overlay {
             display: none; position: fixed; inset: 0; z-index: 2500;
@@ -707,6 +738,111 @@
                 </div>
             </div>
         </div>
+
+        <div class="sp-accordion" id="acc_battle">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_battle')">
+                <div class="sp-accordion-head-left">
+                    <span class="sp-accordion-icon">⚔️</span>
+                    <span class="sp-accordion-label">
+                        <span data-en>Battle Rules</span>
+                        <span data-hi>बैटल — नियम</span>
+                    </span>
+                </div>
+                <span class="sp-accordion-arrow">▼</span>
+            </div>
+            <div class="sp-accordion-body">
+                <div class="sp-accordion-inner">
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💵</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Starting Capital</span>
+                                <span data-hi>स्टार्टिंग कैपिटल</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Every player starts with the same virtual <span class="sp-chip sp-chip-gold">$1,000</span> — fixed, not editable.</span>
+                                <span data-hi>हर प्लेयर <span class="sp-chip sp-chip-gold">$1,000</span> के बराबर वर्चुअल अकाउंट से शुरू करता है — फिक्स्ड, बदला नहीं जा सकता।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">⚡</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Trade From the Main Panel</span>
+                                <span data-hi>मेन पैनल से ट्रेड करें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>No separate battle window. Once a battle is live, the same Buy/Sell buttons and inputs you always use place your battle trades.</span>
+                                <span data-hi>अलग से कोई बैटल विंडो नहीं है। बैटल लाइव होते ही, वही रोज़ के Buy/Sell बटन और इनपुट आपके बैटल ट्रेड प्लेस करते हैं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🪙</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Quantity Limits</span>
+                                <span data-hi>क्वांटिटी लिमिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Same rule as the Funded Account Challenge, per asset — total open quantity can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span>, <span class="sp-chip sp-chip-gold">2.8 ETH</span>, or <span class="sp-chip sp-chip-gold">0.50 Gold</span>.</span>
+                                <span data-hi>फंडेड अकाउंट चैलेंज जैसा ही नियम, हर एसेट के लिए — कुल ओपन क्वांटिटी कभी <span class="sp-chip sp-chip-gold">0.14 BTC</span>, <span class="sp-chip sp-chip-gold">2.8 ETH</span> या <span class="sp-chip sp-chip-gold">0.50 Gold</span> से ज़्यादा नहीं हो सकती।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🛡️</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Instant Elimination</span>
+                                <span data-hi>तुरंत एलिमिनेशन</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If your equity drops to <span class="sp-chip sp-chip-red">5% loss</span> of your starting $1,000, you're eliminated immediately and drop to the bottom of the leaderboard. Last player standing wins on the spot.</span>
+                                <span data-hi>आपकी इक्विटी $1,000 से <span class="sp-chip sp-chip-red">5% लॉस</span> तक पहुंचते ही आप तुरंत एलिमिनेट हो जाते हैं और लीडरबोर्ड में नीचे चले जाते हैं। आखिरी बचा प्लेयर तुरंत जीत जाता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">⏱️</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>3-Hour Duration</span>
+                                <span data-hi>3 घंटे की अवधि</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Every battle runs for a fixed <span class="sp-chip sp-chip-gold">3 hours</span>. When time's up, players are ranked by equity (realized + unrealized P&amp;L) — highest ranks first on the leaderboard. Equal equity shares the same rank.</span>
+                                <span data-hi>हर बैटल <span class="sp-chip sp-chip-gold">3 घंटे</span> के लिए चलता है। टाइम खत्म होने पर, प्लेयर्स को इक्विटी (realized + unrealized P&amp;L) के हिसाब से रैंक किया जाता है — लीडरबोर्ड में सबसे ऊपर सबसे ज़्यादा। बराबर इक्विटी वालों की रैंक भी बराबर होती है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎲</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Host, Share, or Find a Match</span>
+                                <span data-hi>होस्ट करें, शेयर करें, या मैच ढूंढें</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Host picks any lobby size (<span class="sp-chip sp-chip-gold">2 players minimum</span>, no upper limit) and shares the join code, or tap <span class="sp-chip sp-chip-gold">Find Public Battle</span> to join an open lobby instantly. The battle starts once the lobby is full — or the host can start it early with 2+ players in.</span>
+                                <span data-hi>होस्ट कोई भी लॉबी साइज़ चुन सकता है (<span class="sp-chip sp-chip-gold">कम से कम 2 प्लेयर्स</span>, कोई ऊपरी लिमिट नहीं) और join code शेयर करता है, या <span class="sp-chip sp-chip-gold">Find Public Battle</span> दबाकर तुरंत किसी खुली लॉबी में join करें। लॉबी फुल होते ही बैटल शुरू हो जाता है — या होस्ट 2+ प्लेयर्स आते ही जल्दी शुरू कर सकता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="sp-action-btn" onclick="closeSidePanel(); openBattle();">
+                        <span data-en>Open Profit Battle</span>
+                        <span data-hi>प्रॉफिट बैटल खोलें</span>
+                    </button>
+                </div>
+            </div>
 
         <!-- ACCORDION 2: Auto Mode & Strategies -->
         <div class="sp-accordion" id="acc_strategies">
@@ -1175,6 +1311,7 @@
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
         <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
+        <button onclick="openBattle()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">⚔️ Battle</button>
         <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
     </div>
 
@@ -1453,7 +1590,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); }
+        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); resumeActiveBattleIfAny(); serverSyncClosedTrades(); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1466,6 +1603,43 @@
         }
 
         // Generic short-lived toast for quick feedback messages
+        // Styled in-app modal for battle messages — replaces native browser alert().
+        function showBattleAlert(msg, tone, copyText) {
+            const box = document.getElementById('battle_alert_box');
+            box.className = 'battle-alert-box' + (tone === 'error' ? ' tone-error' : tone === 'success' ? ' tone-success' : '');
+            document.getElementById('battle_alert_icon').innerText = tone === 'error' ? '❌' : tone === 'success' ? '✅' : '⚔️';
+            document.getElementById('battle_alert_msg').innerText = msg;
+            const copyRow = document.getElementById('battle_alert_copy_row');
+            if (copyText) {
+                copyRow.style.display = 'flex';
+                document.getElementById('battle_alert_copy_input').value = copyText;
+            } else {
+                copyRow.style.display = 'none';
+            }
+            document.getElementById('battle_alert_overlay').classList.add('show');
+        }
+        function closeBattleAlert() {
+            document.getElementById('battle_alert_overlay').classList.remove('show');
+        }
+        function copyBattleAlertText() {
+            const input = document.getElementById('battle_alert_copy_input');
+            input.select();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value).then(() => showToast('Copied!', '#089981'));
+            } else {
+                document.execCommand('copy');
+                showToast('Copied!', '#089981');
+            }
+        }
+
+        function openBattleRules() {
+            closeBattle();
+            openSidePanel();
+            const el = document.getElementById('acc_battle');
+            if (el && !el.classList.contains('open')) el.classList.add('open');
+            setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+        }
+
         function showToast(msg, color) {
             const c = color || '#38bdf8';
             const toast = document.createElement('div');
@@ -1683,7 +1857,7 @@
             try {
                 const settings = assetSettings[asset];
                 const strat = settings.strategy;
-                const isAuto = document.getElementById('auto_mode').checked;
+                const isAuto = document.getElementById('auto_mode').checked && !(typeof activeBattleId !== 'undefined' && activeBattleId);
                 const curP = prices[asset];
                 if(!curP || !isAuto) return;
 
@@ -2021,6 +2195,7 @@
             const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
             const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true), tf: tfNow };
             trades.push(trade); saveData(); refreshUI();
+            serverOpenTrade(trade, 'btex_real'); // mirror to always-on server so SL/Target executes even if app closes
             notifyKodular("TRADE_OPEN|" + asset + "|" + side + "|" + stratName);
 
             // Record trade count in challenge — manual only
@@ -2042,6 +2217,35 @@
             const currency = document.getElementById('currency_mode').value;
             const rate = (currency === 'INR') ? 83.50 : 1;
             const symbol = (currency === 'INR') ? ' INR' : ' USD';
+
+            if (typeof activeBattleId !== 'undefined' && activeBattleId) {
+                // ── Battle mode: positions/history render in the same bottom
+                // panel as Real/Funded (⚔️-tagged); the leaderboard itself
+                // lives in the top battle bar, untouched by this. ──
+                let bTotalP_USD = 0;
+                const bTrades = (battleData && battleData.trades) ? battleData.trades : [];
+                bTrades.forEach(t => {
+                    const lp = prices[t.asset] || t.entry;
+                    bTotalP_USD += (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                });
+                document.getElementById('btc_pnl_val').innerText = (bTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('btc_pnl_val').style.color = bTotalP_USD >= 0 ? "#089981" : "#f23645";
+                document.getElementById('eth_pnl_val').innerText = '-';
+                document.getElementById('eth_pnl_val').style.color = "#555";
+                document.getElementById('gold_pnl_val').innerText = '-';
+                document.getElementById('gold_pnl_val').style.color = "#555";
+                document.getElementById('total_pnl').innerText = (bTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('total_pnl').style.color = bTotalP_USD >= 0 ? "#089981" : "#f23645";
+
+                let bDisplayBal = (BATTLE_START_CAPITAL + bTotalP_USD);
+                if (currency === 'INR') bDisplayBal = bDisplayBal * 83.50;
+                document.getElementById('displayBalance').innerText = bDisplayBal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+
+                renderBattlePositionsBottom();
+                renderBattleHistoryBottom();
+                setTimeout(fixTabHeight, 0);
+                return;
+            }
 
             if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
                 // ── Funded Challenge mode: show virtual balance/P&L only ──
@@ -2104,26 +2308,764 @@
         // ── Brokerage fee: 0.06% of entry notional (entry price × qty), applied app-wide on close ──
         const FEE_RATE = 0.0006;
 
+        // ── Always-on server sync (shared with Nafa's backend — same
+        // infrastructure, Btex's own trades tagged with a distinct
+        // account_mode so they don't mix with Nafa's data). This lets
+        // SL/Target still execute even if the app is fully closed, and is
+        // what the Profit Battle feature below is built on top of. If the
+        // server below fails, it fails silently — local SL/Target checking
+        // keeps working exactly as before, so nothing breaks when offline.
+        const SERVER_URL = 'https://nafa-kfqj.onrender.com';
+        const SERVER_API_KEY = 'nafa_prod_key_8x7k2m9qz1';
+
+        async function serverOpenTrade(trade, accountMode, userId, challengeId) {
+            try {
+                const body = {
+                    id: String(trade.id),
+                    account_mode: accountMode || 'btex_real',
+                    asset: trade.asset,
+                    side: trade.side,
+                    qty: trade.qty,
+                    entry_price: trade.entry,
+                    sl_price: trade.sl || 0,
+                    tgt_price: trade.tgt || 0,
+                    strategy: trade.strat,
+                    timeframe: trade.tf,
+                    fee: (trade.entry * trade.qty * FEE_RATE)
+                };
+                if (userId) body.user_id = userId;
+                if (challengeId) body.challenge_id = challengeId;
+                await fetch(`${SERVER_URL}/api/trades`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify(body)
+                });
+            } catch (err) {
+                console.warn('[serverSync] could not register trade with server (will keep working locally):', err.message);
+            }
+        }
+
+        async function serverManualClose(id, exitPrice) {
+            try {
+                await fetch(`${SERVER_URL}/api/trades/${id}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ exit_price: exitPrice })
+                });
+            } catch (err) {
+                console.warn('[serverSync] could not notify server of close:', err.message);
+            }
+        }
+
+        // Pushes an SL/Target edit (from the Modify modal) to the server so
+        // orderMonitor.js — which watches every OPEN trade 24/7, even while
+        // this app is fully closed — enforces the NEW level, not the one the
+        // trade was originally opened with.
+        async function serverModifyTrade(id, slPrice, tgtPrice) {
+            try {
+                await fetch(`${SERVER_URL}/api/trades/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ sl_price: slPrice || 0, tgt_price: tgtPrice || 0 })
+                });
+            } catch (err) {
+                console.warn('[serverSync] could not sync modified SL/Target to server:', err.message);
+            }
+        }
+
+        // Called on app start: catches up on any trade the SERVER closed via
+        // SL/Target while this app was completely closed. Covers Real, Funded
+        // Challenge, and Battle trades.
+        async function serverSyncClosedTrades() {
+            await syncClosedForMode('btex_real', (typeof trades !== 'undefined') ? trades : null,
+                (id, exitPrice, closeTime) => closeSingle(id, exitPrice, true, closeTime));
+            await syncClosedForMode('btex_funded', (typeof fundedChallengeData !== 'undefined' && fundedChallengeData) ? fundedChallengeData.trades : null,
+                (id, exitPrice, closeTime) => fundedCloseSingle(id, exitPrice, true, closeTime));
+            await syncClosedForMode('battle', (typeof battleData !== 'undefined' && battleData) ? battleData.trades : null,
+                (id, exitPrice) => battleCloseSingle(id, exitPrice, true));
+        }
+
+        async function syncClosedForMode(accountMode, localTradesArr, applyCloseFn) {
+            if (!localTradesArr || localTradesArr.length === 0) return;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/trades?status=CLOSED&account_mode=${accountMode}`, {
+                    headers: { 'x-api-key': SERVER_API_KEY }
+                });
+                if (!res.ok) return;
+                const closedOnServer = await res.json();
+                const closedIds = new Set(closedOnServer.map(t => t.id));
+                localTradesArr.slice().forEach(localTrade => {
+                    if (closedIds.has(String(localTrade.id))) {
+                        const serverTrade = closedOnServer.find(t => t.id === String(localTrade.id));
+                        console.log(`[serverSync:${accountMode}] applying server-side exit that happened while app was closed:`, serverTrade.exit_reason);
+                        applyCloseFn(localTrade.id, serverTrade.exit_price, serverTrade.close_time);
+                    }
+                });
+            } catch (err) {
+                console.warn(`[serverSync:${accountMode}] could not sync closed trades:`, err.message);
+            }
+        }
+
         // ✅ FIX 2: closeSingle
-        function closeSingle(id) {
+        function closeSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
             let idx = trades.findIndex(t => t.id === id);
             if(idx > -1) {
-                let t = trades[idx]; const lp = prices[t.asset] || t.entry;
+                let t = trades[idx]; const lp = forceExitPrice || prices[t.asset] || t.entry;
                 let grossPnlUSD = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
                 let feeUSD = t.entry * t.qty * FEE_RATE;
                 let netPnlUSD = grossPnlUSD - feeUSD;
                 let pnlINR = netPnlUSD * 83.50;
                 let feeINR = feeUSD * 83.50;
                 balance += pnlINR; 
-                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), isManual: t.isManual, tf: t.tf });
                 if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
+
+                if (!skipServerNotify) serverManualClose(t.id, lp);
 
                 // Challenge P&L — only for explicitly flagged manual trades
                 if (t.isManual === true && typeof challengeOnTradeClose === 'function') {
                     challengeOnTradeClose(pnlINR);
                 }
             }
+        }
+
+        const BATTLE_MAX_QTY_BY_ASSET = {   // per-asset qty caps for battle trades
+            'BTCUSDT': 0.14,
+            'ETHUSDT': 2.8,
+            'PAXGUSDT': 0.50   // Gold
+        };
+        const BATTLE_START_CAPITAL = 1000;   // $1,000 each — fixed, not user-editable
+        const BATTLE_LOSS_LIMIT_PCT = 5;     // 5% max loss — fixed hard stop
+        const BATTLE_DURATION_MINS = 180;    // 3 hours — fixed
+        const BATTLE_KEY = 'NAFAA_BATTLE_LOCAL_V1';
+
+        let battleData = null;       // { challengeId, trades: [], eliminated }
+        let activeBattleId = null;   // battle currently open on the live screen
+        let battleLiveStatus = null; // last known status ('ACTIVE' | 'COMPLETED') of activeBattleId
+        let battlePollTimer = null;
+
+        function getBattleUserId() {
+            let uid = localStorage.getItem('NAFAA_USER');
+            if (!uid) {
+                uid = 'guest_' + Math.random().toString(36).slice(2, 8);
+                localStorage.setItem('NAFAA_USER', uid);
+            }
+            return uid;
+        }
+
+        // Cosmetic display name shown on the leaderboard instead of the raw
+        // anonymous device id — user_id (above) stays the real identity used
+        // for join/auth/ownership everywhere, this is purely what other
+        // players see next to your rank.
+        const BATTLE_NAME_KEY = 'NAFAA_BATTLE_NAME';
+        function getBattleDisplayName() {
+            return localStorage.getItem(BATTLE_NAME_KEY) || '';
+        }
+        function promptBattleDisplayName() {
+            document.getElementById('battle_name_input').value = getBattleDisplayName();
+            document.getElementById('battle_name_modal_overlay').style.display = 'flex';
+        }
+        function closeBattleNameModal() {
+            document.getElementById('battle_name_modal_overlay').style.display = 'none';
+        }
+        function saveBattleNameModal() {
+            const trimmed = document.getElementById('battle_name_input').value.trim().slice(0, 24);
+            localStorage.setItem(BATTLE_NAME_KEY, trimmed);
+            const el = document.getElementById('battle_name_display');
+            if (el) el.innerText = trimmed || 'Set your name ✏️';
+            closeBattleNameModal();
+        }
+
+        function loadBattleLocal() {
+            const saved = localStorage.getItem(BATTLE_KEY);
+            battleData = saved ? JSON.parse(saved) : { challengeId: null, trades: [], eliminated: false, history: [] };
+            if (!battleData.history) battleData.history = []; // upgrade older saved data missing this field
+        }
+        function saveBattleLocal() {
+            localStorage.setItem(BATTLE_KEY, JSON.stringify(battleData));
+        }
+
+        // Called once on app startup. activeBattleId only lives in memory (not
+        // localStorage), so without this, closing and reopening the app while
+        // a battle is still live would silently "forget" it — manualTrade()
+        // would fall through to Real/Funded again and any new trades would
+        // land in the normal position list instead of the battle. We ask the
+        // server (the source of truth) whether battleData.challengeId is
+        // still ACTIVE and, if so, restore the live battle screen exactly as
+        // if the user had tapped "Open Battle" on it.
+        async function resumeActiveBattleIfAny() {
+            if (!battleData) loadBattleLocal();
+            const id = battleData && battleData.challengeId;
+            if (!id) return;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/${id}`, { headers: { 'x-api-key': SERVER_API_KEY } });
+                if (!res.ok) return;
+                const c = await res.json();
+                if (c.status === 'ACTIVE') {
+                    openBattleLive(id);
+                } else if (c.status === 'COMPLETED') {
+                    // Show the result once more, then stop treating it as active.
+                    openBattleLive(id);
+                } else {
+                    // CANCELLED or unknown — nothing to resume, clear stale local state.
+                    battleData = { challengeId: null, trades: [], eliminated: false, history: [] };
+                    saveBattleLocal();
+                }
+            } catch (err) {
+                // Server unreachable at startup — leave battleData as-is and
+                // just don't auto-resume; the user can still open it manually
+                // from the lobby once the server's reachable again.
+            }
+        }
+
+        // ── Lobby ──
+        function openBattle() {
+            if (!battleData) loadBattleLocal();
+            const nameEl = document.getElementById('battle_name_display');
+            if (nameEl) nameEl.innerText = getBattleDisplayName() || 'Set your name ✏️';
+            document.getElementById('battle_overlay').classList.add('show');
+            refreshBattleList();
+        }
+        function closeBattle() {
+            document.getElementById('battle_overlay').classList.remove('show');
+        }
+
+        async function refreshBattleList() {
+            const uid = getBattleUserId();
+            const listEl = document.getElementById('battle_list');
+            listEl.innerHTML = '<div style="text-align:center;color:#888;font-size:10px;padding:10px;">Loading...</div>';
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/mine?user_id=${encodeURIComponent(uid)}`, {
+                    headers: { 'x-api-key': SERVER_API_KEY }
+                });
+                if (!res.ok) throw new Error('server error');
+                renderBattleList(await res.json(), uid);
+            } catch (err) {
+                listEl.innerHTML = '<div style="text-align:center;color:#f23645;font-size:10px;padding:10px;">Could not reach the battle server. Try again.</div>';
+            }
+        }
+
+        function renderBattleList(list, uid) {
+            const listEl = document.getElementById('battle_list');
+            if (!list.length) {
+                listEl.innerHTML = '<div style="text-align:center;color:#888;font-size:10px;padding:10px;">No battles yet. Start a new one below!</div>';
+                return;
+            }
+            listEl.innerHTML = list.map(c => {
+                const amHost = c.host_id === uid;
+                const playersLine = `${c.player_count}/${c.max_players} players${c.is_public ? ' · public' : ' · private'}`;
+                let statusChip = '', action = '';
+                if (c.status === 'PENDING') {
+                    statusChip = `<span style="color:#888;">Waiting — code: <b style="color:#f0b90b;">${c.id}</b> · ${playersLine}</span>`;
+                    action = amHost
+                        ? `<div style="display:flex; gap:4px; margin-top:4px;">
+                            <button class="chal-btn chal-btn-start" style="margin:0; padding:5px; flex:1;" onclick="shareBattleCode('${c.id}')">📤 Share</button>
+                            ${c.player_count >= 2 ? `<button class="chal-btn chal-btn-start" style="margin:0; padding:5px; flex:1;" onclick="startBattleNow('${c.id}')">▶️ Start</button>` : ''}
+                            <button class="chal-btn chal-btn-reset" style="margin:0; padding:5px; flex:1;" onclick="cancelBattle('${c.id}')">✕ Cancel</button>
+                        </div>`
+                        : `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="leaveBattle('${c.id}')">Leave lobby</button>`;
+                } else if (c.status === 'ACTIVE') {
+                    statusChip = `<span style="color:#089981;">⚔️ LIVE now · ${playersLine}</span>`;
+                    const isThisOneOpen = (activeBattleId === c.id);
+                    action = isThisOneOpen
+                        ? `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="exitBattle()">🚪 Exit to Normal Trading</button>`
+                        : `<button class="chal-btn chal-btn-start" style="margin-top:4px; padding:5px;" onclick="openBattleLive('${c.id}')">▶️ Open Battle</button>`;
+                } else if (c.status === 'COMPLETED') {
+                    const won = c.winner_id === uid;
+                    const drew = !c.winner_id;
+                    statusChip = drew ? '<span style="color:#f0b90b;">🤝 Tied at the top</span>' : (won ? '<span style="color:#089981;">🏆 You Won</span>' : '<span style="color:#f23645;">Battle ended</span>');
+                    action = `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="openBattleLive('${c.id}')">📊 View Result</button>`;
+                } else {
+                    statusChip = `<span style="color:#666;">${c.status}</span>`;
+                }
+                return `<div style="background:#1e222d;border:1px solid #2a2e39;border-radius:6px;padding:8px;margin-bottom:6px;">
+                    <div style="font-size:10px;color:#b2b5be;">${amHost ? 'Hosted by you' : 'Host: <b style="color:#eee;">' + (c.host_display_name || c.host_id) + '</b>'}</div>
+                    <div style="font-size:9px;margin-top:3px;">${statusChip}</div>
+                    ${action}
+                </div>`;
+            }).join('');
+        }
+
+        async function createBattleChallenge() {
+            const maxPlayersInput = document.getElementById('battle_max_players_input');
+            const publicInput = document.getElementById('battle_public_input');
+            const maxPlayers = maxPlayersInput ? parseInt(maxPlayersInput.value, 10) : 4;
+            const isPublic = publicInput ? publicInput.checked : true;
+            const uid = getBattleUserId();
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({
+                        host_id: uid,
+                        display_name: getBattleDisplayName(),
+                        max_players: maxPlayers,
+                        is_public: isPublic,
+                        start_capital: BATTLE_START_CAPITAL,
+                        loss_limit_pct: BATTLE_LOSS_LIMIT_PCT,
+                        duration_mins: BATTLE_DURATION_MINS
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) { showBattleAlert(data.error || 'Could not create battle', 'error'); return; }
+                refreshBattleList();
+                shareBattleCode(data.join_code);
+            } catch (err) {
+                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+            }
+        }
+
+        // Sends the join code to friends via the phone's native share sheet
+        // (WhatsApp, SMS, etc.). Falls back to clipboard copy if the WebView
+        // doesn't support navigator.share, and to the styled alert modal
+        // (with a Copy button) as last resort.
+        function shareBattleCode(code) {
+            const text = `⚔️ Join my Profit Battle on Nafa! Join code: ${code}\n\nOpen the app → ⚔️ Profit Battle → enter this code.`;
+            if (navigator.share) {
+                navigator.share({ title: 'Nafa Profit Battle', text: text }).catch(() => {});
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showBattleAlert('Invite copied — now paste it in WhatsApp.', 'success'));
+            } else {
+                showBattleAlert('Share this invite with your friends:', 'info', text);
+            }
+        }
+
+        // Skip the code-sharing step — join whichever open public lobby has
+        // room, or create a fresh public one if nothing's open right now.
+        async function findPublicBattle() {
+            const uid = getBattleUserId();
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/open?user_id=${encodeURIComponent(uid)}`, {
+                    headers: { 'x-api-key': SERVER_API_KEY }
+                });
+                const list = await res.json();
+                if (list && list.length) {
+                    await joinBattle(list[0].id);
+                } else {
+                    showBattleAlert('No open public battles right now — creating one for you. Share the code or wait for others to join.', 'info');
+                    const publicInput = document.getElementById('battle_public_input');
+                    if (publicInput) publicInput.checked = true;
+                    await createBattleChallenge();
+                }
+            } catch (err) {
+                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+            }
+        }
+
+        async function joinBattleByCode() {
+            const codeInput = document.getElementById('battle_join_input');
+            const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+            if (!code) return;
+            await joinBattle(code);
+            if (codeInput) codeInput.value = '';
+        }
+
+        async function joinBattle(id) {
+            const uid = getBattleUserId();
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/${id}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ user_id: uid, display_name: getBattleDisplayName() })
+                });
+                const data = await res.json();
+                if (!res.ok) { showBattleAlert(data.error || 'Could not join', 'error'); return; }
+                refreshBattleList();
+                if (data.started) {
+                    openBattleLive(id);
+                } else {
+                    showBattleAlert(`Joined! Waiting for host to start (${data.players}/${data.max_players} players).`, 'success');
+                }
+            } catch (err) {
+                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+            }
+        }
+
+        async function startBattleNow(id) {
+            const uid = getBattleUserId();
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/${id}/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ host_id: uid })
+                });
+                const data = await res.json();
+                if (!res.ok) { showBattleAlert(data.error || 'Could not start', 'error'); return; }
+                openBattleLive(id);
+            } catch (err) {
+                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+            }
+        }
+
+        async function leaveBattle(id) {
+            const uid = getBattleUserId();
+            try {
+                await fetch(`${SERVER_URL}/api/challenges/${id}/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ user_id: uid })
+                });
+                refreshBattleList();
+            } catch (err) {}
+        }
+
+        async function cancelBattle(id) {
+            const uid = getBattleUserId();
+            try {
+                await fetch(`${SERVER_URL}/api/challenges/${id}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
+                    body: JSON.stringify({ user_id: uid })
+                });
+                refreshBattleList();
+            } catch (err) {}
+        }
+
+        // ── Live Battle screen ──
+        function openBattleLive(id) {
+            activeBattleId = id;
+            battleLiveStatus = 'ACTIVE';
+            if (!battleData) loadBattleLocal();
+            if (battleData.challengeId !== id) {
+                battleData = { challengeId: id, trades: [], eliminated: false, history: [] };
+                saveBattleLocal();
+            }
+            document.getElementById('battle_overlay').classList.remove('show');
+            document.getElementById('battle_live_bar').classList.add('show');
+            document.getElementById('battle_result_banner').style.display = 'none';
+            expandBattleBar(); // always open on the full view, never mid-minimized
+
+            // Battle trading is manual-only, same as Funded Challenge — force
+            // Auto Mode off (it always trades the Real balance) so it can't
+            // silently keep firing trades outside the battle while this is live.
+            const autoCb = document.getElementById('auto_mode');
+            if (autoCb && autoCb.checked) {
+                autoCb.checked = false;
+                saveData();
+                showToast('🚫 Auto Mode paused while this Battle is live.', '#f0b90b');
+            }
+
+            renderBattlePositions();
+            pollBattleStatus();
+            if (battlePollTimer) clearInterval(battlePollTimer);
+            battlePollTimer = setInterval(pollBattleStatus, 8000);
+        }
+
+        function closeBattleLive() {
+            document.getElementById('battle_live_bar').classList.remove('show');
+            if (battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
+            activeBattleId = null;
+            battleLiveStatus = null;
+            refreshUI(); // switch the bottom panel back to Real/Funded now that battle trading has stopped
+        }
+
+        // ── Minimize/expand: purely visual. The battle, its polling, and its
+        // open positions in the bottom panel all keep running exactly the
+        // same either way — this only hides the big bar down to a small pill.
+        function minimizeBattleBar() {
+            document.getElementById('battle_bar_full').style.display = 'none';
+            document.getElementById('battle_bar_mini').style.display = 'flex';
+        }
+        function expandBattleBar() {
+            document.getElementById('battle_bar_mini').style.display = 'none';
+            document.getElementById('battle_bar_full').style.display = 'block';
+        }
+
+        // Deliberately leave battle-only trading mode and go back to Real/Funded,
+        // without touching this battle's own state on the server (it's still
+        // live for everyone else, and this player's own open battle trades
+        // stay open and still get tracked/eliminated normally by the server —
+        // this only stops the APP from routing new manual trades into it).
+        function exitBattle() {
+            if (!activeBattleId) return;
+            document.getElementById('exit_battle_modal_overlay').style.display = 'flex';
+        }
+        function closeExitBattleModal() {
+            document.getElementById('exit_battle_modal_overlay').style.display = 'none';
+        }
+        function confirmExitBattle() {
+            closeExitBattleModal();
+            closeBattle(); // close the lobby overlay if it happened to be open
+            closeBattleLive();
+        }
+
+        function toggleBattleLeaderboard() {
+            const el = document.getElementById('battle_leaderboard');
+            if (!el) return;
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            setTimeout(fixTabHeight, 0);
+        }
+
+        async function pollBattleStatus() {
+            if (!activeBattleId) return;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/challenges/${activeBattleId}`, { headers: { 'x-api-key': SERVER_API_KEY } });
+                if (!res.ok) return;
+                const c = await res.json();
+                renderBattleLive(c);
+                if (c.status === 'COMPLETED' && battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
+            } catch (err) {
+                console.warn('[battle] poll failed', err.message);
+            }
+        }
+
+        function renderBattleLive(c) {
+            const uid = getBattleUserId();
+            const lb = c.leaderboard || [];
+
+            const prevStatus = battleLiveStatus;
+            battleLiveStatus = c.status;
+
+            // lb is already sorted best-to-worst by the server (active players
+            // by P&L% desc, then eliminated players by how long they survived).
+            // Once the battle COMPLETEs the server has written a real final_rank
+            // (ties share a rank) — use that. While still live, derive a
+            // running rank from sort position, sharing rank on tied P&L%.
+            let rank = 0, prevPnl = null;
+            const ranked = lb.map((row, idx) => {
+                if (row.final_rank != null) return { ...row, rank: row.final_rank };
+                if (row.pnl_pct !== prevPnl) rank = idx + 1;
+                prevPnl = row.pnl_pct;
+                return { ...row, rank };
+            });
+
+            const mine = ranked.find(r => r.user_id === uid);
+            if (mine) {
+                const rankText = `#${mine.rank} / ${ranked.length}`;
+                const pnlText = (mine.pnl_pct >= 0 ? '+' : '') + mine.pnl_pct.toFixed(2) + '%';
+                const pnlColor = mine.pnl_pct >= 0 ? '#089981' : '#f23645';
+
+                const rankEl = document.getElementById('battle_my_rank');
+                rankEl.innerText = rankText;
+                const pnlEl = document.getElementById('battle_my_pnl');
+                pnlEl.innerText = pnlText;
+                pnlEl.style.color = pnlColor;
+
+                // Keep the minimized pill's numbers current too, so a user who
+                // left it minimized still sees their live rank/P&L at a glance
+                // without needing to expand.
+                const miniRankEl = document.getElementById('battle_mini_rank');
+                if (miniRankEl) miniRankEl.innerText = rankText;
+                const miniPnlEl = document.getElementById('battle_mini_pnl');
+                if (miniPnlEl) { miniPnlEl.innerText = pnlText; miniPnlEl.style.color = pnlColor; }
+
+                // The server is the source of truth on elimination (it force-closed
+                // their open trades already) — mirror that into local state the
+                // instant we see it, so placeBattleTrade() blocks locally without
+                // needing a round-trip, and any open positions shown locally get
+                // cleared since the server already closed them.
+                if (mine.eliminated && !battleData.eliminated) {
+                    battleData.eliminated = true;
+                    battleData.trades = [];
+                    saveBattleLocal();
+                    if (c.status === 'ACTIVE') showBattleAlert('You hit your 5% loss limit — eliminated. You can still watch the leaderboard, but no more trades in this battle.', 'error');
+                }
+            }
+
+            const boardEl = document.getElementById('battle_leaderboard');
+            if (boardEl) {
+                boardEl.innerHTML = ranked.map(r => {
+                    const isMe = r.user_id === uid;
+                    const nameColor = isMe ? '#f0b90b' : '#eaecef';
+                    const pnlColor = r.eliminated ? '#666' : (r.pnl_pct >= 0 ? '#089981' : '#f23645');
+                    const tag = r.eliminated ? ' · eliminated' : '';
+                    const label = isMe ? 'You' : (r.display_name || r.user_id);
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; padding:4px 6px; border-bottom:1px solid #1e222d;">
+                        <span style="color:${nameColor}; font-weight:${isMe ? 'bold' : 'normal'};">#${r.rank} ${label}${tag}</span>
+                        <span style="color:${pnlColor}; font-weight:bold;">${r.pnl_pct >= 0 ? '+' : ''}${r.pnl_pct.toFixed(2)}%</span>
+                    </div>`;
+                }).join('');
+            }
+
+            const timerEl = document.getElementById('battle_timer');
+            const miniTimerEl = document.getElementById('battle_mini_timer');
+            if (c.status === 'ACTIVE' && c.ends_at) {
+                const remainMs = Math.max(0, c.ends_at - Date.now());
+                const h = Math.floor(remainMs / 3600000), m = Math.floor((remainMs % 3600000) / 60000), s = Math.floor((remainMs % 60000) / 1000);
+                const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                timerEl.innerText = timeStr;
+                if (miniTimerEl) miniTimerEl.innerText = timeStr;
+            } else if (c.status === 'COMPLETED') {
+                timerEl.innerText = '00:00:00';
+                if (miniTimerEl) miniTimerEl.innerText = 'Ended';
+            }
+
+            // Battle just finished — surface the result even if the user had
+            // it minimized, instead of leaving them to notice on their own.
+            if (prevStatus === 'ACTIVE' && c.status === 'COMPLETED') expandBattleBar();
+
+            const resultEl = document.getElementById('battle_result_banner');
+            if (c.status === 'COMPLETED') {
+                resultEl.style.display = 'block';
+                if (!mine) {
+                    resultEl.style.display = 'none';
+                } else if (mine.rank === 1 && ranked.filter(r => r.rank === 1).length > 1) {
+                    resultEl.innerHTML = '🤝 Tied for 1st place!';
+                    resultEl.style.color = '#f0b90b';
+                } else if (mine.rank === 1) {
+                    resultEl.innerHTML = c.end_reason === 'LAST_STANDING' ? '🏆 You Won — last one standing!' : '🏆 You won the battle!';
+                    resultEl.style.color = '#089981';
+                } else {
+                    resultEl.innerHTML = `❌ Battle over — you finished #${mine.rank} of ${ranked.length}.`;
+                    resultEl.style.color = '#f23645';
+                }
+                document.getElementById('battle_leaderboard').style.display = 'block';
+            } else if (mine && mine.eliminated) {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '🛑 Eliminated — spectating only, no more trades in this battle.';
+                resultEl.style.color = '#f23645';
+            } else {
+                resultEl.style.display = 'none';
+            }
+
+            renderBattlePositions();
+        }
+
+        function renderBattlePositions() {
+            refreshUI(); // repaints the bottom Positions/History tabs from battleData
+        }
+
+        // ── Battle Positions & History rendering — bottom panel, same shared
+        // table (#positions_body / #history_body) as Real and Funded trades,
+        // same visual pattern as renderPositions()/buildHistoryRowHTML().
+        // The leaderboard stays exactly where it already is, in the top bar.
+        function renderBattlePositionsBottom() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1;
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('positions_body');
+            if (!tbody) return;
+            const bTrades = (battleData && battleData.trades) ? battleData.trades : [];
+            if (bTrades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open battle positions</td></tr>';
+                return;
+            }
+            tbody.innerHTML = bTrades.map(t => {
+                const lp = prices[t.asset] || t.entry;
+                const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                const pnlDisp = pnlUSD * rate;
+                const feeUSD = t.entry * t.qty * FEE_RATE;
+                const feeDisp = feeUSD * rate;
+                let buyCol, sellCol;
+                if (t.side === 'BUY') {
+                    buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    sellCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                } else {
+                    sellCol = `<span style="color:#f23645;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                }
+                return `<tr>
+                    <td style="text-align:left; padding-left:6px;">⚔️ ${t.asset.replace('USDT','')}/${t.strat}</td>
+                    <td>${buyCol}</td>
+                    <td>${sellCol}</td>
+                    <td>${t.qty}</td>
+                    <td>
+                        <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
+                        <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
+                    </td>
+                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, 'battle')" style="background:#f0b90b;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="battleCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderBattleHistoryBottom() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1;
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('history_body');
+            if (!tbody) return;
+            const bHistory = (battleData && battleData.history) ? battleData.history : [];
+            if (bHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No battle trade history</td></tr>';
+                return;
+            }
+            tbody.innerHTML = bHistory.slice(0, 20).map(h => buildHistoryRowHTML(h, rate, sym)).join('');
+        }
+
+        // Places a battle trade using the SAME inputs as the normal manual trade
+        // panel (asset_choice / manual_qty / manual_sl_input / manual_target_input).
+        // Called from manualTrade() whenever a battle is live — no separate
+        // battle trade panel/inputs anymore.
+        function placeBattleTrade(side) {
+            if (!activeBattleId) return;
+            if (battleLiveStatus === 'COMPLETED') { showBattleAlert('This battle has ended.', 'info'); return; }
+            if (battleData && battleData.eliminated) { showBattleAlert('You already hit your loss limit in this battle.', 'error'); return; }
+
+            const asset = document.getElementById('asset_choice').value;
+            let qty = parseFloat(document.getElementById('manual_qty').value) || 1;
+
+            // Same max-qty rule as the Funded Account Challenge, applied per asset:
+            // cap the single entry, then also cap by whatever room is left across
+            // all currently open battle trades in that SAME asset.
+            const maxQty = BATTLE_MAX_QTY_BY_ASSET[asset];
+            if (maxQty !== undefined) {
+                if (qty > maxQty) qty = maxQty;
+                const openQty = (battleData && battleData.trades ? battleData.trades : [])
+                    .filter(t => t.asset === asset)
+                    .reduce((sum, t) => sum + (t.qty || 0), 0);
+                const remainingQty = Math.max(0, maxQty - openQty);
+                if (remainingQty <= 0) {
+                    showBattleAlert(`Total open qty limit is ${maxQty} ${asset === 'BTCUSDT' ? 'BTC' : asset === 'ETHUSDT' ? 'ETH' : 'Gold'} already reached. Close a position first.`, 'error');
+                    return;
+                }
+                if (qty > remainingQty) qty = remainingQty;
+            }
+
+            const slInput = document.getElementById('manual_sl_input').value;
+            const tgtInput = document.getElementById('manual_target_input').value;
+            const slPrice = slInput ? parseFloat(slInput) : 0;
+            const tgtPrice = tgtInput ? parseFloat(tgtInput) : 0;
+
+            const entryPrice = prices[asset] || 0;
+            if (!entryPrice) { showBattleAlert('Price not ready yet, try again in a moment.', 'info'); return; }
+
+            const uid = getBattleUserId();
+            if (!battleData) loadBattleLocal();
+            const trade = { id: Date.now(), side: side, entry: entryPrice, qty: qty, sl: slPrice, tgt: tgtPrice, strat: 'BATTLE', asset: asset, time: Date.now(), tf: '' };
+            battleData.trades.push(trade);
+            saveBattleLocal();
+            renderBattlePositions();
+
+            serverOpenTrade(trade, 'battle', uid, activeBattleId);
+
+            document.getElementById('manual_sl_input').value = '';
+            document.getElementById('manual_target_input').value = '';
+            const slPrev = document.getElementById('sl_preview'); if (slPrev) slPrev.innerText = '';
+            const tgtPrev = document.getElementById('tgt_preview'); if (tgtPrev) tgtPrev.innerText = '';
+        }
+
+        function battleCheckExits() {
+            if (!battleData || !battleData.trades || !battleData.trades.length) return;
+            battleData.trades.slice().forEach(t => {
+                const lp = prices[t.asset]; if (!lp) return;
+                if (t.sl > 0 && ((t.side === 'BUY' && lp <= t.sl) || (t.side === 'SELL' && lp >= t.sl))) battleCloseSingle(t.id);
+                if (t.tgt > 0 && ((t.side === 'BUY' && lp >= t.tgt) || (t.side === 'SELL' && lp <= t.tgt))) battleCloseSingle(t.id);
+            });
+        }
+
+        function battleCloseSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
+            if (!battleData) return;
+            const idx = battleData.trades.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            const t = battleData.trades[idx];
+            const lp = forceExitPrice || prices[t.asset] || t.entry;
+            const grossPnl = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+            const fee = t.entry * t.qty * FEE_RATE;
+            const netPnl = grossPnl - fee;
+
+            if (!battleData.history) battleData.history = [];
+            battleData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnl, fee: fee, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), tf: t.tf });
+            if (battleData.history.length > 100) battleData.history.length = 100;
+
+            battleData.trades.splice(idx, 1);
+            saveBattleLocal();
+            refreshUI();
+            if (!skipServerNotify) serverManualClose(String(t.id), lp);
         }
 
         function renderPositions() {
@@ -2335,6 +3277,7 @@
         }
 
         function manualTrade(side) {
+            if (typeof activeBattleId !== 'undefined' && activeBattleId) { placeBattleTrade(side); return; }
             if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
                 fundedManualTrade(side);
                 return;
@@ -2476,13 +3419,17 @@
 
         // ── MODIFY ORDER ──
         let modifyTradeId = null;
-        let modifyIsFunded = false;
+        let modifyMode = 'real'; // 'real' | 'funded' | 'battle' — which trade list modifyTradeId belongs to.
 
-        function openModify(id, isFunded) {
-            modifyIsFunded = !!isFunded;
-            const t = modifyIsFunded
-                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === id)
-                : trades.find(t => t.id === id);
+        function getModifyTradesList(mode) {
+            if (mode === 'funded') return (fundedChallengeData && fundedChallengeData.trades) || [];
+            if (mode === 'battle') return (battleData && battleData.trades) || [];
+            return trades;
+        }
+
+        function openModify(id, modeArg) {
+            modifyMode = modeArg === true ? 'funded' : (modeArg === 'battle' ? 'battle' : 'real');
+            const t = getModifyTradesList(modifyMode).find(t => t.id === id);
             if (!t) return;
             modifyTradeId = id;
             const lp = prices[t.asset] || t.entry;
@@ -2497,37 +3444,45 @@
         function closeModifyModal() {
             document.getElementById('modify_modal_overlay').style.display = 'none';
             modifyTradeId = null;
-            modifyIsFunded = false;
+            modifyMode = 'real';
         }
 
         function saveModify() {
             if (!modifyTradeId) return;
-            const t = modifyIsFunded
-                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === modifyTradeId)
-                : trades.find(t => t.id === modifyTradeId);
+            const t = getModifyTradesList(modifyMode).find(t => t.id === modifyTradeId);
             if (!t) return;
             const newSL = parseFloat(document.getElementById('modify_sl_input').value) || 0;
             const newTGT = parseFloat(document.getElementById('modify_tgt_input').value) || 0;
             t.sl = newSL;
             t.tgt = newTGT;
-            if (modifyIsFunded) {
+            serverModifyTrade(t.id, newSL, newTGT); // keep the always-on server in sync too
+            if (modifyMode === 'funded') {
                 saveFundedChallenge();
+                refreshUI();
+            } else if (modifyMode === 'battle') {
+                saveBattleLocal();
+                renderBattlePositions();
             } else {
                 saveData();
+                refreshUI();
             }
-            refreshUI();
             closeModifyModal();
         }
 
         function saveData() { localStorage.setItem('DELTA_ULTRA_S7', JSON.stringify({ bal: balance, trds: trades, hist: history, settings: assetSettings, auto: document.getElementById('auto_mode').checked })); }
 
         // Guards the AUTO toggle: Auto Mode trades always post to the Real balance, so it's
-        // blocked while Funded Challenge mode is active (funded trades must be manual).
+        // blocked while Funded Challenge mode or a live Battle is active (both require manual-only trading).
         function handleAutoModeToggle() {
             const cb = document.getElementById('auto_mode');
             if (cb.checked && typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
                 cb.checked = false;
                 showToast('🚫 Auto Mode is disabled during Funded Challenge. Switch to Real to use it.', '#f23645');
+                return;
+            }
+            if (cb.checked && typeof activeBattleId !== 'undefined' && activeBattleId) {
+                cb.checked = false;
+                showToast('🚫 Auto Mode is disabled while a Battle is live. Exit the Battle to use it.', '#f23645');
                 return;
             }
             saveData();
@@ -2849,6 +3804,103 @@
         </div>
     </div>
 
+    <div id="battle_overlay">
+        <div class="chal-box">
+            <div class="chal-title">⚔️ PROFIT BATTLE</div>
+
+            <div onclick="promptBattleDisplayName()" style="display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; background:#1e222d; border:1px solid #2a2e39; border-radius:6px; padding:6px 10px; margin-bottom:8px;">
+                <span style="font-size:9px; color:#888;">Playing as</span>
+                <span id="battle_name_display" style="font-size:11px; font-weight:bold; color:#f0b90b;">Set your name ✏️</span>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
+                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💵 $1,000 EACH · 🛡️ 5% MAX LOSS · ⏱️ 3 HOURS</div>
+                <div style="font-size: 10px; color: #b2b5be; margin-top:4px;">Highest P&amp;L% when time's up wins the leaderboard. Hit your loss limit and you're eliminated instantly.</div>
+            </div>
+
+            <div class="chal-section-title">➕ Host a New Battle</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#0c0d10; border:1px solid #2a2e39; border-radius:4px; padding:7px 8px;">
+                <span style="font-size:10px; color:#b2b5be; white-space:nowrap;">Max Players</span>
+                <input type="number" id="battle_max_players_input" min="2" value="4" step="1" style="flex:1; box-sizing:border-box; background:#1e222d; color:#f0b90b; border:1px solid #2a2e39; border-radius:4px; padding:5px 8px; font-size:12px; font-weight:bold; text-align:center;">
+            </div>
+            <div style="font-size:8px; color:#666; margin:-3px 0 8px 2px;">Minimum 2 — set any lobby size you want (big group battles work too).</div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:10px; color:#b2b5be; margin-bottom:8px; cursor:pointer;">
+                <input type="checkbox" id="battle_public_input" checked style="accent-color:#f0b90b;">
+                Public — show in the open lobby list for anyone to join
+            </label>
+            <button class="chal-btn chal-btn-start" onclick="createBattleChallenge()">⚔️ Create Battle</button>
+
+            <button class="chal-btn chal-btn-reset" style="margin-top:6px;" onclick="findPublicBattle()">🎲 Find Public Battle</button>
+
+            <div class="chal-section-title">🔑 Join with Code</div>
+            <div style="display:flex; gap:6px; margin-bottom:4px;">
+                <input type="text" id="battle_join_input" placeholder="e.g. 3C4080" style="flex:1; box-sizing:border-box; background:#0c0d10; color:#eee; border:1px solid #2a2e39; border-radius:4px; padding:7px 8px; font-size:10px;">
+                <button class="chal-btn chal-btn-start" style="width:auto; padding:0 14px; margin-top:0;" onclick="joinBattleByCode()">Join</button>
+            </div>
+
+            <div class="chal-section-title">📋 Your Battles</div>
+            <div id="battle_list" style="max-height:180px; overflow-y:auto; margin-bottom:6px;"></div>
+
+            <button class="chal-btn chal-btn-reset" onclick="refreshBattleList()">🔄 Refresh</button>
+            <button class="chal-btn chal-btn-reset" onclick="openBattleRules()">📜 RULES</button>
+            <button class="chal-btn chal-btn-close" onclick="closeBattle()">✕ CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Professional in-app alert modal for battle messages (replaces native alert()) -->
+    <div id="battle_alert_overlay">
+        <div class="battle-alert-box" id="battle_alert_box">
+            <span class="battle-alert-icon" id="battle_alert_icon">⚔️</span>
+            <div class="battle-alert-msg" id="battle_alert_msg"></div>
+            <div class="battle-alert-copy-row" id="battle_alert_copy_row" style="display:none;">
+                <input type="text" class="battle-alert-copy-input" id="battle_alert_copy_input" readonly>
+                <button class="battle-alert-copy-btn" onclick="copyBattleAlertText()">Copy</button>
+            </div>
+            <button class="battle-alert-ok-btn" onclick="closeBattleAlert()">OK</button>
+        </div>
+    </div>
+
+    <!-- Profit Battle: Live status bar (trading happens via the normal Buy/Sell
+         panel on the chart below, positions/history show in the normal bottom
+         panel too — same as Funded Challenge). This bar is leaderboard-only:
+         your rank/P&L at a glance, tap to expand the full standings.
+         Two visual states — full (#battle_bar_full) and a small collapsed
+         pill (#battle_bar_mini). Minimizing (─) is NOT the same as exiting
+         the battle: positions, polling, and battle-only trading all keep
+         running either way. Actually leaving the battle to trade normally
+         again is a deliberate action from the Battles list (exitBattle()). -->
+    <div id="battle_live_bar">
+        <div id="battle_bar_mini" onclick="expandBattleBar()" style="display:none; align-items:center; gap:6px; cursor:pointer; padding:4px 2px;">
+            <span style="font-weight:bold; color:#f0b90b;">⚔️</span>
+            <span id="battle_mini_rank" style="font-weight:bold; color:#f0b90b; font-size:10px;">#- / -</span>
+            <span id="battle_mini_pnl" style="font-weight:bold; font-size:10px;">+0.00%</span>
+            <span id="battle_mini_timer" style="color:#888; font-family:monospace; font-size:9px;">--:--:--</span>
+            <span style="color:#555; margin-left:auto;">▴ tap to expand</span>
+        </div>
+        <div id="battle_bar_full">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <div style="font-weight:bold; color:#f0b90b; white-space:nowrap;">⚔️ BATTLE</div>
+                <div id="battle_timer" style="font-weight:bold; color:#f0b90b; font-family:monospace; white-space:nowrap;">--:--:--</div>
+                <div onclick="toggleBattleLeaderboard()" style="display:flex; align-items:center; gap:5px; flex:1; justify-content:center; overflow:hidden; cursor:pointer;">
+                    <div style="text-align:center;">
+                        <div style="font-size:7px; color:#888;">YOUR RANK</div>
+                        <div id="battle_my_rank" style="font-weight:bold; color:#f0b90b;">#- / -</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:7px; color:#888;">P&amp;L</div>
+                        <div id="battle_my_pnl" style="font-weight:bold; color:#089981;">+0.00%</div>
+                    </div>
+                    <div style="color:#555;">▾</div>
+                </div>
+                <button onclick="openBattle()" style="background:#2a2e39; color:#f0b90b; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Battles</button>
+                <button onclick="minimizeBattleBar()" title="Minimize — battle keeps running" style="background:#2a2e39; color:#b2b5be; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; padding:3px 9px;">─</button>
+            </div>
+            <div id="battle_result_banner" style="display:none; text-align:center; padding:5px; border-radius:5px; margin-top:5px; font-weight:bold; background:rgba(255,255,255,0.05);"></div>
+            <div id="battle_leaderboard" style="display:none; margin-top:5px; max-height:150px; overflow-y:auto; background:#0c0d10; border-radius:6px; padding:4px;"></div>
+        </div>
+    </div>
+
+
     <script>
         // =============================================
         // FUNDED ACCOUNT CHALLENGE SYSTEM
@@ -3006,6 +4058,7 @@
             fundedChallengeData.trades.push(trade);
             saveFundedChallenge();
             refreshUI();
+            serverOpenTrade(trade, 'btex_funded'); // mirror to always-on server so SL/Target executes even if app closes
 
             document.getElementById('manual_sl_input').value = "";
             document.getElementById('manual_target_input').value = "";
@@ -3022,7 +4075,7 @@
             });
         }
 
-        function fundedCloseSingle(id, forceExitPrice) {
+        function fundedCloseSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
             if (!fundedChallengeData) return;
             let idx = fundedChallengeData.trades.findIndex(t => t.id === id);
             if (idx === -1) return;
@@ -3038,7 +4091,7 @@
             const k = getFundedTodayKey();
             fundedChallengeData.days[k].pnl += netPnlUSD;
 
-            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), tf: t.tf });
             if (fundedChallengeData.history.length > 100) fundedChallengeData.history.length = 100;
             fundedChallengeData.trades.splice(idx, 1);
 
@@ -3046,6 +4099,7 @@
             saveFundedChallenge();
             refreshUI();
             updateFundedUI();
+            if (!skipServerNotify) serverManualClose(t.id, lp);
         }
 
         function fundedCheckLimits() {
@@ -4012,6 +5066,46 @@
             loadMoreBtn.style.display = (filtered.length > thRenderCount) ? 'inline-block' : 'none';
         }
     </script>
+
+    <!-- ── EXIT BATTLE CONFIRM MODAL ── (window.confirm() has the same problem
+         as window.prompt() in this WebView — no native dialog to catch it) -->
+    <div id="exit_battle_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:16px;">🚪</span>
+                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">EXIT BATTLE?</span>
+            </div>
+            <div style="padding:10px 12px;">
+                <div style="font-size:10px; color:#b2b5be; line-height:1.5;">Go back to normal trading? Your battle positions stay open and the battle keeps running in the background — you can rejoin anytime from the Battles list.</div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button onclick="closeExitBattleModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
+                    <button onclick="confirmExitBattle()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">🚪 EXIT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── BATTLE DISPLAY NAME MODAL ── (window.prompt() doesn't render in this
+         WebView — no JS-dialog handler is wired up on the Flutter side — so
+         this uses the same in-page modal pattern as Modify SL/Target above) -->
+    <div id="battle_name_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:16px;">⚔️</span>
+                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">YOUR BATTLE NAME</span>
+            </div>
+            <div style="padding:10px 12px;">
+                <div style="font-size:9px; color:#b2b5be; margin-bottom:6px;">Shown on the leaderboard instead of your device id.</div>
+                <input id="battle_name_input" type="text" maxlength="24"
+                    style="width:100%; background:#131722; border:1.5px solid #f0b90b; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
+                    placeholder="e.g. Mango">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button onclick="closeBattleNameModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
+                    <button onclick="saveBattleNameModal()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✅ SAVE</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ── MODIFY SL/TGT MODAL ── -->
     <div id="modify_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
