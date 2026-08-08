@@ -199,7 +199,7 @@
         .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
         .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
         #auto_mode:checked + .toggle { background: #089981; }
-        #funded_mode_toggle:checked + .toggle { background: #f0b90b; }
+        #funded_mode_toggle:checked + .toggle { background: #C0C0C0; }
         #auto_mode:checked + .toggle::after { left: 18px; }
         #funded_mode_toggle:checked + .toggle::after { left: 18px; }
         #auto_mode { display: none; }
@@ -1311,7 +1311,7 @@
             </div>
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
-        <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
+        <button onclick="openFundedChallenge()" style="background:#1e222d; color:#C0C0C0; border:1px solid #C0C0C0; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
         <button onclick="openBattle()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">⚔️ Battle</button>
         <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
     </div>
@@ -3733,8 +3733,8 @@
         <div class="chal-box">
             <div class="chal-title">FUNDED ACCOUNT CHALLENGE</div>
 
-            <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
-                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💰 2-STEP HIGH STAKES CHALLENGE</div>
+            <div style="background: linear-gradient(135deg, rgba(192,192,192,0.18), rgba(192,192,192,0.06)); border: 1.5px solid #C0C0C0; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
+                <div style="font-size: 10px; font-weight: bold; color: #C0C0C0; letter-spacing: 0.5px;">💰 2-STEP HIGH STAKES CHALLENGE</div>
                 <div style="font-size: 11px; color: #b2b5be; margin-top:3px;">BTC (0.14) · ETH (2.8) · GOLD (0.50) · Unlimited Time</div>
                 <div style="font-size: 10px; color: #089981; margin-top:4px; font-weight:bold;">💸 Save $35 Upfront Fee — Practice Free</div>
             </div>
@@ -3745,7 +3745,7 @@
             <div class="chal-section-title">🏁 Step Progress</div>
             <div class="chal-stat-row">
                 <span class="chal-stat-label">Current Step</span>
-                <span class="chal-stat-val" id="fc_step_label" style="color:#f0b90b;">Step 1</span>
+                <span class="chal-stat-val" id="fc_step_label" style="color:#C0C0C0;">Step 1</span>
             </div>
             <div class="chal-stat-row">
                 <span class="chal-stat-label">Profit Target</span>
@@ -3814,8 +3814,8 @@
                 <span id="battle_name_display" style="font-size:11px; font-weight:bold; color:#38bdf8;">Set your name ✏️</span>
             </div>
 
-            <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
-                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💵 $1,000 EACH · 🛡️ 5% MAX LOSS · ⏱️ 3 HOURS</div>
+            <div style="background: linear-gradient(135deg, rgba(192,192,192,0.18), rgba(192,192,192,0.06)); border: 1.5px solid #C0C0C0; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
+                <div style="font-size: 10px; font-weight: bold; color: #C0C0C0; letter-spacing: 0.5px;">💵 $1,000 EACH · 🛡️ 5% MAX LOSS · ⏱️ 3 HOURS</div>
                 <div style="font-size: 10px; color: #b2b5be; margin-top:4px;">Highest P&amp;L% when time's up wins the leaderboard. Hit your loss limit and you're eliminated instantly.</div>
             </div>
 
@@ -4348,7 +4348,7 @@
                 ethOpt.disabled = false;
                 goldOpt.disabled = false;
                 updateFundedQtyMax();
-                balLabel.innerHTML = '<span style="color:#f0b90b">Funded Challenge</span> Balance';
+                balLabel.innerHTML = '<span style="color:#C0C0C0">Funded Challenge</span> Balance';
                 switchMarket();
                 loadFundedChallenge();
 
@@ -5031,8 +5031,8 @@
             document.getElementById('th_tab_manual').style.borderBottom = thCurrentType === 'manual' ? '2px solid #38bdf8' : '2px solid transparent';
             document.getElementById('th_tab_auto').style.color = thCurrentType === 'auto' ? '#38bdf8' : '#b2b5be';
             document.getElementById('th_tab_auto').style.borderBottom = thCurrentType === 'auto' ? '2px solid #38bdf8' : '2px solid transparent';
-            document.getElementById('th_tab_funded').style.color = thCurrentType === 'funded' ? '#f0b90b' : '#b2b5be';
-            document.getElementById('th_tab_funded').style.borderBottom = thCurrentType === 'funded' ? '2px solid #f0b90b' : '2px solid transparent';
+            document.getElementById('th_tab_funded').style.color = thCurrentType === 'funded' ? '#C0C0C0' : '#b2b5be';
+            document.getElementById('th_tab_funded').style.borderBottom = thCurrentType === 'funded' ? '2px solid #C0C0C0' : '2px solid transparent';
 
             const curr = document.getElementById('currency_mode').value;
             const tbody = document.getElementById('trade_history_modal_body');
