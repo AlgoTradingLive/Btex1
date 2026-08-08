@@ -3963,7 +3963,6 @@
             saveFundedChallenge();
             updateFundedUI();
             activateFundedTradingMode();
-            notifyKodular('SHOW_INTERSTITIAL_AD');
         }
 
         // Auto-switches the Real/Funded toggle into Funded mode and gives it a brief
@@ -4469,7 +4468,6 @@
             document.getElementById('chal_start_btn').style.display = 'none';
             document.getElementById('chal_reset_btn').style.display = 'block';
             updateMiniBar();
-            notifyKodular('SHOW_INTERSTITIAL_AD');
         }
 
         function resetChallenge() {
@@ -4496,7 +4494,6 @@
             document.getElementById('chal_reset_btn').style.display = 'none';
             updateChallengeUI();
             updateMiniBar();
-            notifyKodular('SHOW_INTERSTITIAL_AD');
         }
 
         function openChallenge() {
@@ -4904,9 +4901,6 @@
             <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Log Data</p>
             <p>When you use the app, we may collect technical information including device type, operating system version, IP address, crash logs, and diagnostic data to improve app performance and security.</p>
 
-            <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Advertising</p>
-            <p>This app uses Google AdMob to display advertisements. AdMob may collect and process device identifiers, advertising IDs, and usage information to provide personalized and non-personalized ads.</p>
-
             <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Analytics</p>
             <p>We may use Google services such as Firebase Analytics to understand app usage, improve user experience, and monitor performance.</p>
 
@@ -4951,9 +4945,6 @@
 
             <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Paid Content &amp; Premium Features</p>
             <p>Certain advanced features, strategies, challenges, or educational content may require payment. All purchases are subject to the applicable store policies.</p>
-
-            <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Advertisements</p>
-            <p>The app may display advertisements through Google AdMob and other approved advertising partners.</p>
 
             <p style="color:#fff; font-weight:bold; margin-bottom:2px;">Limitation of Liability</p>
             <p>The developers, owners, and operators of Btex shall not be liable for any direct, indirect, incidental, consequential, or financial losses resulting from the use of the application, trading decisions, or reliance on information provided within the app.</p>

@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
 
-        // Bridge: Btex.html मधून notifyKodular('SHOW_INTERSTITIAL_AD') आल्यावर हे पकडतं
+        // Bridge: Btex.html कडून येणारे कोणतेही message या ठिकाणी पकडले जातात (सध्या काहीही active नाही)
         webView.addJavascriptInterface(new AppInventorBridge(), "AppInventor");
 
         webView.setWebViewClient(new WebViewClient());
@@ -31,9 +31,7 @@ public class MainActivity extends Activity {
     private class AppInventorBridge {
         @JavascriptInterface
         public void setWebViewString(String value) {
-            if ("SHOW_INTERSTITIAL_AD".equals(value)) {
-                // Ads सध्या बंद आहेत — इथे काहीच होत नाही, html कडून call आली तरी crash होणार नाही
-            }
+            // Ad-related bridge messages removed — no longer sent from Btex.html
         }
     }
 }
