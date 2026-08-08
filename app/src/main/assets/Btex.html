@@ -248,7 +248,7 @@
         #battle_overlay.show { display:flex; }
         /* Live battle status bar — sits above the chart. Chart + the normal manual
            trade panel stay visible/usable; trades placed there count as battle trades. */
-        #battle_live_bar { display:none; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1450; background:#131722; border-bottom:2px solid #f0b90b; padding:5px 8px; font-size:9px; }
+        #battle_live_bar { display:none; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1450; background:#131722; border-bottom:2px solid #38bdf8; padding:5px 8px; font-size:9px; }
         #battle_live_bar.show { display:block; }
         /* Minimized state: instead of the full-width bar sitting at top:0 (which
            covers the timeframe/indicator toolbar underneath), shrink down to a
@@ -256,23 +256,23 @@
            so the tools stay usable. Tap it to expand back to the full bar. */
         #battle_live_bar.mini-corner {
             top: 38px; left: auto; right: 6px; width: auto;
-            border-bottom: none; border: 1px solid #f0b90b; border-radius: 20px;
+            border-bottom: none; border: 1px solid #38bdf8; border-radius: 20px;
             padding: 3px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         /* Professional in-app alert modal for battle messages (replaces native alert()) */
         #battle_alert_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10500; align-items:center; justify-content:center; }
         #battle_alert_overlay.show { display:flex; }
-        .battle-alert-box { background:#131722; border:2px solid #f0b90b; border-radius:12px; padding:18px 16px; width:88%; max-width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
+        .battle-alert-box { background:#131722; border:2px solid #38bdf8; border-radius:12px; padding:18px 16px; width:88%; max-width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
         .battle-alert-box.tone-error { border-color:#f23645; }
         .battle-alert-box.tone-success { border-color:#089981; }
         .battle-alert-icon { font-size:26px; margin-bottom:8px; display:block; }
         .battle-alert-msg { color:#eaecef; font-size:12.5px; line-height:1.5; margin-bottom:14px; white-space:pre-line; }
-        .battle-alert-ok-btn { width:100%; padding:9px; border-radius:6px; border:none; font-size:11px; font-weight:bold; cursor:pointer; background:#f0b90b; color:#000; }
+        .battle-alert-ok-btn { width:100%; padding:9px; border-radius:6px; border:none; font-size:11px; font-weight:bold; cursor:pointer; background:#38bdf8; color:#000; }
         .battle-alert-box.tone-error .battle-alert-ok-btn { background:#f23645; color:#fff; }
         .battle-alert-box.tone-success .battle-alert-ok-btn { background:#089981; color:#fff; }
         .battle-alert-copy-row { display:flex; gap:6px; margin-bottom:14px; }
         .battle-alert-copy-input { flex:1; background:#1e222d; border:1px solid #444; color:#b2b5be; font-size:10px; padding:8px 6px; border-radius:6px; }
-        .battle-alert-copy-btn { background:#2a2e39; color:#f0b90b; border:1px solid #f0b90b; border-radius:6px; padding:0 12px; font-size:10px; font-weight:bold; cursor:pointer; }
+        .battle-alert-copy-btn { background:#2a2e39; color:#38bdf8; border:1px solid #38bdf8; border-radius:6px; padding:0 12px; font-size:10px; font-weight:bold; cursor:pointer; }
 
         /* ── HAMBURGER SIDE PANEL ── */
         #side_panel_overlay {
@@ -1311,7 +1311,7 @@
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
         <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
-        <button onclick="openBattle()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">⚔️ Battle</button>
+        <button onclick="openBattle()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">⚔️ Battle</button>
         <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
     </div>
 
@@ -2557,7 +2557,7 @@
                 const playersLine = `${c.player_count}/${c.max_players} players${c.is_public ? ' · public' : ' · private'}`;
                 let statusChip = '', action = '';
                 if (c.status === 'PENDING') {
-                    statusChip = `<span style="color:#888;">Waiting — code: <b style="color:#f0b90b;">${c.id}</b> · ${playersLine}</span>`;
+                    statusChip = `<span style="color:#888;">Waiting — code: <b style="color:#38bdf8;">${c.id}</b> · ${playersLine}</span>`;
                     action = amHost
                         ? `<div style="display:flex; gap:4px; margin-top:4px;">
                             <button class="chal-btn chal-btn-start" style="margin:0; padding:5px; flex:1;" onclick="shareBattleCode('${c.id}')">📤 Share</button>
@@ -2574,7 +2574,7 @@
                 } else if (c.status === 'COMPLETED') {
                     const won = c.winner_id === uid;
                     const drew = !c.winner_id;
-                    statusChip = drew ? '<span style="color:#f0b90b;">🤝 Tied at the top</span>' : (won ? '<span style="color:#089981;">🏆 You Won</span>' : '<span style="color:#f23645;">Battle ended</span>');
+                    statusChip = drew ? '<span style="color:#38bdf8;">🤝 Tied at the top</span>' : (won ? '<span style="color:#089981;">🏆 You Won</span>' : '<span style="color:#f23645;">Battle ended</span>');
                     action = `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="openBattleLive('${c.id}')">📊 View Result</button>`;
                 } else {
                     statusChip = `<span style="color:#666;">${c.status}</span>`;
@@ -2743,7 +2743,7 @@
             if (autoCb && autoCb.checked) {
                 autoCb.checked = false;
                 saveData();
-                showToast('🚫 Auto Mode paused while this Battle is live.', '#f0b90b');
+                showToast('🚫 Auto Mode paused while this Battle is live.', '#38bdf8');
             }
 
             renderBattlePositions();
@@ -2867,7 +2867,7 @@
             if (boardEl) {
                 boardEl.innerHTML = ranked.map(r => {
                     const isMe = r.user_id === uid;
-                    const nameColor = isMe ? '#f0b90b' : '#eaecef';
+                    const nameColor = isMe ? '#38bdf8' : '#eaecef';
                     const pnlColor = r.eliminated ? '#666' : (r.pnl_pct >= 0 ? '#089981' : '#f23645');
                     const tag = r.eliminated ? ' · eliminated' : '';
                     const label = isMe ? 'You' : (r.display_name || r.user_id);
@@ -2902,7 +2902,7 @@
                     resultEl.style.display = 'none';
                 } else if (mine.rank === 1 && ranked.filter(r => r.rank === 1).length > 1) {
                     resultEl.innerHTML = '🤝 Tied for 1st place!';
-                    resultEl.style.color = '#f0b90b';
+                    resultEl.style.color = '#38bdf8';
                 } else if (mine.rank === 1) {
                     resultEl.innerHTML = c.end_reason === 'LAST_STANDING' ? '🏆 You Won — last one standing!' : '🏆 You won the battle!';
                     resultEl.style.color = '#089981';
@@ -2968,7 +2968,7 @@
                         <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
                         <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
                     </td>
-                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, 'battle')" style="background:#f0b90b;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="battleCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
+                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, 'battle')" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="battleCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
                 </tr>`;
             }).join('');
         }
@@ -3810,7 +3810,7 @@
 
             <div onclick="promptBattleDisplayName()" style="display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; background:#1e222d; border:1px solid #2a2e39; border-radius:6px; padding:6px 10px; margin-bottom:8px;">
                 <span style="font-size:9px; color:#888;">Playing as</span>
-                <span id="battle_name_display" style="font-size:11px; font-weight:bold; color:#f0b90b;">Set your name ✏️</span>
+                <span id="battle_name_display" style="font-size:11px; font-weight:bold; color:#38bdf8;">Set your name ✏️</span>
             </div>
 
             <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
@@ -3821,11 +3821,11 @@
             <div class="chal-section-title">➕ Host a New Battle</div>
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#0c0d10; border:1px solid #2a2e39; border-radius:4px; padding:7px 8px;">
                 <span style="font-size:10px; color:#b2b5be; white-space:nowrap;">Max Players</span>
-                <input type="number" id="battle_max_players_input" min="2" value="4" step="1" style="flex:1; box-sizing:border-box; background:#1e222d; color:#f0b90b; border:1px solid #2a2e39; border-radius:4px; padding:5px 8px; font-size:12px; font-weight:bold; text-align:center;">
+                <input type="number" id="battle_max_players_input" min="2" value="4" step="1" style="flex:1; box-sizing:border-box; background:#1e222d; color:#38bdf8; border:1px solid #2a2e39; border-radius:4px; padding:5px 8px; font-size:12px; font-weight:bold; text-align:center;">
             </div>
             <div style="font-size:8px; color:#666; margin:-3px 0 8px 2px;">Minimum 2 — set any lobby size you want (big group battles work too).</div>
             <label style="display:flex; align-items:center; gap:6px; font-size:10px; color:#b2b5be; margin-bottom:8px; cursor:pointer;">
-                <input type="checkbox" id="battle_public_input" checked style="accent-color:#f0b90b;">
+                <input type="checkbox" id="battle_public_input" checked style="accent-color:#38bdf8;">
                 Public — show in the open lobby list for anyone to join
             </label>
             <button class="chal-btn chal-btn-start" onclick="createBattleChallenge()">⚔️ Create Battle</button>
@@ -3871,20 +3871,20 @@
          again is a deliberate action from the Battles list (exitBattle()). -->
     <div id="battle_live_bar">
         <div id="battle_bar_mini" onclick="expandBattleBar()" style="display:none; align-items:center; gap:6px; cursor:pointer; padding:4px 2px;">
-            <span style="font-weight:bold; color:#f0b90b;">⚔️</span>
-            <span id="battle_mini_rank" style="font-weight:bold; color:#f0b90b; font-size:10px;">#- / -</span>
+            <span style="font-weight:bold; color:#38bdf8;">⚔️</span>
+            <span id="battle_mini_rank" style="font-weight:bold; color:#38bdf8; font-size:10px;">#- / -</span>
             <span id="battle_mini_pnl" style="font-weight:bold; font-size:10px;">+0.00%</span>
             <span id="battle_mini_timer" style="color:#888; font-family:monospace; font-size:9px;">--:--:--</span>
             <span style="color:#555; margin-left:auto;">▴ tap to expand</span>
         </div>
         <div id="battle_bar_full">
             <div style="display:flex; align-items:center; gap:6px;">
-                <div style="font-weight:bold; color:#f0b90b; white-space:nowrap;">⚔️ BATTLE</div>
-                <div id="battle_timer" style="font-weight:bold; color:#f0b90b; font-family:monospace; white-space:nowrap;">--:--:--</div>
+                <div style="font-weight:bold; color:#38bdf8; white-space:nowrap;">⚔️ BATTLE</div>
+                <div id="battle_timer" style="font-weight:bold; color:#38bdf8; font-family:monospace; white-space:nowrap;">--:--:--</div>
                 <div onclick="toggleBattleLeaderboard()" style="display:flex; align-items:center; gap:5px; flex:1; justify-content:center; overflow:hidden; cursor:pointer;">
                     <div style="text-align:center;">
                         <div style="font-size:7px; color:#888;">YOUR RANK</div>
-                        <div id="battle_my_rank" style="font-weight:bold; color:#f0b90b;">#- / -</div>
+                        <div id="battle_my_rank" style="font-weight:bold; color:#38bdf8;">#- / -</div>
                     </div>
                     <div style="text-align:center;">
                         <div style="font-size:7px; color:#888;">P&amp;L</div>
@@ -3892,7 +3892,7 @@
                     </div>
                     <div style="color:#555;">▾</div>
                 </div>
-                <button onclick="openBattle()" style="background:#2a2e39; color:#f0b90b; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Battles</button>
+                <button onclick="openBattle()" style="background:#2a2e39; color:#38bdf8; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Battles</button>
                 <button onclick="minimizeBattleBar()" title="Minimize — battle keeps running" style="background:#2a2e39; color:#b2b5be; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; padding:3px 9px;">─</button>
             </div>
             <div id="battle_result_banner" style="display:none; text-align:center; padding:5px; border-radius:5px; margin-top:5px; font-weight:bold; background:rgba(255,255,255,0.05);"></div>
@@ -5070,16 +5070,16 @@
     <!-- ── EXIT BATTLE CONFIRM MODAL ── (window.confirm() has the same problem
          as window.prompt() in this WebView — no native dialog to catch it) -->
     <div id="exit_battle_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
-            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <div style="background:#1e222d; border:1.5px solid #38bdf8; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #38bdf8; padding:7px 12px; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:16px;">🚪</span>
-                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">EXIT BATTLE?</span>
+                <span style="color:#38bdf8; font-weight:bold; font-size:11px; letter-spacing:0.5px;">EXIT BATTLE?</span>
             </div>
             <div style="padding:10px 12px;">
                 <div style="font-size:10px; color:#b2b5be; line-height:1.5;">Go back to normal trading? Your battle positions stay open and the battle keeps running in the background — you can rejoin anytime from the Battles list.</div>
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <button onclick="closeExitBattleModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
-                    <button onclick="confirmExitBattle()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">🚪 EXIT</button>
+                    <button onclick="confirmExitBattle()" style="flex:1; background:linear-gradient(135deg,#38bdf8,#1e88c7); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">🚪 EXIT</button>
                 </div>
             </div>
         </div>
@@ -5089,19 +5089,19 @@
          WebView — no JS-dialog handler is wired up on the Flutter side — so
          this uses the same in-page modal pattern as Modify SL/Target above) -->
     <div id="battle_name_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
-            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <div style="background:#1e222d; border:1.5px solid #38bdf8; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #38bdf8; padding:7px 12px; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:16px;">⚔️</span>
-                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">YOUR BATTLE NAME</span>
+                <span style="color:#38bdf8; font-weight:bold; font-size:11px; letter-spacing:0.5px;">YOUR BATTLE NAME</span>
             </div>
             <div style="padding:10px 12px;">
                 <div style="font-size:9px; color:#b2b5be; margin-bottom:6px;">Shown on the leaderboard instead of your device id.</div>
                 <input id="battle_name_input" type="text" maxlength="24"
-                    style="width:100%; background:#131722; border:1.5px solid #f0b90b; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
+                    style="width:100%; background:#131722; border:1.5px solid #38bdf8; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
                     placeholder="e.g. Mango">
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <button onclick="closeBattleNameModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
-                    <button onclick="saveBattleNameModal()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✅ SAVE</button>
+                    <button onclick="saveBattleNameModal()" style="flex:1; background:linear-gradient(135deg,#38bdf8,#1e88c7); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✅ SAVE</button>
                 </div>
             </div>
         </div>
