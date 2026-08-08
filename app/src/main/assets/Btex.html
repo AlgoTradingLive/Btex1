@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
     <script>
         function notifyKodular(str) { if (window.AppInventor) { window.AppInventor.setWebViewString(str); } }
 
@@ -105,11 +105,112 @@
         .pnl-chip { flex: 1; padding: 4px 2px; border-radius: 4px; background: #0c0d10; border: 1px solid #333; text-align: center; font-size: 8.5px; min-width: 60px; }
         .controls-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 15px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 8px; flex-shrink: 0; }
         .strat-select { background: #0c0d10; color: #38bdf8; border: 1px solid #444; padding: 4px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+
+        /* ── Custom Strategy Selector (professional dropdown) ── */
+        .strategy-select-btn {
+            background: #0c0d10; color: #38bdf8; border: 1px solid #444; border-radius: 4px;
+            font-size: 9px; padding: 2px 6px; flex: 1; height: 22px; box-sizing: border-box;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            cursor: pointer; font-weight: bold; letter-spacing: 0.2px;
+        }
+        .strategy-select-btn .cur-strat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .strategy-select-btn .strat-caret { flex-shrink: 0; font-size: 8px; color: #38bdf8; transition: transform 0.2s; }
+        #strategy_modal_overlay {
+            display: none; position: fixed; inset: 0; z-index: 3000;
+            background: rgba(0,0,0,0.72); align-items: center; justify-content: center; padding: 18px;
+        }
+        #strategy_modal_overlay.open { display: flex; }
+        .strat-modal-box {
+            width: 100%; max-width: 340px; max-height: 82vh; display: flex; flex-direction: column;
+            background: #131722; border: 1px solid rgba(56,189,248,0.45); border-radius: 14px;
+            overflow: hidden; box-shadow: 0 0 34px rgba(56,189,248,0.18), 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .strat-modal-header {
+            position: relative; text-align: center; padding: 14px 34px 12px;
+            border-bottom: 1px solid #2a2e39; flex-shrink: 0;
+        }
+        .strat-modal-title {
+            color: #38bdf8; font-size: 13px; font-weight: 800; letter-spacing: 1.8px;
+            text-transform: uppercase;
+        }
+        .strat-modal-title-underline {
+            width: 46px; height: 2px; margin: 7px auto 0; border-radius: 2px;
+            background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        }
+        .strat-modal-close {
+            position: absolute; top: 9px; right: 10px; background: none; border: none;
+            color: #888; font-size: 17px; line-height: 1; cursor: pointer; padding: 4px;
+        }
+        .strat-modal-close:hover { color: #f23645; }
+        .strat-modal-list { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 0; }
+        .strat-modal-item {
+            display: flex; align-items: center; gap: 11px; padding: 11px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+        }
+        .strat-modal-item:last-child { border-bottom: none; }
+        .strat-modal-item:active { background: rgba(56,189,248,0.08); }
+        .strat-bullet {
+            width: 5px; height: 5px; border-radius: 50%; background: #667; flex-shrink: 0;
+        }
+        .strat-modal-item.selected .strat-bullet { background: #38bdf8; }
+        .strat-lock-icon { display: none; flex-shrink: 0; font-size: 12px; width: 5px; text-align: center; }
+        .strat-modal-item.locked .strat-bullet { display: none; }
+        .strat-modal-item.locked .strat-lock-icon { display: inline-block; width: auto; }
+        .strat-modal-item-label {
+            flex: 1; font-size: 11px; font-weight: 700; color: #d1d4dc; letter-spacing: 0.3px;
+        }
+        .strat-modal-item.selected .strat-modal-item-label { color: #38bdf8; }
+        .strat-radio {
+            width: 16px; height: 16px; border-radius: 50%; border: 2px solid #555;
+            flex-shrink: 0; position: relative;
+        }
+        .strat-modal-item.selected .strat-radio { border-color: #38bdf8; }
+        .strat-modal-item.selected .strat-radio::after {
+            content: ''; position: absolute; inset: 2.5px; border-radius: 50%; background: #38bdf8;
+        }
+        #tf_select_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 3px;
+            font-size: 9px; font-weight: bold; height: 22px; padding: 0 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+        }
+        #tf_select_btn .tf-caret { font-size: 7px; }
+        #ind_select_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 3px;
+            font-size: 9px; font-weight: bold; height: 22px; padding: 0 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        }
+        #ind_select_btn .tf-caret { font-size: 7px; }
+        #currency_select_btn {
+            background: #1e222d; color: #38bdf8; border: 1px solid #444; border-radius: 3px;
+            font-size: 9px; font-weight: bold; height: 18px; padding: 1px 5px; cursor: pointer;
+            display: flex; align-items: center; gap: 3px; min-width: 45px;
+        }
+        #currency_select_btn .tf-caret { font-size: 7px; }
+        .strat-checkbox {
+            width: 15px; height: 15px; border-radius: 4px; border: 2px solid #555;
+            flex-shrink: 0; position: relative; box-sizing: border-box;
+        }
+        .strat-modal-item.selected .strat-checkbox { border-color: #38bdf8; background: #38bdf8; }
+        .strat-modal-item.selected .strat-checkbox::after {
+            content: ''; position: absolute; left: 4px; top: 0px; width: 4px; height: 8px;
+            border: solid #0c0d10; border-width: 0 2px 2px 0; transform: rotate(45deg);
+        }
+        .strat-modal-item.disabled { opacity: 0.35; pointer-events: none; }
         .toggle { cursor: pointer; width: 34px; height: 18px; background: #444; border-radius: 10px; position: relative; display: block; }
         .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; transition: 0.3s; }
         #auto_mode:checked + .toggle { background: #089981; }
+        #funded_mode_toggle:checked + .toggle { background: #f0b90b; }
         #auto_mode:checked + .toggle::after { left: 18px; }
+        #funded_mode_toggle:checked + .toggle::after { left: 18px; }
         #auto_mode { display: none; }
+        #funded_mode_toggle { display: none; }
+        @keyframes toggleModePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(240,185,11,0.7); }
+            70%  { box-shadow: 0 0 0 8px rgba(240,185,11,0); }
+            100% { box-shadow: 0 0 0 0 rgba(240,185,11,0); }
+        }
+        .toggle-pulse { animation: toggleModePulse 0.9s ease-out 3; border-radius: 10px; }
+        .toggle-locked { opacity: 0.4; }
         .small-close-btn { background: #f23645; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
         .history-table { width: 100%; border-collapse: collapse; font-size: 9px; }
         .history-table th { color: #b2b5be; padding: 6px 4px; border-bottom: 1px solid #2a2e39; background: #1e222d; }
@@ -119,6 +220,8 @@
         /* 30 DAY CHALLENGE STYLES */
         #challenge_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
         #challenge_overlay.show { display:flex; }
+        #funded_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
+        #funded_overlay.show { display:flex; }
         .chal-box { background:#131722; border:2px solid #38bdf8; border-radius:12px; padding:16px; width:92%; max-width:360px; max-height:88vh; overflow-y:auto; }
         .chal-title { color:#38bdf8; font-size:14px; font-weight:bold; text-align:center; margin-bottom:10px; letter-spacing:1px; }
         .chal-progress-bar { width:100%; height:10px; background:#2a2e39; border-radius:5px; margin:4px 0 10px; overflow:hidden; }
@@ -139,37 +242,6 @@
 
         .chal-warning-banner { background:#f23645; color:#fff; font-size:9px; font-weight:bold; text-align:center; padding:4px; border-radius:4px; margin-bottom:6px; display:none; }
         .chal-section-title { color:#38bdf8; font-size:9px; font-weight:bold; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.5px; }
-
-        /* ── Profit Battle (new) — reuses .chal-* above for the lobby box, these are battle-specific ── */
-        #battle_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; }
-        #battle_overlay.show { display:flex; }
-        /* Live battle status bar — sits above the chart. Chart + the normal manual
-           trade panel stay visible/usable; trades placed there count as battle trades. */
-        #battle_live_bar { display:none; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1450; background:#131722; border-bottom:2px solid #f0b90b; padding:5px 8px; font-size:9px; }
-        #battle_live_bar.show { display:block; }
-        /* Minimized state: instead of the full-width bar sitting at top:0 (which
-           covers the timeframe/indicator toolbar underneath), shrink down to a
-           small pill tucked in the top-right corner, just below that toolbar,
-           so the tools stay usable. Tap it to expand back to the full bar. */
-        #battle_live_bar.mini-corner {
-            top: 38px; left: auto; right: 6px; width: auto;
-            border-bottom: none; border: 1px solid #f0b90b; border-radius: 20px;
-            padding: 3px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-        /* Professional in-app alert modal for battle messages (replaces native alert()) */
-        #battle_alert_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10500; align-items:center; justify-content:center; }
-        #battle_alert_overlay.show { display:flex; }
-        .battle-alert-box { background:#131722; border:2px solid #f0b90b; border-radius:12px; padding:18px 16px; width:88%; max-width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
-        .battle-alert-box.tone-error { border-color:#f23645; }
-        .battle-alert-box.tone-success { border-color:#089981; }
-        .battle-alert-icon { font-size:26px; margin-bottom:8px; display:block; }
-        .battle-alert-msg { color:#eaecef; font-size:12.5px; line-height:1.5; margin-bottom:14px; white-space:pre-line; }
-        .battle-alert-ok-btn { width:100%; padding:9px; border-radius:6px; border:none; font-size:11px; font-weight:bold; cursor:pointer; background:#f0b90b; color:#000; }
-        .battle-alert-box.tone-error .battle-alert-ok-btn { background:#f23645; color:#fff; }
-        .battle-alert-box.tone-success .battle-alert-ok-btn { background:#089981; color:#fff; }
-        .battle-alert-copy-row { display:flex; gap:6px; margin-bottom:14px; }
-        .battle-alert-copy-input { flex:1; background:#1e222d; border:1px solid #444; color:#b2b5be; font-size:10px; padding:8px 6px; border-radius:6px; }
-        .battle-alert-copy-btn { background:#2a2e39; color:#f0b90b; border:1px solid #f0b90b; border-radius:6px; padding:0 12px; font-size:10px; font-weight:bold; cursor:pointer; }
 
         /* ── HAMBURGER SIDE PANEL ── */
         #side_panel_overlay {
@@ -299,7 +371,14 @@
         /* trade marker animation below */
     </style>
 </head>
-<body onload="initApp()">
+<body>
+
+    <!-- ── APP LOADING OVERLAY (shows instead of a blank black screen while chart/data init) ── -->
+    <div id="app_loading_overlay" style="position:fixed; inset:0; z-index:9999; background:#0c0d10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+        <div style="width:34px; height:34px; border:3px solid #2a2e39; border-top-color:#38bdf8; border-radius:50%; animation: btex_spin 0.8s linear infinite;"></div>
+        <div style="color:#b2b5be; font-size:12px; font-weight:bold; letter-spacing:0.5px;">Loading Btex...</div>
+    </div>
+    <style>@keyframes btex_spin { to { transform: rotate(360deg); } }</style>
 
     <!-- ── SIDE PANEL OVERLAY ── -->
     <div id="side_panel_overlay" onclick="closeSidePanel()"></div>
@@ -466,13 +545,14 @@
             </div>
         </div>
 
-        <div class="sp-accordion" id="acc_battle">
-            <div class="sp-accordion-head" onclick="toggleAccordion('acc_battle')">
+        <!-- ACCORDION 1B: Funded Account Challenge Rules -->
+        <div class="sp-accordion" id="acc_funded">
+            <div class="sp-accordion-head" onclick="toggleAccordion('acc_funded')">
                 <div class="sp-accordion-head-left">
-                    <span class="sp-accordion-icon">⚔️</span>
+                    <span class="sp-accordion-icon">💰</span>
                     <span class="sp-accordion-label">
-                        <span data-en>Battle Rules</span>
-                        <span data-hi>बैटल — नियम</span>
+                        <span data-en>Funded Account Rules</span>
+                        <span data-hi>फंडेड अकाउंट — नियम</span>
                     </span>
                 </div>
                 <span class="sp-accordion-arrow">▼</span>
@@ -481,29 +561,43 @@
                 <div class="sp-accordion-inner">
 
                     <div class="sp-rule-row">
-                        <span class="sp-rule-emoji">💵</span>
+                        <span class="sp-rule-emoji">💸</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>Starting Capital</span>
-                                <span data-hi>स्टार्टिंग कैपिटल</span>
+                                <span data-en>No Upfront Fee</span>
+                                <span data-hi>कोई अपफ्रंट फीस नहीं</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Every player starts with the same virtual <span class="sp-chip sp-chip-gold">$1,000</span> — fixed, not editable.</span>
-                                <span data-hi>हर प्लेयर <span class="sp-chip sp-chip-gold">$1,000</span> के बराबर वर्चुअल अकाउंट से शुरू करता है — फिक्स्ड, बदला नहीं जा सकता।</span>
+                                <span data-en>Real prop-firm challenges charge an upfront fee to attempt them. Here you practice for free and save that <span class="sp-chip sp-chip-green">$35 upfront fee</span>. All the rules below (profit targets, loss limits, quantity caps) are modeled on an actual prop firm's real rules, so you get genuine practice for the real thing.</span>
+                                <span data-hi>असली प्रॉप-फर्म चैलेंज में अटेम्प्ट के लिए अपफ्रंट फीस लगती है। यहां आप फ्री में प्रैक्टिस करते हैं और वो <span class="sp-chip sp-chip-green">$35 अपफ्रंट फीस</span> बचाते हैं। नीचे दिए गए सभी नियम (प्रॉफिट टार्गेट, लॉस लिमिट, क्वांटिटी कैप) एक असली प्रॉप फर्म के नियमों पर आधारित हैं, ताकि आपको असली चैलेंज की सही प्रैक्टिस मिले।</span>
                             </span>
                         </div>
                     </div>
 
                     <div class="sp-rule-row">
-                        <span class="sp-rule-emoji">⚡</span>
+                        <span class="sp-rule-emoji">🏁</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>Trade From the Main Panel</span>
-                                <span data-hi>मेन पैनल से ट्रेड करें</span>
+                                <span data-en>2-Step Challenge</span>
+                                <span data-hi>2-स्टेप चैलेंज</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>No separate battle window. Once a battle is live, the same Buy/Sell buttons and inputs you always use place your battle trades.</span>
-                                <span data-hi>अलग से कोई बैटल विंडो नहीं है। बैटल लाइव होते ही, वही रोज़ के Buy/Sell बटन और इनपुट आपके बैटल ट्रेड प्लेस करते हैं।</span>
+                                <span data-en>Clear <span class="sp-chip sp-chip-gold">Step 1: $500 profit (10%)</span>, then <span class="sp-chip sp-chip-gold">Step 2: 5% profit</span> of your new balance to get funded.</span>
+                                <span data-hi><span class="sp-chip sp-chip-gold">Step 1: $500 प्रॉफिट (10%)</span> पूरा करें, फिर नए बैलेंस पर <span class="sp-chip sp-chip-gold">Step 2: 5% प्रॉफिट</span> कमाएं तो फंडेड मिलेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">💵</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Starting Balance</span>
+                                <span data-hi>शुरुआती बैलेंस</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Every challenge starts with a virtual <span class="sp-chip sp-chip-gold">$5,000</span> account.</span>
+                                <span data-hi>हर चैलेंज <span class="sp-chip sp-chip-gold">$5,000</span> के वर्चुअल अकाउंट से शुरू होता है।</span>
                             </span>
                         </div>
                     </div>
@@ -512,12 +606,12 @@
                         <span class="sp-rule-emoji">🪙</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>Quantity Limits</span>
-                                <span data-hi>क्वांटिटी लिमिट</span>
+                                <span data-en>Asset &amp; Quantity Limit</span>
+                                <span data-hi>एसेट और क्वांटिटी लिमिट</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Same rule as the Funded Account Challenge, per asset — total open quantity can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span>, <span class="sp-chip sp-chip-gold">2.8 ETH</span>, or <span class="sp-chip sp-chip-gold">0.50 Gold</span>.</span>
-                                <span data-hi>फंडेड अकाउंट चैलेंज जैसा ही नियम, हर एसेट के लिए — कुल ओपन क्वांटिटी कभी <span class="sp-chip sp-chip-gold">0.14 BTC</span>, <span class="sp-chip sp-chip-gold">2.8 ETH</span> या <span class="sp-chip sp-chip-gold">0.50 Gold</span> से ज़्यादा नहीं हो सकती।</span>
+                                <span data-en>Trade <span class="sp-chip sp-chip-gold">BTC, ETH or GOLD</span>. Total open quantity per asset can never exceed <span class="sp-chip sp-chip-gold">0.14 BTC</span> / <span class="sp-chip sp-chip-gold">2.8 ETH</span> / <span class="sp-chip sp-chip-gold">0.50 GOLD</span>.</span>
+                                <span data-hi><span class="sp-chip sp-chip-gold">BTC, ETH या GOLD</span> ट्रेड करें। हर एसेट की ओपन पोज़िशन्स की कुल क्वांटिटी कभी भी <span class="sp-chip sp-chip-gold">0.14 BTC</span> / <span class="sp-chip sp-chip-gold">2.8 ETH</span> / <span class="sp-chip sp-chip-gold">0.50 GOLD</span> से ज़्यादा नहीं हो सकती।</span>
                             </span>
                         </div>
                     </div>
@@ -526,12 +620,26 @@
                         <span class="sp-rule-emoji">🛡️</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>Instant Elimination</span>
-                                <span data-hi>तुरंत एलिमिनेशन</span>
+                                <span data-en>Max Overall Loss</span>
+                                <span data-hi>मैक्स ओवरऑल लॉस</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>If your equity drops to <span class="sp-chip sp-chip-red">5% loss</span> of your starting $1,000, you're eliminated immediately and drop to the bottom of the leaderboard. Last player standing wins on the spot.</span>
-                                <span data-hi>आपकी इक्विटी $1,000 से <span class="sp-chip sp-chip-red">5% लॉस</span> तक पहुंचते ही आप तुरंत एलिमिनेट हो जाते हैं और लीडरबोर्ड में नीचे चले जाते हैं। आखिरी बचा प्लेयर तुरंत जीत जाता है।</span>
+                                <span data-en>If total loss from the starting balance reaches <span class="sp-chip sp-chip-red">$500 (10%)</span>, the challenge fails immediately.</span>
+                                <span data-hi>शुरुआती बैलेंस से कुल नुकसान <span class="sp-chip sp-chip-red">$500 (10%)</span> तक पहुंचते ही चैलेंज तुरंत फेल हो जाता है।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🔒</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Daily Loss Limit</span>
+                                <span data-hi>डेली लॉस लिमिट</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>If net loss in a single day reaches <span class="sp-chip sp-chip-red">$250 (5%)</span>, the challenge fails — regardless of the overall balance.</span>
+                                <span data-hi>एक ही दिन में नुकसान <span class="sp-chip sp-chip-red">$250 (5%)</span> तक पहुंचने पर चैलेंज फेल हो जाता है, चाहे ओवरऑल बैलेंस कुछ भी हो।</span>
                             </span>
                         </div>
                     </div>
@@ -540,33 +648,61 @@
                         <span class="sp-rule-emoji">⏱️</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>3-Hour Duration</span>
-                                <span data-hi>3 घंटे की अवधि</span>
+                                <span data-en>Unlimited Time</span>
+                                <span data-hi>अनलिमिटेड टाइम</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Every battle runs for a fixed <span class="sp-chip sp-chip-gold">3 hours</span>. When time's up, players are ranked by equity (realized + unrealized P&amp;L) — highest ranks first on the leaderboard. Equal equity shares the same rank.</span>
-                                <span data-hi>हर बैटल <span class="sp-chip sp-chip-gold">3 घंटे</span> के लिए चलता है। टाइम खत्म होने पर, प्लेयर्स को इक्विटी (realized + unrealized P&amp;L) के हिसाब से रैंक किया जाता है — लीडरबोर्ड में सबसे ऊपर सबसे ज़्यादा। बराबर इक्विटी वालों की रैंक भी बराबर होती है।</span>
+                                <span data-en>No deadline — take as many days as you need to clear both steps.</span>
+                                <span data-hi>कोई डेडलाइन नहीं — दोनों स्टेप पूरे करने के लिए जितने दिन चाहिए उतने ले सकते हैं।</span>
                             </span>
                         </div>
                     </div>
 
                     <div class="sp-rule-row">
-                        <span class="sp-rule-emoji">🎲</span>
+                        <span class="sp-rule-emoji">🔄</span>
                         <div>
                             <span class="sp-rule-title">
-                                <span data-en>Host, Share, or Find a Match</span>
-                                <span data-hi>होस्ट करें, शेयर करें, या मैच ढूंढें</span>
+                                <span data-en>Retry Anytime</span>
+                                <span data-hi>कभी भी रीट्राई करें</span>
                             </span>
                             <span class="sp-rule-desc">
-                                <span data-en>Host picks any lobby size (<span class="sp-chip sp-chip-gold">2 players minimum</span>, no upper limit) and shares the join code, or tap <span class="sp-chip sp-chip-gold">Find Public Battle</span> to join an open lobby instantly. The battle starts once the lobby is full — or the host can start it early with 2+ players in.</span>
-                                <span data-hi>होस्ट कोई भी लॉबी साइज़ चुन सकता है (<span class="sp-chip sp-chip-gold">कम से कम 2 प्लेयर्स</span>, कोई ऊपरी लिमिट नहीं) और join code शेयर करता है, या <span class="sp-chip sp-chip-gold">Find Public Battle</span> दबाकर तुरंत किसी खुली लॉबी में join करें। लॉबी फुल होते ही बैटल शुरू हो जाता है — या होस्ट 2+ प्लेयर्स आते ही जल्दी शुरू कर सकता है।</span>
+                                <span data-en>If you fail, tap <span class="sp-chip sp-chip-gold">Retry With New Challenge</span> to start a fresh $5,000 account instantly.</span>
+                                <span data-hi>फेल होने पर <span class="sp-chip sp-chip-gold">Retry With New Challenge</span> दबाकर तुरंत नया $5,000 अकाउंट शुरू करें।</span>
                             </span>
                         </div>
                     </div>
 
-                    <button class="sp-action-btn" onclick="closeSidePanel(); openBattle();">
-                        <span data-en>Open Profit Battle</span>
-                        <span data-hi>प्रॉफिट बैटल खोलें</span>
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🎉</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Get Funded</span>
+                                <span data-hi>फंडेड कैसे बनें?</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Clear Step 2 without breaking any risk limit and you'll see <strong style="color:#089981;">CHALLENGE PASSED! FUNDED!</strong></span>
+                                <span data-hi>बिना किसी रिस्क लिमिट को तोड़े Step 2 पूरा करने पर <strong style="color:#089981;">CHALLENGE PASSED! FUNDED!</strong> दिखेगा।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sp-rule-row">
+                        <span class="sp-rule-emoji">🤖</span>
+                        <div>
+                            <span class="sp-rule-title">
+                                <span data-en>Auto Mode Disabled</span>
+                                <span data-hi>ऑटो मोड बंद रहता है</span>
+                            </span>
+                            <span class="sp-rule-desc">
+                                <span data-en>Auto Mode stays <span class="sp-chip sp-chip-red">OFF</span> during the Funded Challenge — only manual trades count. Switch back to <span class="sp-chip sp-chip-green">Real Balance</span> to use Auto Mode again.</span>
+                                <span data-hi>Funded Challenge के दौरान Auto Mode <span class="sp-chip sp-chip-red">बंद</span> ही रहता है — सिर्फ मैनुअल ट्रेड ही गिने जाते हैं। Auto Mode दोबारा चालू करने के लिए <span class="sp-chip sp-chip-green">Real Balance</span> पर वापस जाएं।</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="sp-action-btn" onclick="closeSidePanel(); openFundedChallenge();">
+                        <span data-en>Open Funded Dashboard</span>
+                        <span data-hi>फंडेड डैशबोर्ड खोलें</span>
                     </button>
                 </div>
             </div>
@@ -846,8 +982,8 @@
                         <span class="sp-rule-emoji">💾</span>
                         <div>
                             <span class="sp-rule-desc">
-                                <span data-en>Your latest 100 closed trades are saved here, split by Manual and Auto.</span>
-                                <span data-hi>आपके नवीनतम 100 बंद ट्रेड्स इथे Manual आणि Auto असे वेगळे साठवले जातात.</span>
+                                <span data-en>Your latest 100 closed trades are saved here, split by Manual, Auto and Funded.</span>
+                                <span data-hi>आपके नवीनतम 100 बंद ट्रेड्स इथे Manual, Auto आणि Funded असे वेगळे साठवले जातात.</span>
                             </span>
                         </div>
                     </div>
@@ -858,6 +994,10 @@
                     <button class="sp-action-btn" style="margin-top:8px;" onclick="closeSidePanel(); openTradeHistory('auto');">
                         <span data-en>🤖 Auto Trade History</span>
                         <span data-hi>🤖 Auto ट्रेड हिस्ट्री</span>
+                    </button>
+                    <button class="sp-action-btn" style="margin-top:8px;" onclick="closeSidePanel(); openTradeHistory('funded');">
+                        <span data-en>💰 Funded Trade History</span>
+                        <span data-hi>💰 Funded ट्रेड हिस्ट्री</span>
                     </button>
                 </div>
             </div>
@@ -902,7 +1042,7 @@
         <button id="hamburger_btn" onclick="openSidePanel()" title="Menu">☰</button>
         <div class="top-bar-sep"></div>
         <div id="chart_controls">
-            <select id="user_tf" class="chart-select" onchange="updateUserPreferences()">
+            <select id="user_tf" style="display:none;" onchange="updateUserPreferences()">
                 <option value="1">1m</option>
                 <option value="5">5m</option>
                 <option value="15">15m</option>
@@ -910,22 +1050,131 @@
                 <option value="240">4H</option>
                 <option value="D">D</option>
             </select>
-            <select id="user_ind" class="chart-select" onchange="updateUserPreferences()">
-                <option value="">None</option>
-                <option value="EMA9">E9</option>
-                <option value="EMA21">E21</option>
-                <option value="EMA50">E50</option>
-                <option value="EMA200">E200</option>
-                <option value="RSI@tv-basicstudies">RSI</option>
-                <option value="SuperTrend@tv-basicstudies">ST</option>
-                <option value="BB@tv-basicstudies">BB</option>
-                <option value="VWAP@tv-basicstudies">VWAP</option>
-                <option value="MACD@tv-basicstudies">MACD</option>
-                <option value="Volume@tv-basicstudies">Vol</option>
-            </select>
+            <button type="button" id="tf_select_btn" onclick="openTFModal()">
+                <span id="tf_select_display">5m</span><span class="tf-caret">▼</span>
+            </button>
+
+            <div id="tf_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeTFModal();">
+                <div class="strat-modal-box" style="max-width:260px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Timeframe</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeTFModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="tf_modal_list">
+                        <div class="strat-modal-item" data-value="1" onclick="selectTFModal('1')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Minute</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="5" onclick="selectTFModal('5')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">5 Minutes</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="15" onclick="selectTFModal('15')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">15 Minutes</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="60" onclick="selectTFModal('60')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Hour</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="240" onclick="selectTFModal('240')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">4 Hours</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="D" onclick="selectTFModal('D')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">1 Day</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:none;">
+                <input type="checkbox" class="ind-checkbox" value="EMA9" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA21" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA50" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="EMA200" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="RSI@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="SuperTrend@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="BB@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="VWAP@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="MACD@tv-basicstudies" onchange="updateUserPreferences()">
+                <input type="checkbox" class="ind-checkbox" value="Volume@tv-basicstudies" onchange="updateUserPreferences()">
+            </div>
+            <button type="button" id="ind_select_btn" onclick="openIndModal()">
+                <span id="ind_select_display">Indicators</span><span class="tf-caret">▼</span>
+            </button>
+
+            <div id="ind_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeIndModal();">
+                <div class="strat-modal-box" style="max-width:280px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Indicators</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeIndModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="ind_modal_list">
+                        <div class="strat-modal-item" data-value="EMA9" onclick="toggleIndModal('EMA9', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 9</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA21" onclick="toggleIndModal('EMA21', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 21</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA50" onclick="toggleIndModal('EMA50', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 50</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="EMA200" onclick="toggleIndModal('EMA200', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">EMA 200</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="RSI@tv-basicstudies" onclick="toggleIndModal('RSI@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">RSI</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="SuperTrend@tv-basicstudies" onclick="toggleIndModal('SuperTrend@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">SuperTrend</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="BB@tv-basicstudies" onclick="toggleIndModal('BB@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">Bollinger Bands</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="VWAP@tv-basicstudies" onclick="toggleIndModal('VWAP@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">VWAP</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="MACD@tv-basicstudies" onclick="toggleIndModal('MACD@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">MACD</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="Volume@tv-basicstudies" onclick="toggleIndModal('Volume@tv-basicstudies', this)">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">Volume</span>
+                            <span class="strat-checkbox"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <button onclick="openChallenge()" style="background:#1e222d; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">🏆 30 Day Challenge</button>
-        <button onclick="openBattle()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">⚔️ Battle</button>
+        <button onclick="openFundedChallenge()" style="background:#1e222d; color:#f0b90b; border:1px solid #f0b90b; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; height:24px; padding:0 7px; flex-shrink:0; white-space:nowrap;">💰 Funded Account Challenge</button>
         <button id="tools_toggle" onclick="toggleTools()">Tools: ON</button>
     </div>
 
@@ -950,12 +1199,9 @@
                     <option value="150">150x</option>
                 </select>
                 <select id="mtp_order_type" class="mtp-pill" onchange="sharkSetOrderType(this.value)">
-                    <option value="Market">Market</option>
-                    <option value="Limit" selected>Limit</option>
-                    <option value="Stop Limit">Stop Lmt</option>
-                    <option value="Stop Market">Stop Mkt</option>
+                    <option value="Market" selected>Market</option>
                 </select>
-                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Price" oninput="syncSharkQty()">
+                <input type="number" id="sp_price_input" class="qty-input mtp-price" placeholder="Mkt" disabled oninput="syncSharkQty()" style="display:none;">
                 <input type="number" id="manual_qty" class="qty-input mtp-qty" value="1" min="1" placeholder="Qty" oninput="syncSharkQty()">
                 <input type="number" id="manual_sl_input" class="qty-input mtp-sltp" placeholder="SL" oninput="updateTradePreview()">
                 <input type="number" id="manual_target_input" class="qty-input mtp-sltp" placeholder="TP" oninput="updateTradePreview()">
@@ -973,13 +1219,43 @@
     </div>
 
     <div class="status-panel">
+        <div class="row" style="padding:3px 8px; gap:4px; border-bottom:1px solid #2a2e39;">
+            <span style="font-size:9px; font-weight:bold; color:#b2b5be;">Real</span>
+            <input type="checkbox" id="funded_mode_toggle" onchange="toggleTradingMode()">
+            <label for="funded_mode_toggle" class="toggle" id="funded_mode_toggle_label"></label>
+            <span style="font-size:9px; font-weight:bold; color:#38bdf8;">Funded Challenge</span>
+        </div>
         <div class="row">
-            <span style="color:#b2b5be;"><span style="color:#f0b90b">Real</span> Balance</span>
+            <span style="color:#b2b5be;" id="balance_label"><span style="color:#f0b90b">Real</span> Balance</span>
             <div style="display:flex; align-items:center; gap:6px;">
-                <select id="currency_mode" class="strat-select" onchange="refreshUI()" style="padding: 1px 3px; font-size: 9px; height: 18px; min-width: 45px;">
+                <select id="currency_mode" style="display:none;" onchange="refreshUI()">
                     <option value="INR">INR</option>
                     <option value="USD" selected>USD</option>
                 </select>
+                <button type="button" id="currency_select_btn" onclick="openCurrencyModal()">
+                    <span id="currency_select_display">USD</span><span class="tf-caret">▼</span>
+                </button>
+                <div id="currency_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeCurrencyModal();">
+                    <div class="strat-modal-box" style="max-width:220px;">
+                        <div class="strat-modal-header">
+                            <div class="strat-modal-title">Select Currency</div>
+                            <div class="strat-modal-title-underline"></div>
+                            <button type="button" class="strat-modal-close" onclick="closeCurrencyModal()">&times;</button>
+                        </div>
+                        <div class="strat-modal-list" id="currency_modal_list">
+                            <div class="strat-modal-item" data-value="INR" onclick="selectCurrencyModal('INR')">
+                                <span class="strat-bullet"></span>
+                                <span class="strat-modal-item-label">INR</span>
+                                <span class="strat-radio"></span>
+                            </div>
+                            <div class="strat-modal-item" data-value="USD" onclick="selectCurrencyModal('USD')">
+                                <span class="strat-bullet"></span>
+                                <span class="strat-modal-item-label">USD</span>
+                                <span class="strat-radio"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <span id="displayBalance" style="font-weight:bold; color:#ffffff;">0.00</span>
             </div>
         </div>
@@ -1004,24 +1280,124 @@
         </div>
 
         <div class="controls-row" style="padding:3px 8px; gap:4px;">
-            <select id="asset_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:0 0 auto;" onchange="switchMarket(); updateTradePreview();">
+            <select id="asset_choice" style="display:none;" onchange="switchMarket(); updateTradePreview();">
                 <option value="BTCUSDT">BTC/USDT</option>
-                <option value="ETHUSDT">ETH/USDT</option>
-                <option value="PAXGUSDT">GOLD</option>
+                <option value="ETHUSDT" id="asset_opt_eth">ETH/USDT</option>
+                <option value="PAXGUSDT" id="asset_opt_gold">GOLD</option>
             </select>
-            <select id="strategy_choice" class="strat-select" style="font-size:9px; padding:2px 3px; flex:1;" onchange="updateAssetStrategy()">
+            <button type="button" id="asset_select_btn" class="strategy-select-btn" style="flex:0 0 auto; min-width:76px;" onclick="openAssetModal()">
+                <span class="cur-strat-name" id="asset_select_display">BTC/USDT</span>
+                <span class="strat-caret">▼</span>
+            </button>
+
+            <div id="asset_modal_overlay" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.72); align-items:center; justify-content:center; padding:18px;" onclick="if(event.target===this) closeAssetModal();">
+                <div class="strat-modal-box" style="max-width:260px;">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Asset</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeAssetModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="asset_modal_list">
+                        <div class="strat-modal-item" data-value="BTCUSDT" onclick="selectAssetModal('BTCUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">BTC/USDT</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="ETHUSDT" id="asset_modal_item_eth" onclick="selectAssetModal('ETHUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">ETH/USDT</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="PAXGUSDT" id="asset_modal_item_gold" onclick="selectAssetModal('PAXGUSDT')">
+                            <span class="strat-bullet"></span>
+                            <span class="strat-modal-item-label">GOLD</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <select id="strategy_choice" style="display:none;" onchange="updateAssetStrategy()">
                 <option value="s1">S1: REVERSAL (5M)</option>
                 <option value="s1_5m">S1: REVERSAL (15M)</option>
-                <option value="s2">🔒 S2: EMA (5M)</option>
-                <option value="s2_5m">🔒 S2: EMA (15M)</option>
+                <option value="s2">S2: EMA (5M)</option>
+                <option value="s2_5m">S2: EMA (15M)</option>
                 <option value="s3_power">S3: POWER ZONE (15M)</option>
                 <option value="s4">S4: STRONG ZONE (5M)</option>
                 <option value="s6_struct">S6: STRUCTURE BREAK (15M)</option>
+                <option value="s7_1m">S7: SCALPING (1M)</option>
+                <option value="s7_5m">S7: SCALPING (5M)</option>
+                <option value="s7_triple">S7: SCALPING (15M)</option>
             </select>
+            <button type="button" id="strategy_select_btn" class="strategy-select-btn" onclick="openStrategyModal()">
+                <span class="cur-strat-name" id="strategy_select_display">S1: REVERSAL (5M)</span>
+                <span class="strat-caret">▼</span>
+            </button>
+
+            <div id="strategy_modal_overlay" onclick="if(event.target===this) closeStrategyModal();">
+                <div class="strat-modal-box">
+                    <div class="strat-modal-header">
+                        <div class="strat-modal-title">Select Strategy</div>
+                        <div class="strat-modal-title-underline"></div>
+                        <button type="button" class="strat-modal-close" onclick="closeStrategyModal()">&times;</button>
+                    </div>
+                    <div class="strat-modal-list" id="strategy_modal_list">
+                        <div class="strat-modal-item" data-value="s1" onclick="selectStrategyModal('s1')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S1: REVERSAL (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s1_5m" onclick="selectStrategyModal('s1_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S1: REVERSAL (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item locked" data-value="s2" onclick="selectStrategyModal('s2')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S2: EMA (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item locked" data-value="s2_5m" onclick="selectStrategyModal('s2_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S2: EMA (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s3_power" onclick="selectStrategyModal('s3_power')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S3: POWER ZONE (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s4" onclick="selectStrategyModal('s4')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S4: STRONG ZONE (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s6_struct" onclick="selectStrategyModal('s6_struct')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S6: STRUCTURE BREAK (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_1m" onclick="selectStrategyModal('s7_1m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (1M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_5m" onclick="selectStrategyModal('s7_5m')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (5M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                        <div class="strat-modal-item" data-value="s7_triple" onclick="selectStrategyModal('s7_triple')">
+                            <span class="strat-bullet"></span><span class="strat-lock-icon">🔒</span>
+                            <span class="strat-modal-item-label">S7: SCALPING (15M)</span>
+                            <span class="strat-radio"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div style="display:flex; align-items:center; gap:4px; flex:0 0 auto;">
                 <span style="font-size:8px; font-weight:bold; color:#b2b5be;">AUTO</span>
                 <input type="checkbox" id="auto_mode" onchange="handleAutoModeToggle()">
-                <label for="auto_mode" class="toggle"></label>
+                <label for="auto_mode" class="toggle" id="auto_mode_label"></label>
             </div>
         </div>
         <!-- AdSense Banner -->
@@ -1042,7 +1418,7 @@
         <!-- History Tab -->
         <div class="tab-content" id="tab_history">
             <table class="history-table">
-                <thead><tr><th>ASSET/STR</th><th>BUY</th><th>B/TIME</th><th>SELL</th><th>S/TIME</th><th>QTY</th><th>P&L</th></tr></thead>
+                <thead><tr><th>ASSET/STR</th><th>BUY</th><th>B/TIME</th><th>SELL</th><th>S/TIME</th><th>QTY</th><th>FEE</th><th>P&L</th></tr></thead>
                 <tbody id="history_body"></tbody>
             </table>
         </div>
@@ -1057,99 +1433,6 @@
             "PAXGUSDT": { strategy: "s2_5m", lastTime: 0, s2Set: {active: false} }
         };
         const USDT_INR = 83.50;
-
-        // ── Always-on server sync (shared with Nafa's backend — same
-        // infrastructure, Btex's own trades are tagged with a distinct
-        // account_mode so they don't mix with Nafa's data). This lets
-        // SL/Target still execute even if the app is fully closed, and is
-        // what the Profit Battle feature below is built on top of. ──
-        const SERVER_URL = 'https://nafa-kfqj.onrender.com';
-        const SERVER_API_KEY = 'nafa_prod_key_8x7k2m9qz1';
-        const FEE_RATE = 0.0006; // used for Battle trades only — Real-mode P&L math below is unchanged, no fee added there
-
-        async function serverOpenTrade(trade, accountMode, userId, challengeId) {
-            try {
-                const body = {
-                    id: String(trade.id),
-                    account_mode: accountMode || 'btex_real',
-                    asset: trade.asset,
-                    side: trade.side,
-                    qty: trade.qty,
-                    entry_price: trade.entry,
-                    sl_price: trade.sl || 0,
-                    tgt_price: trade.tgt || 0,
-                    strategy: trade.strat,
-                    fee: (accountMode === 'battle') ? (trade.entry * trade.qty * FEE_RATE) : 0
-                };
-                if (userId) body.user_id = userId;
-                if (challengeId) body.challenge_id = challengeId;
-                await fetch(`${SERVER_URL}/api/trades`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify(body)
-                });
-            } catch (err) {
-                console.warn('[serverSync] could not register trade with server (will keep working locally):', err.message);
-            }
-        }
-
-        async function serverManualClose(id, exitPrice) {
-            try {
-                await fetch(`${SERVER_URL}/api/trades/${id}/close`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ exit_price: exitPrice })
-                });
-            } catch (err) {
-                console.warn('[serverSync] could not notify server of close:', err.message);
-            }
-        }
-
-        // Pushes an SL/Target edit (from the Modify modal) to the server so
-        // orderMonitor.js — which watches every OPEN trade 24/7, even while
-        // this app is fully closed — enforces the NEW level, not the one the
-        // trade was originally opened with.
-        async function serverModifyTrade(id, slPrice, tgtPrice) {
-            try {
-                await fetch(`${SERVER_URL}/api/trades/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ sl_price: slPrice || 0, tgt_price: tgtPrice || 0 })
-                });
-            } catch (err) {
-                console.warn('[serverSync] could not sync modified SL/Target to server:', err.message);
-            }
-        }
-
-        // Called on app start: catches up on any trade the SERVER closed via
-        // SL/Target while this app was completely closed.
-        async function serverSyncClosedTrades() {
-            await syncClosedForMode('btex_real', (typeof trades !== 'undefined') ? trades : null,
-                (id, exitPrice, closeTime) => closeSingle(id, exitPrice, true, closeTime));
-            await syncClosedForMode('battle', (typeof battleData !== 'undefined' && battleData) ? battleData.trades : null,
-                (id, exitPrice) => battleCloseSingle(id, exitPrice, true));
-        }
-
-        async function syncClosedForMode(accountMode, localTradesArr, applyCloseFn) {
-            if (!localTradesArr || localTradesArr.length === 0) return;
-            try {
-                const res = await fetch(`${SERVER_URL}/api/trades?status=CLOSED&account_mode=${accountMode}`, {
-                    headers: { 'x-api-key': SERVER_API_KEY }
-                });
-                if (!res.ok) return;
-                const closedOnServer = await res.json();
-                const closedIds = new Set(closedOnServer.map(t => t.id));
-                localTradesArr.slice().forEach(localTrade => {
-                    if (closedIds.has(String(localTrade.id))) {
-                        const serverTrade = closedOnServer.find(t => t.id === String(localTrade.id));
-                        console.log(`[serverSync:${accountMode}] applying server-side exit that happened while app was closed:`, serverTrade.exit_reason);
-                        applyCloseFn(localTrade.id, serverTrade.exit_price, serverTrade.close_time);
-                    }
-                });
-            } catch (err) {
-                console.warn(`[serverSync:${accountMode}] could not sync closed trades:`, err.message);
-            }
-        }
 
         function fixTabHeight() {
             var sp = document.querySelector('.status-panel');
@@ -1170,7 +1453,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); resumeActiveBattleIfAny(); serverSyncClosedTrades(); }
+        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1180,6 +1463,18 @@
             setTimeout(() => toast.style.opacity = '0', 4000);
             setTimeout(() => toast.remove(), 4800);
             toast.style.transition = 'opacity 0.8s';
+        }
+
+        // Generic short-lived toast for quick feedback messages
+        function showToast(msg, color) {
+            const c = color || '#38bdf8';
+            const toast = document.createElement('div');
+            toast.innerText = msg;
+            toast.style.cssText = `position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(30,34,45,0.97);color:${c};border:1px solid ${c};border-radius:20px;padding:7px 16px;font-size:11px;font-weight:bold;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:90vw;overflow:hidden;text-overflow:ellipsis;`;
+            document.body.appendChild(toast);
+            toast.style.transition = 'opacity 0.8s';
+            setTimeout(() => toast.style.opacity = '0', 2500);
+            setTimeout(() => toast.remove(), 3300);
         }
 
         // ── SIDE PANEL FUNCTIONS ──
@@ -1195,6 +1490,13 @@
             const el = document.getElementById(id);
             el.classList.toggle('open');
         }
+        function openFundedRules() {
+            closeFundedChallenge();
+            openSidePanel();
+            const el = document.getElementById('acc_funded');
+            if (el && !el.classList.contains('open')) el.classList.add('open');
+            setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+        }
         function setLang(lang) {
             document.body.classList.remove('lang-en', 'lang-hi');
             document.body.classList.add('lang-' + lang);
@@ -1206,32 +1508,120 @@
 
         function updateUserPreferences() {
             const tf = document.getElementById('user_tf').value;
-            const ind = document.getElementById('user_ind').value;
+            const checkedInds = [...document.querySelectorAll('.ind-checkbox:checked')].map(cb => cb.value);
             localStorage.setItem('PREF_TF', tf);
-            localStorage.setItem('PREF_IND', ind);
+            localStorage.setItem('PREF_IND', JSON.stringify(checkedInds));
             initTradingView();
         }
 
+        // ── Custom Timeframe Selector modal ──
+        const TF_LABELS = { "1": "1m", "5": "5m", "15": "15m", "60": "1H", "240": "4H", "D": "D" };
+        function openTFModal() {
+            syncTFModalUI();
+            document.getElementById('tf_modal_overlay').style.display = 'flex';
+        }
+        function closeTFModal() {
+            document.getElementById('tf_modal_overlay').style.display = 'none';
+        }
+        function selectTFModal(val) {
+            document.getElementById('user_tf').value = val;
+            updateUserPreferences();
+            syncTFModalUI();
+            closeTFModal();
+        }
+        function syncTFModalUI() {
+            const val = document.getElementById('user_tf').value;
+            document.querySelectorAll('#tf_modal_list .strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const display = document.getElementById('tf_select_display');
+            if (display) display.textContent = TF_LABELS[val] || val;
+        }
+
+        // ── Custom Currency Selector modal ──
+        function openCurrencyModal() {
+            syncCurrencyModalUI();
+            document.getElementById('currency_modal_overlay').style.display = 'flex';
+        }
+        function closeCurrencyModal() {
+            document.getElementById('currency_modal_overlay').style.display = 'none';
+        }
+        function selectCurrencyModal(val) {
+            document.getElementById('currency_mode').value = val;
+            refreshUI();
+            syncCurrencyModalUI();
+            closeCurrencyModal();
+        }
+        function syncCurrencyModalUI() {
+            const val = document.getElementById('currency_mode').value;
+            document.querySelectorAll('#currency_modal_list .strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const display = document.getElementById('currency_select_display');
+            if (display) display.textContent = val;
+        }
+
+        // ── Custom Indicators Selector modal (multi-select) ──
+        function openIndModal() {
+            syncIndModalUI();
+            document.getElementById('ind_modal_overlay').style.display = 'flex';
+        }
+        function closeIndModal() {
+            document.getElementById('ind_modal_overlay').style.display = 'none';
+        }
+        function toggleIndModal(value, rowEl) {
+            const cb = document.querySelector('.ind-checkbox[value="' + value + '"]');
+            if (!cb) return;
+            cb.checked = !cb.checked;
+            rowEl.classList.toggle('selected', cb.checked);
+            updateUserPreferences();
+            syncIndBtnLabel();
+        }
+        function syncIndModalUI() {
+            document.querySelectorAll('#ind_modal_list .strat-modal-item').forEach(function(el) {
+                const val = el.getAttribute('data-value');
+                const cb = document.querySelector('.ind-checkbox[value="' + val + '"]');
+                el.classList.toggle('selected', !!(cb && cb.checked));
+            });
+            syncIndBtnLabel();
+        }
+        function syncIndBtnLabel() {
+            const n = document.querySelectorAll('.ind-checkbox:checked').length;
+            const display = document.getElementById('ind_select_display');
+            if (display) display.textContent = n > 0 ? ('Indicators (' + n + ')') : 'Indicators';
+        }
+
         function initTradingView() {
+            if (typeof TradingView === 'undefined') {
+                // tv.js अजून लोड झालेली नाही — थोड्या वेळाने पुन्हा प्रयत्न करा
+                setTimeout(initTradingView, 200);
+                return;
+            }
             const savedTF = localStorage.getItem('PREF_TF') || "5";
-            const savedInd = localStorage.getItem('PREF_IND') || "";
+            let savedInds = [];
+            try { savedInds = JSON.parse(localStorage.getItem('PREF_IND') || "[]"); } catch(e) { savedInds = []; }
 
             document.getElementById('user_tf').value = savedTF;
-            document.getElementById('user_ind').value = savedInd;
+            syncTFModalUI();
+            // प्रत्येक checkbox ला त्याची saved स्थिती (checked/unchecked) परत लावतो
+            document.querySelectorAll('.ind-checkbox').forEach(cb => {
+                cb.checked = savedInds.includes(cb.value);
+            });
+            syncIndModalUI();
 
             // Container clear करा — नाहीतर multiple widgets stack होतात
             const container = document.getElementById('tradingview_widget');
             container.innerHTML = '';
 
             let studiesList = [];
-            if (savedInd) {
-                if (savedInd === "EMA9") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 9 } });
-                else if (savedInd === "EMA21") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 21 } });
-                else if (savedInd === "EMA50") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 50 } });
-                else if (savedInd === "EMA200") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 200 } });
+            savedInds.forEach(savedInd => {
+                if (savedInd === "EMA9") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 9 }, overrides: { "Plot.color": "#00E5FF" } });
+                else if (savedInd === "EMA21") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 21 }, overrides: { "Plot.color": "#FFEB3B" } });
+                else if (savedInd === "EMA50") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 50 }, overrides: { "Plot.color": "#40C4FF" } });
+                else if (savedInd === "EMA200") studiesList.push({ id: "MAExp@tv-basicstudies", inputs: { length: 200 }, overrides: { "Plot.color": "#F23645" } });
                 else if (savedInd === "SuperTrend@tv-basicstudies") studiesList.push("STD;Supertrend");
                 else studiesList.push(savedInd);
-            }
+            });
 
             new TradingView.widget({
                 "autosize": true,
@@ -1248,6 +1638,16 @@
                 "show_popup_button": true,
                 "allow_symbol_change": true
             });
+
+            hideAppLoadingOverlay();
+        }
+
+        function hideAppLoadingOverlay() {
+            const overlay = document.getElementById('app_loading_overlay');
+            if (!overlay) return;
+            overlay.style.transition = 'opacity 0.35s';
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 400);
         }
 
         function toggleTools() {
@@ -1283,7 +1683,7 @@
             try {
                 const settings = assetSettings[asset];
                 const strat = settings.strategy;
-                const isAuto = document.getElementById('auto_mode').checked && !(typeof activeBattleId !== 'undefined' && activeBattleId);
+                const isAuto = document.getElementById('auto_mode').checked;
                 const curP = prices[asset];
                 if(!curP || !isAuto) return;
 
@@ -1537,13 +1937,78 @@
                     }
                 }
 
+                // ➕ S7: TRIPLE-EMA (1M / 5M / 15M) — नवीन strategy, तिन्ही टाइमफ्रेमवर एकच लॉजिक
+                // नियम: 21/50/200 EMA च्या पूर्ण वर बंद झालेली हिरवी कॅन्डल (Low कुठल्याही EMA ला टच नाही) => BUY
+                //        21/50/200 EMA च्या पूर्ण खाली बंद झालेली लाल कॅन्डल (High कुठल्याही EMA ला टच नाही) => SELL
+                //        Exit फक्त उलट सिग्नल आल्यावरच (कुठलाही ठराविक SL/Target नाही)
+                else if (strat === 's7_1m' || strat === 's7_5m' || strat === 's7_triple') {
+                    // टाइमफ्रेम: s7_1m => 1 मिनिट, s7_5m => 5 मिनिट, s7_triple => 15 मिनिट
+                    let _tfT = (strat === 's7_1m') ? '1m' : (strat === 's7_5m') ? '5m' : '15m';
+                    let _stratLabelT = (strat === 's7_1m') ? 'S7-SCALPING-1M' : (strat === 's7_5m') ? 'S7-SCALPING-5M' : 'S7-SCALPING-15M';
+                    // EMA200 अचूक यावा म्हणून जास्तीत जास्त इतिहास (500 candles) आणतो
+                    let res15t = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset}&interval=${_tfT}&limit=500`);
+                    let data15t = await res15t.json();
+
+                    let closesT = data15t.map(d => parseFloat(d[4]));
+                    // शेवटची (अजून चालू असलेली) कॅन्डल सोडून, त्याआधीची पूर्ण बंद झालेली कॅन्डल वापरतो
+                    let ptrT = data15t.length - 2;
+                    let k0t = {
+                        o: parseFloat(data15t[ptrT][1]),
+                        h: parseFloat(data15t[ptrT][2]),
+                        l: parseFloat(data15t[ptrT][3]),
+                        c: parseFloat(data15t[ptrT][4]),
+                        t: data15t[ptrT][0]
+                    };
+
+                    let closesUpToK0 = closesT.slice(0, ptrT + 1);
+                    let ema21t = calculateEMAAccurate(closesUpToK0, 21);
+                    let ema50t = calculateEMAAccurate(closesUpToK0, 50);
+                    let ema200t = calculateEMAAccurate(closesUpToK0, 200);
+
+                    let maxEmaT = Math.max(ema21t, ema50t, ema200t);
+                    let minEmaT = Math.min(ema21t, ema50t, ema200t);
+
+                    let isGreenT = k0t.c > k0t.o;
+                    let isRedT = k0t.c < k0t.o;
+
+                    let buySignalT = isGreenT && k0t.c > maxEmaT && k0t.l > maxEmaT;
+                    let sellSignalT = isRedT && k0t.c < minEmaT && k0t.h < minEmaT;
+
+                    if (k0t.t !== settings.lastTime) {
+                        if (buySignalT) {
+                            let existingSellT = trades.find(t => t.asset === asset && t.side === 'SELL');
+                            if (existingSellT) closeSingle(existingSellT.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'BUY')) {
+                                handleTrade(asset, 'BUY', 0, 0, _stratLabelT, qty);
+                            }
+                            settings.lastTime = k0t.t;
+                        }
+                        else if (sellSignalT) {
+                            let existingBuyT = trades.find(t => t.asset === asset && t.side === 'BUY');
+                            if (existingBuyT) closeSingle(existingBuyT.id);
+                            if (!trades.some(t => t.asset === asset && t.side === 'SELL')) {
+                                handleTrade(asset, 'SELL', 0, 0, _stratLabelT, qty);
+                            }
+                            settings.lastTime = k0t.t;
+                        }
+                    }
+                }
+
             } catch (e) { console.log(e); }
         }
 
         // ✅ FIX 1: handleTrade - stratName + isManual parameter add केला
         function handleTrade(asset, side, sl, tgt, stratName, qty, isManual) {
+            // ✅ FIX: Limit order असेल तर entered limit price वापर risk calc साठी, live price नाही
+            let curP;
+            if (isManual && sharkOrderType === 'Limit') {
+                const priceInputEl = document.getElementById('sp_price_input');
+                const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
+                curP = (enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+            } else {
+                curP = prices[asset] || 0;
+            }
             // Calculate estimated SL-based risk in INR
-            const curP = prices[asset] || 0;
             let riskPerUnit = sl > 0 ? Math.abs(curP - sl) : 0;
             let estimatedRiskINR = riskPerUnit * (qty || 1) * USDT_INR;
 
@@ -1553,9 +2018,9 @@
                 if (result === 'block') return; // Hard block — do not place trade
             }
 
-            const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true) };
+            const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
+            const trade = { id: Date.now(), side: side, entry: prices[asset], qty: qty, sl: sl, tgt: tgt, strat: stratName, asset: asset, time: Date.now(), estimatedRiskINR: estimatedRiskINR, isManual: (isManual === true), tf: tfNow };
             trades.push(trade); saveData(); refreshUI();
-            serverOpenTrade(trade, 'btex_real'); // mirror to always-on server so SL/Target executes even if app closes
             notifyKodular("TRADE_OPEN|" + asset + "|" + side + "|" + stratName);
 
             // Record trade count in challenge — manual only
@@ -1578,31 +2043,30 @@
             const rate = (currency === 'INR') ? 83.50 : 1;
             const symbol = (currency === 'INR') ? ' INR' : ' USD';
 
-            if (typeof activeBattleId !== 'undefined' && activeBattleId) {
-                // ── Battle mode: positions/history render in the same bottom
-                // panel as Real trades (⚔️-tagged); the leaderboard itself
-                // lives in the top battle bar, untouched by this. ──
-                let bTotalP_USD = 0;
-                const bTrades = (battleData && battleData.trades) ? battleData.trades : [];
-                bTrades.forEach(t => {
+            if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
+                // ── Funded Challenge mode: show virtual balance/P&L only ──
+                let fTotalP_USD = 0;
+                const fTrades = (fundedChallengeData && fundedChallengeData.trades) ? fundedChallengeData.trades : [];
+                fTrades.forEach(t => {
                     const lp = prices[t.asset] || t.entry;
-                    bTotalP_USD += (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                    fTotalP_USD += (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
                 });
-                document.getElementById('btc_pnl_val').innerText = (bTotalP_USD * rate).toFixed(2) + symbol;
-                document.getElementById('btc_pnl_val').style.color = bTotalP_USD >= 0 ? "#089981" : "#f23645";
+                document.getElementById('btc_pnl_val').innerText = (fTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('btc_pnl_val').style.color = fTotalP_USD >= 0 ? "#089981" : "#f23645";
                 document.getElementById('eth_pnl_val').innerText = '-';
                 document.getElementById('eth_pnl_val').style.color = "#555";
                 document.getElementById('gold_pnl_val').innerText = '-';
                 document.getElementById('gold_pnl_val').style.color = "#555";
-                document.getElementById('total_pnl').innerText = (bTotalP_USD * rate).toFixed(2) + symbol;
-                document.getElementById('total_pnl').style.color = bTotalP_USD >= 0 ? "#089981" : "#f23645";
+                document.getElementById('total_pnl').innerText = (fTotalP_USD * rate).toFixed(2) + symbol;
+                document.getElementById('total_pnl').style.color = fTotalP_USD >= 0 ? "#089981" : "#f23645";
 
-                let bDisplayBal = (BATTLE_START_CAPITAL + bTotalP_USD);
-                if (currency === 'INR') bDisplayBal = bDisplayBal * 83.50;
-                document.getElementById('displayBalance').innerText = bDisplayBal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
+                const fBal = fundedChallengeData ? fundedChallengeData.balance : FUNDED_START_BALANCE;
+                let displayBal = (fBal + fTotalP_USD);
+                if (currency === 'INR') displayBal = displayBal * 83.50;
+                document.getElementById('displayBalance').innerText = displayBal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + symbol;
 
-                renderBattlePositionsBottom();
-                renderBattleHistoryBottom();
+                renderFundedPositions();
+                renderFundedHistory();
                 setTimeout(fixTabHeight, 0);
                 return;
             }
@@ -1637,18 +2101,23 @@
             setTimeout(fixTabHeight, 0);
         }
 
+        // ── Brokerage fee: 0.06% of entry notional (entry price × qty), applied app-wide on close ──
+        const FEE_RATE = 0.0006;
+
         // ✅ FIX 2: closeSingle
-        function closeSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
+        function closeSingle(id) {
             let idx = trades.findIndex(t => t.id === id);
             if(idx > -1) {
                 let t = trades[idx]; const lp = prices[t.asset] || t.entry;
-                let pnlINR = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty * 83.50;
+                let grossPnlUSD = (t.side == 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                let feeUSD = t.entry * t.qty * FEE_RATE;
+                let netPnlUSD = grossPnlUSD - feeUSD;
+                let pnlINR = netPnlUSD * 83.50;
+                let feeINR = feeUSD * 83.50;
                 balance += pnlINR; 
-                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), isManual: t.isManual });
+                history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: pnlINR, fee: feeINR, qty: t.qty, openTime: t.id, time: Date.now(), isManual: t.isManual, tf: t.tf });
                 if (history.length > 100) history.length = 100; // keep only latest 100 trades — protects storage size & app speed
                 trades.splice(idx, 1); saveData(); refreshUI();
-
-                if (!skipServerNotify) serverManualClose(t.id, lp);
 
                 // Challenge P&L — only for explicitly flagged manual trades
                 if (t.isManual === true && typeof challengeOnTradeClose === 'function') {
@@ -1657,520 +2126,17 @@
             }
         }
 
-        const BATTLE_MAX_QTY_BY_ASSET = {   // per-asset qty caps for battle trades
-            'BTCUSDT': 0.14,
-            'ETHUSDT': 2.8,
-            'PAXGUSDT': 0.50   // Gold
-        };
-        const BATTLE_START_CAPITAL = 1000;   // $1,000 each — fixed, not user-editable
-        const BATTLE_LOSS_LIMIT_PCT = 5;     // 5% max loss — fixed hard stop
-        const BATTLE_DURATION_MINS = 180;    // 3 hours — fixed
-        const BATTLE_KEY = 'NAFAA_BATTLE_LOCAL_V1';
-
-        let battleData = null;       // { challengeId, trades: [], eliminated }
-        let activeBattleId = null;   // battle currently open on the live screen
-        let battleLiveStatus = null; // last known status ('ACTIVE' | 'COMPLETED') of activeBattleId
-        let battlePollTimer = null;
-
-        function getBattleUserId() {
-            let uid = localStorage.getItem('NAFAA_USER');
-            if (!uid) {
-                uid = 'guest_' + Math.random().toString(36).slice(2, 8);
-                localStorage.setItem('NAFAA_USER', uid);
-            }
-            return uid;
-        }
-
-        // Cosmetic display name shown on the leaderboard instead of the raw
-        // anonymous device id — user_id (above) stays the real identity used
-        // for join/auth/ownership everywhere, this is purely what other
-        // players see next to your rank.
-        const BATTLE_NAME_KEY = 'NAFAA_BATTLE_NAME';
-        function getBattleDisplayName() {
-            return localStorage.getItem(BATTLE_NAME_KEY) || '';
-        }
-        function promptBattleDisplayName() {
-            document.getElementById('battle_name_input').value = getBattleDisplayName();
-            document.getElementById('battle_name_modal_overlay').style.display = 'flex';
-        }
-        function closeBattleNameModal() {
-            document.getElementById('battle_name_modal_overlay').style.display = 'none';
-        }
-        function saveBattleNameModal() {
-            const trimmed = document.getElementById('battle_name_input').value.trim().slice(0, 24);
-            localStorage.setItem(BATTLE_NAME_KEY, trimmed);
-            const el = document.getElementById('battle_name_display');
-            if (el) el.innerText = trimmed || 'Set your name ✏️';
-            closeBattleNameModal();
-        }
-
-        function loadBattleLocal() {
-            const saved = localStorage.getItem(BATTLE_KEY);
-            battleData = saved ? JSON.parse(saved) : { challengeId: null, trades: [], eliminated: false, history: [] };
-            if (!battleData.history) battleData.history = []; // upgrade older saved data missing this field
-        }
-        function saveBattleLocal() {
-            localStorage.setItem(BATTLE_KEY, JSON.stringify(battleData));
-        }
-
-        // Called once on app startup. activeBattleId only lives in memory (not
-        // localStorage), so without this, closing and reopening the app while
-        // a battle is still live would silently "forget" it — manualTrade()
-        // would fall through to Real/Funded again and any new trades would
-        // land in the normal position list instead of the battle. We ask the
-        // server (the source of truth) whether battleData.challengeId is
-        // still ACTIVE and, if so, restore the live battle screen exactly as
-        // if the user had tapped "Open Battle" on it.
-        async function resumeActiveBattleIfAny() {
-            if (!battleData) loadBattleLocal();
-            const id = battleData && battleData.challengeId;
-            if (!id) return;
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/${id}`, { headers: { 'x-api-key': SERVER_API_KEY } });
-                if (!res.ok) return;
-                const c = await res.json();
-                if (c.status === 'ACTIVE') {
-                    openBattleLive(id);
-                } else if (c.status === 'COMPLETED') {
-                    // Show the result once more, then stop treating it as active.
-                    openBattleLive(id);
-                } else {
-                    // CANCELLED or unknown — nothing to resume, clear stale local state.
-                    battleData = { challengeId: null, trades: [], eliminated: false, history: [] };
-                    saveBattleLocal();
-                }
-            } catch (err) {
-                // Server unreachable at startup — leave battleData as-is and
-                // just don't auto-resume; the user can still open it manually
-                // from the lobby once the server's reachable again.
-            }
-        }
-
-        // ── Lobby ──
-        function openBattle() {
-            if (!battleData) loadBattleLocal();
-            const nameEl = document.getElementById('battle_name_display');
-            if (nameEl) nameEl.innerText = getBattleDisplayName() || 'Set your name ✏️';
-            document.getElementById('battle_overlay').classList.add('show');
-            refreshBattleList();
-        }
-        function closeBattle() {
-            document.getElementById('battle_overlay').classList.remove('show');
-        }
-
-        async function refreshBattleList() {
-            const uid = getBattleUserId();
-            const listEl = document.getElementById('battle_list');
-            listEl.innerHTML = '<div style="text-align:center;color:#888;font-size:10px;padding:10px;">Loading...</div>';
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/mine?user_id=${encodeURIComponent(uid)}`, {
-                    headers: { 'x-api-key': SERVER_API_KEY }
-                });
-                if (!res.ok) throw new Error('server error');
-                renderBattleList(await res.json(), uid);
-            } catch (err) {
-                listEl.innerHTML = '<div style="text-align:center;color:#f23645;font-size:10px;padding:10px;">Could not reach the battle server. Try again.</div>';
-            }
-        }
-
-        function renderBattleList(list, uid) {
-            const listEl = document.getElementById('battle_list');
-            if (!list.length) {
-                listEl.innerHTML = '<div style="text-align:center;color:#888;font-size:10px;padding:10px;">No battles yet. Start a new one below!</div>';
-                return;
-            }
-            listEl.innerHTML = list.map(c => {
-                const amHost = c.host_id === uid;
-                const playersLine = `${c.player_count}/${c.max_players} players${c.is_public ? ' · public' : ' · private'}`;
-                let statusChip = '', action = '';
-                if (c.status === 'PENDING') {
-                    statusChip = `<span style="color:#888;">Waiting — code: <b style="color:#f0b90b;">${c.id}</b> · ${playersLine}</span>`;
-                    action = amHost
-                        ? `<div style="display:flex; gap:4px; margin-top:4px;">
-                            <button class="chal-btn chal-btn-start" style="margin:0; padding:5px; flex:1;" onclick="shareBattleCode('${c.id}')">📤 Share</button>
-                            ${c.player_count >= 2 ? `<button class="chal-btn chal-btn-start" style="margin:0; padding:5px; flex:1;" onclick="startBattleNow('${c.id}')">▶️ Start</button>` : ''}
-                            <button class="chal-btn chal-btn-reset" style="margin:0; padding:5px; flex:1;" onclick="cancelBattle('${c.id}')">✕ Cancel</button>
-                        </div>`
-                        : `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="leaveBattle('${c.id}')">Leave lobby</button>`;
-                } else if (c.status === 'ACTIVE') {
-                    statusChip = `<span style="color:#089981;">⚔️ LIVE now · ${playersLine}</span>`;
-                    const isThisOneOpen = (activeBattleId === c.id);
-                    action = isThisOneOpen
-                        ? `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="exitBattle()">🚪 Exit to Normal Trading</button>`
-                        : `<button class="chal-btn chal-btn-start" style="margin-top:4px; padding:5px;" onclick="openBattleLive('${c.id}')">▶️ Open Battle</button>`;
-                } else if (c.status === 'COMPLETED') {
-                    const won = c.winner_id === uid;
-                    const drew = !c.winner_id;
-                    statusChip = drew ? '<span style="color:#f0b90b;">🤝 Tied at the top</span>' : (won ? '<span style="color:#089981;">🏆 You Won</span>' : '<span style="color:#f23645;">Battle ended</span>');
-                    action = `<button class="chal-btn chal-btn-reset" style="margin-top:4px; padding:5px;" onclick="openBattleLive('${c.id}')">📊 View Result</button>`;
-                } else {
-                    statusChip = `<span style="color:#666;">${c.status}</span>`;
-                }
-                return `<div style="background:#1e222d;border:1px solid #2a2e39;border-radius:6px;padding:8px;margin-bottom:6px;">
-                    <div style="font-size:10px;color:#b2b5be;">${amHost ? 'Hosted by you' : 'Host: <b style="color:#eee;">' + (c.host_display_name || c.host_id) + '</b>'}</div>
-                    <div style="font-size:9px;margin-top:3px;">${statusChip}</div>
-                    ${action}
-                </div>`;
-            }).join('');
-        }
-
-        async function createBattleChallenge() {
-            const maxPlayersInput = document.getElementById('battle_max_players_input');
-            const publicInput = document.getElementById('battle_public_input');
-            const maxPlayers = maxPlayersInput ? parseInt(maxPlayersInput.value, 10) : 4;
-            const isPublic = publicInput ? publicInput.checked : true;
-            const uid = getBattleUserId();
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({
-                        host_id: uid,
-                        display_name: getBattleDisplayName(),
-                        max_players: maxPlayers,
-                        is_public: isPublic,
-                        start_capital: BATTLE_START_CAPITAL,
-                        loss_limit_pct: BATTLE_LOSS_LIMIT_PCT,
-                        duration_mins: BATTLE_DURATION_MINS
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok) { showBattleAlert(data.error || 'Could not create battle', 'error'); return; }
-                refreshBattleList();
-                shareBattleCode(data.join_code);
-            } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
-            }
-        }
-
-        // Sends the join code to friends via the phone's native share sheet
-        // (WhatsApp, SMS, etc.). Falls back to clipboard copy if the WebView
-        // doesn't support navigator.share, and to the styled alert modal
-        // (with a Copy button) as last resort.
-        function shareBattleCode(code) {
-            const text = `⚔️ Join my Profit Battle on Nafa! Join code: ${code}\n\nOpen the app → ⚔️ Profit Battle → enter this code.`;
-            if (navigator.share) {
-                navigator.share({ title: 'Nafa Profit Battle', text: text }).catch(() => {});
-            } else if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => showBattleAlert('Invite copied — now paste it in WhatsApp.', 'success'));
-            } else {
-                showBattleAlert('Share this invite with your friends:', 'info', text);
-            }
-        }
-
-        // Skip the code-sharing step — join whichever open public lobby has
-        // room, or create a fresh public one if nothing's open right now.
-        async function findPublicBattle() {
-            const uid = getBattleUserId();
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/open?user_id=${encodeURIComponent(uid)}`, {
-                    headers: { 'x-api-key': SERVER_API_KEY }
-                });
-                const list = await res.json();
-                if (list && list.length) {
-                    await joinBattle(list[0].id);
-                } else {
-                    showBattleAlert('No open public battles right now — creating one for you. Share the code or wait for others to join.', 'info');
-                    const publicInput = document.getElementById('battle_public_input');
-                    if (publicInput) publicInput.checked = true;
-                    await createBattleChallenge();
-                }
-            } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
-            }
-        }
-
-        async function joinBattleByCode() {
-            const codeInput = document.getElementById('battle_join_input');
-            const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
-            if (!code) return;
-            await joinBattle(code);
-            if (codeInput) codeInput.value = '';
-        }
-
-        async function joinBattle(id) {
-            const uid = getBattleUserId();
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/${id}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ user_id: uid, display_name: getBattleDisplayName() })
-                });
-                const data = await res.json();
-                if (!res.ok) { showBattleAlert(data.error || 'Could not join', 'error'); return; }
-                refreshBattleList();
-                if (data.started) {
-                    openBattleLive(id);
-                } else {
-                    showBattleAlert(`Joined! Waiting for host to start (${data.players}/${data.max_players} players).`, 'success');
-                }
-            } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
-            }
-        }
-
-        async function startBattleNow(id) {
-            const uid = getBattleUserId();
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/${id}/start`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ host_id: uid })
-                });
-                const data = await res.json();
-                if (!res.ok) { showBattleAlert(data.error || 'Could not start', 'error'); return; }
-                openBattleLive(id);
-            } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
-            }
-        }
-
-        async function leaveBattle(id) {
-            const uid = getBattleUserId();
-            try {
-                await fetch(`${SERVER_URL}/api/challenges/${id}/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ user_id: uid })
-                });
-                refreshBattleList();
-            } catch (err) {}
-        }
-
-        async function cancelBattle(id) {
-            const uid = getBattleUserId();
-            try {
-                await fetch(`${SERVER_URL}/api/challenges/${id}/cancel`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': SERVER_API_KEY },
-                    body: JSON.stringify({ user_id: uid })
-                });
-                refreshBattleList();
-            } catch (err) {}
-        }
-
-        // ── Live Battle screen ──
-        function openBattleLive(id) {
-            activeBattleId = id;
-            battleLiveStatus = 'ACTIVE';
-            if (!battleData) loadBattleLocal();
-            if (battleData.challengeId !== id) {
-                battleData = { challengeId: id, trades: [], eliminated: false, history: [] };
-                saveBattleLocal();
-            }
-            document.getElementById('battle_overlay').classList.remove('show');
-            document.getElementById('battle_live_bar').classList.add('show');
-            document.getElementById('battle_result_banner').style.display = 'none';
-            expandBattleBar(); // always open on the full view, never mid-minimized
-
-            // Battle trading is manual-only, same as Funded Challenge — force
-            // Auto Mode off (it always trades the Real balance) so it can't
-            // silently keep firing trades outside the battle while this is live.
-            const autoCb = document.getElementById('auto_mode');
-            if (autoCb && autoCb.checked) {
-                autoCb.checked = false;
-                saveData();
-                showToast('🚫 Auto Mode paused while this Battle is live.', '#f0b90b');
-            }
-
-            renderBattlePositions();
-            pollBattleStatus();
-            if (battlePollTimer) clearInterval(battlePollTimer);
-            battlePollTimer = setInterval(pollBattleStatus, 8000);
-        }
-
-        function closeBattleLive() {
-            document.getElementById('battle_live_bar').classList.remove('show');
-            if (battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
-            activeBattleId = null;
-            battleLiveStatus = null;
-            refreshUI(); // switch the bottom panel back to Real/Funded now that battle trading has stopped
-        }
-
-        // ── Minimize/expand: purely visual. The battle, its polling, and its
-        // open positions in the bottom panel all keep running exactly the
-        // same either way — this only hides the big bar down to a small pill.
-        function minimizeBattleBar() {
-            document.getElementById('battle_bar_full').style.display = 'none';
-            document.getElementById('battle_bar_mini').style.display = 'flex';
-            document.getElementById('battle_live_bar').classList.add('mini-corner');
-        }
-        function expandBattleBar() {
-            document.getElementById('battle_bar_mini').style.display = 'none';
-            document.getElementById('battle_bar_full').style.display = 'block';
-            document.getElementById('battle_live_bar').classList.remove('mini-corner');
-        }
-
-        // Deliberately leave battle-only trading mode and go back to Real/Funded,
-        // without touching this battle's own state on the server (it's still
-        // live for everyone else, and this player's own open battle trades
-        // stay open and still get tracked/eliminated normally by the server —
-        // this only stops the APP from routing new manual trades into it).
-        function exitBattle() {
-            if (!activeBattleId) return;
-            document.getElementById('exit_battle_modal_overlay').style.display = 'flex';
-        }
-        function closeExitBattleModal() {
-            document.getElementById('exit_battle_modal_overlay').style.display = 'none';
-        }
-        function confirmExitBattle() {
-            closeExitBattleModal();
-            closeBattle(); // close the lobby overlay if it happened to be open
-            closeBattleLive();
-        }
-
-        function toggleBattleLeaderboard() {
-            const el = document.getElementById('battle_leaderboard');
-            if (!el) return;
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-            setTimeout(fixTabHeight, 0);
-        }
-
-        async function pollBattleStatus() {
-            if (!activeBattleId) return;
-            try {
-                const res = await fetch(`${SERVER_URL}/api/challenges/${activeBattleId}`, { headers: { 'x-api-key': SERVER_API_KEY } });
-                if (!res.ok) return;
-                const c = await res.json();
-                renderBattleLive(c);
-                if (c.status === 'COMPLETED' && battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
-            } catch (err) {
-                console.warn('[battle] poll failed', err.message);
-            }
-        }
-
-        function renderBattleLive(c) {
-            const uid = getBattleUserId();
-            const lb = c.leaderboard || [];
-
-            const prevStatus = battleLiveStatus;
-            battleLiveStatus = c.status;
-
-            // lb is already sorted best-to-worst by the server (active players
-            // by P&L% desc, then eliminated players by how long they survived).
-            // Once the battle COMPLETEs the server has written a real final_rank
-            // (ties share a rank) — use that. While still live, derive a
-            // running rank from sort position, sharing rank on tied P&L%.
-            let rank = 0, prevPnl = null;
-            const ranked = lb.map((row, idx) => {
-                if (row.final_rank != null) return { ...row, rank: row.final_rank };
-                if (row.pnl_pct !== prevPnl) rank = idx + 1;
-                prevPnl = row.pnl_pct;
-                return { ...row, rank };
-            });
-
-            const mine = ranked.find(r => r.user_id === uid);
-            if (mine) {
-                const rankText = `#${mine.rank} / ${ranked.length}`;
-                const pnlText = (mine.pnl_pct >= 0 ? '+' : '') + mine.pnl_pct.toFixed(2) + '%';
-                const pnlColor = mine.pnl_pct >= 0 ? '#089981' : '#f23645';
-
-                const rankEl = document.getElementById('battle_my_rank');
-                rankEl.innerText = rankText;
-                const pnlEl = document.getElementById('battle_my_pnl');
-                pnlEl.innerText = pnlText;
-                pnlEl.style.color = pnlColor;
-
-                // Keep the minimized pill's numbers current too, so a user who
-                // left it minimized still sees their live rank/P&L at a glance
-                // without needing to expand.
-                const miniRankEl = document.getElementById('battle_mini_rank');
-                if (miniRankEl) miniRankEl.innerText = rankText;
-                const miniPnlEl = document.getElementById('battle_mini_pnl');
-                if (miniPnlEl) { miniPnlEl.innerText = pnlText; miniPnlEl.style.color = pnlColor; }
-
-                // The server is the source of truth on elimination (it force-closed
-                // their open trades already) — mirror that into local state the
-                // instant we see it, so placeBattleTrade() blocks locally without
-                // needing a round-trip, and any open positions shown locally get
-                // cleared since the server already closed them.
-                if (mine.eliminated && !battleData.eliminated) {
-                    battleData.eliminated = true;
-                    battleData.trades = [];
-                    saveBattleLocal();
-                    if (c.status === 'ACTIVE') showBattleAlert('You hit your 5% loss limit — eliminated. You can still watch the leaderboard, but no more trades in this battle.', 'error');
-                }
-            }
-
-            const boardEl = document.getElementById('battle_leaderboard');
-            if (boardEl) {
-                boardEl.innerHTML = ranked.map(r => {
-                    const isMe = r.user_id === uid;
-                    const nameColor = isMe ? '#f0b90b' : '#eaecef';
-                    const pnlColor = r.eliminated ? '#666' : (r.pnl_pct >= 0 ? '#089981' : '#f23645');
-                    const tag = r.eliminated ? ' · eliminated' : '';
-                    const label = isMe ? 'You' : (r.display_name || r.user_id);
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; padding:4px 6px; border-bottom:1px solid #1e222d;">
-                        <span style="color:${nameColor}; font-weight:${isMe ? 'bold' : 'normal'};">#${r.rank} ${label}${tag}</span>
-                        <span style="color:${pnlColor}; font-weight:bold;">${r.pnl_pct >= 0 ? '+' : ''}${r.pnl_pct.toFixed(2)}%</span>
-                    </div>`;
-                }).join('');
-            }
-
-            const timerEl = document.getElementById('battle_timer');
-            const miniTimerEl = document.getElementById('battle_mini_timer');
-            if (c.status === 'ACTIVE' && c.ends_at) {
-                const remainMs = Math.max(0, c.ends_at - Date.now());
-                const h = Math.floor(remainMs / 3600000), m = Math.floor((remainMs % 3600000) / 60000), s = Math.floor((remainMs % 60000) / 1000);
-                const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-                timerEl.innerText = timeStr;
-                if (miniTimerEl) miniTimerEl.innerText = timeStr;
-            } else if (c.status === 'COMPLETED') {
-                timerEl.innerText = '00:00:00';
-                if (miniTimerEl) miniTimerEl.innerText = 'Ended';
-            }
-
-            // Battle just finished — surface the result even if the user had
-            // it minimized, instead of leaving them to notice on their own.
-            if (prevStatus === 'ACTIVE' && c.status === 'COMPLETED') expandBattleBar();
-
-            const resultEl = document.getElementById('battle_result_banner');
-            if (c.status === 'COMPLETED') {
-                resultEl.style.display = 'block';
-                if (!mine) {
-                    resultEl.style.display = 'none';
-                } else if (mine.rank === 1 && ranked.filter(r => r.rank === 1).length > 1) {
-                    resultEl.innerHTML = '🤝 Tied for 1st place!';
-                    resultEl.style.color = '#f0b90b';
-                } else if (mine.rank === 1) {
-                    resultEl.innerHTML = c.end_reason === 'LAST_STANDING' ? '🏆 You Won — last one standing!' : '🏆 You won the battle!';
-                    resultEl.style.color = '#089981';
-                } else {
-                    resultEl.innerHTML = `❌ Battle over — you finished #${mine.rank} of ${ranked.length}.`;
-                    resultEl.style.color = '#f23645';
-                }
-                document.getElementById('battle_leaderboard').style.display = 'block';
-            } else if (mine && mine.eliminated) {
-                resultEl.style.display = 'block';
-                resultEl.innerHTML = '🛑 Eliminated — spectating only, no more trades in this battle.';
-                resultEl.style.color = '#f23645';
-            } else {
-                resultEl.style.display = 'none';
-            }
-
-            renderBattlePositions();
-        }
-
-        function renderBattlePositions() {
-            refreshUI(); // repaints the bottom Positions/History tabs from battleData
-        }
-
-        // ── Battle Positions & History rendering — bottom panel, same shared
-        // table (#positions_body / #history_body) as Real and Funded trades,
-        // same visual pattern as renderPositions()/buildHistoryRowHTML().
-        // The leaderboard stays exactly where it already is, in the top bar.
-        function renderBattlePositionsBottom() {
+        function renderPositions() {
             const curr = document.getElementById('currency_mode').value;
             const rate = (curr === 'INR') ? 83.50 : 1;
             const sym = (curr === 'INR') ? ' INR' : ' USD';
             const tbody = document.getElementById('positions_body');
             if (!tbody) return;
-            const bTrades = (battleData && battleData.trades) ? battleData.trades : [];
-            if (bTrades.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open battle positions</td></tr>';
+            if (trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open positions</td></tr>';
                 return;
             }
-            tbody.innerHTML = bTrades.map(t => {
+            tbody.innerHTML = trades.map(t => {
                 const lp = prices[t.asset] || t.entry;
                 const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
                 const pnlDisp = pnlUSD * rate;
@@ -2189,7 +2155,7 @@
                     buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
                 }
                 return `<tr>
-                    <td style="text-align:left; padding-left:6px;">⚔️ ${t.asset.replace('USDT','')}/${t.strat}</td>
+                    <td style="text-align:left; padding-left:6px;">${t.asset.replace('USDT','')}/${t.strat}</td>
                     <td>${buyCol}</td>
                     <td>${sellCol}</td>
                     <td>${t.qty}</td>
@@ -2197,189 +2163,15 @@
                         <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
                         <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
                     </td>
-                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, 'battle')" style="background:#f0b90b;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="battleCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
-                </tr>`;
-            }).join('');
-        }
-
-        function renderBattleHistoryBottom() {
-            const curr = document.getElementById('currency_mode').value;
-            const rate = (curr === 'INR') ? 83.50 : 1;
-            const sym = (curr === 'INR') ? ' INR' : ' USD';
-            const tbody = document.getElementById('history_body');
-            if (!tbody) return;
-            const bHistory = (battleData && battleData.history) ? battleData.history : [];
-            if (bHistory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No battle trade history</td></tr>';
-                return;
-            }
-            tbody.innerHTML = bHistory.slice(0, 20).map(h => buildHistoryRowHTML(h, rate, sym)).join('');
-        }
-
-        // Places a battle trade using the SAME inputs as the normal manual trade
-        // panel (asset_choice / manual_qty / manual_sl_input / manual_target_input).
-        // Called from manualTrade() whenever a battle is live — no separate
-        // battle trade panel/inputs anymore.
-        function placeBattleTrade(side) {
-            if (!activeBattleId) return;
-            if (battleLiveStatus === 'COMPLETED') { showBattleAlert('This battle has ended.', 'info'); return; }
-            if (battleData && battleData.eliminated) { showBattleAlert('You already hit your loss limit in this battle.', 'error'); return; }
-
-            const asset = document.getElementById('asset_choice').value;
-            let qty = parseFloat(document.getElementById('manual_qty').value) || 1;
-
-            // Same max-qty rule as the Funded Account Challenge, applied per asset:
-            // cap the single entry, then also cap by whatever room is left across
-            // all currently open battle trades in that SAME asset.
-            const maxQty = BATTLE_MAX_QTY_BY_ASSET[asset];
-            if (maxQty !== undefined) {
-                if (qty > maxQty) qty = maxQty;
-                const openQty = (battleData && battleData.trades ? battleData.trades : [])
-                    .filter(t => t.asset === asset)
-                    .reduce((sum, t) => sum + (t.qty || 0), 0);
-                const remainingQty = Math.max(0, maxQty - openQty);
-                if (remainingQty <= 0) {
-                    showBattleAlert(`Total open qty limit is ${maxQty} ${asset === 'BTCUSDT' ? 'BTC' : asset === 'ETHUSDT' ? 'ETH' : 'Gold'} already reached. Close a position first.`, 'error');
-                    return;
-                }
-                if (qty > remainingQty) qty = remainingQty;
-            }
-
-            const slInput = document.getElementById('manual_sl_input').value;
-            const tgtInput = document.getElementById('manual_target_input').value;
-            const slPrice = slInput ? parseFloat(slInput) : 0;
-            const tgtPrice = tgtInput ? parseFloat(tgtInput) : 0;
-
-            const entryPrice = prices[asset] || 0;
-            if (!entryPrice) { showBattleAlert('Price not ready yet, try again in a moment.', 'info'); return; }
-
-            const uid = getBattleUserId();
-            if (!battleData) loadBattleLocal();
-            const trade = { id: Date.now(), side: side, entry: entryPrice, qty: qty, sl: slPrice, tgt: tgtPrice, strat: 'BATTLE', asset: asset, time: Date.now(), tf: '' };
-            battleData.trades.push(trade);
-            saveBattleLocal();
-            renderBattlePositions();
-
-            serverOpenTrade(trade, 'battle', uid, activeBattleId);
-
-            document.getElementById('manual_sl_input').value = '';
-            document.getElementById('manual_target_input').value = '';
-            const slPrev = document.getElementById('sl_preview'); if (slPrev) slPrev.innerText = '';
-            const tgtPrev = document.getElementById('tgt_preview'); if (tgtPrev) tgtPrev.innerText = '';
-        }
-
-        function battleCheckExits() {
-            if (!battleData || !battleData.trades || !battleData.trades.length) return;
-            battleData.trades.slice().forEach(t => {
-                const lp = prices[t.asset]; if (!lp) return;
-                if (t.sl > 0 && ((t.side === 'BUY' && lp <= t.sl) || (t.side === 'SELL' && lp >= t.sl))) battleCloseSingle(t.id);
-                if (t.tgt > 0 && ((t.side === 'BUY' && lp >= t.tgt) || (t.side === 'SELL' && lp <= t.tgt))) battleCloseSingle(t.id);
-            });
-        }
-
-        function battleCloseSingle(id, forceExitPrice, skipServerNotify, forceCloseTime) {
-            if (!battleData) return;
-            const idx = battleData.trades.findIndex(t => t.id === id);
-            if (idx === -1) return;
-            const t = battleData.trades[idx];
-            const lp = forceExitPrice || prices[t.asset] || t.entry;
-            const grossPnl = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
-            const fee = t.entry * t.qty * FEE_RATE;
-            const netPnl = grossPnl - fee;
-
-            if (!battleData.history) battleData.history = [];
-            battleData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnl, fee: fee, qty: t.qty, openTime: t.id, time: forceCloseTime || Date.now(), tf: t.tf });
-            if (battleData.history.length > 100) battleData.history.length = 100;
-
-            battleData.trades.splice(idx, 1);
-            saveBattleLocal();
-            refreshUI();
-            if (!skipServerNotify) serverManualClose(String(t.id), lp);
-        }
-
-        // Styled in-app modal for battle messages — replaces native browser alert().
-        function showBattleAlert(msg, tone, copyText) {
-            const box = document.getElementById('battle_alert_box');
-            box.className = 'battle-alert-box' + (tone === 'error' ? ' tone-error' : tone === 'success' ? ' tone-success' : '');
-            document.getElementById('battle_alert_icon').innerText = tone === 'error' ? '❌' : tone === 'success' ? '✅' : '⚔️';
-            document.getElementById('battle_alert_msg').innerText = msg;
-            const copyRow = document.getElementById('battle_alert_copy_row');
-            if (copyText) {
-                copyRow.style.display = 'flex';
-                document.getElementById('battle_alert_copy_input').value = copyText;
-            } else {
-                copyRow.style.display = 'none';
-            }
-            document.getElementById('battle_alert_overlay').classList.add('show');
-        }
-        function closeBattleAlert() {
-            document.getElementById('battle_alert_overlay').classList.remove('show');
-        }
-        function copyBattleAlertText() {
-            const input = document.getElementById('battle_alert_copy_input');
-            input.select();
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(input.value).then(() => showToast('Copied!', '#089981'));
-            } else {
-                document.execCommand('copy');
-                showToast('Copied!', '#089981');
-            }
-        }
-
-        function openBattleRules() {
-            closeBattle();
-            openSidePanel();
-            const el = document.getElementById('acc_battle');
-            if (el && !el.classList.contains('open')) el.classList.add('open');
-            setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
-        }
-
-        function showToast(msg, color) {
-            const c = color || '#f0b90b';
-            const toast = document.createElement('div');
-            toast.innerText = msg;
-            toast.style.cssText = `position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(30,34,45,0.97);color:${c};border:1px solid ${c};border-radius:20px;padding:7px 16px;font-size:11px;font-weight:bold;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:90vw;overflow:hidden;text-overflow:ellipsis;`;
-            document.body.appendChild(toast);
-            toast.style.transition = 'opacity 0.8s';
-            setTimeout(() => toast.style.opacity = '0', 2500);
-            setTimeout(() => toast.remove(), 3300);
-        }
-
-        function renderPositions() {
-            const curr = document.getElementById('currency_mode').value;
-            const rate = (curr === 'INR') ? 83.50 : 1;
-            const sym = (curr === 'INR') ? ' INR' : ' USD';
-            const tbody = document.getElementById('positions_body');
-            if (!tbody) return;
-            if (trades.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open positions</td></tr>';
-                return;
-            }
-            tbody.innerHTML = trades.map(t => {
-                const lp = prices[t.asset] || t.entry;
-                const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
-                const pnlDisp = pnlUSD * rate;
-                let buyCol, sellCol;
-                if (t.side === 'BUY') {
-                    buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
-                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
-                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
-                    sellCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
-                } else {
-                    sellCol = `<span style="color:#f23645;">${t.entry.toFixed(1)}</span>`;
-                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
-                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
-                    buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
-                }
-                return `<tr>
-                    <td style="text-align:left; padding-left:6px;">${t.asset.replace('USDT','')}/${t.strat}</td>
-                    <td>${buyCol}</td>
-                    <td>${sellCol}</td>
-                    <td>${t.qty}</td>
-                    <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
                     <td style="display:flex;gap:3px;align-items:center;justify-content:center;">${t.isManual ? `<button onclick="openModify(${t.id})" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button>` : ''}<button onclick="closeSingle(${t.id})" class="exit-btn">EXIT</button></td>
                 </tr>`;
             }).join('');
+        }
+
+        // Converts the raw user_tf select value ('1','5','15','60','240','D') into a short label
+        function tfLabel(tf) {
+            const map = { '1': '1m', '5': '5m', '15': '15m', '60': '1H', '240': '4H', 'D': 'D' };
+            return map[tf] || '';
         }
 
         // Shared row-builder — used by the History tab AND the Manual/Auto Trade History modal
@@ -2402,13 +2194,17 @@
                 buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
                 bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
             }
+            const sideLetter = h.side === 'BUY' ? 'B' : 'S';
+            const tfPart = h.tf ? '/' + tfLabel(h.tf) : '';
+            const feeDisp = (h.fee || 0) * rate;
             return `<tr>
-                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}</td>
+                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}/${sideLetter}${tfPart}</td>
                 <td>${buyPrice}</td>
                 <td>${bTime}</td>
                 <td>${sellPrice}</td>
                 <td>${sTime}</td>
                 <td>${h.qty || '-'}</td>
+                <td style="color:#f23645; font-size:8px;">-${feeDisp.toFixed(2)}${sym}</td>
                 <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
             </tr>`;
         }
@@ -2448,6 +2244,18 @@
             return ema;
         }
 
+        // ➕ S7 साठी अधिक अचूक EMA — पहिल्या close ऐवजी पहिल्या `period` candles च्या SMA पासून सुरुवात करतो,
+        // त्यामुळे TradingView च्या चार्टवरील खऱ्या EMA च्या खूप जवळ result मिळतो (विशेषतः EMA200 साठी)
+        function calculateEMAAccurate(pArr, period) {
+            if (pArr.length < period) return calculateEMA(pArr, period); // पुरेसा data नसेल तर जुनी पद्धत वापर
+            let sum = 0;
+            for (let i = 0; i < period; i++) sum += pArr[i];
+            let ema = sum / period; // SMA सुरुवात
+            const k = 2 / (period + 1);
+            for (let i = period; i < pArr.length; i++) { ema = pArr[i] * k + ema * (1 - k); }
+            return ema;
+        }
+
         function calculateSupertrendRMA(data, period, mult) {
             let tr = [], hl2 = [];
             for (let i = 0; i < data.length; i++) {
@@ -2473,7 +2281,15 @@
         function updateTradePreview() {
             const assetEl = document.getElementById('asset_choice');
             const asset = assetEl ? assetEl.value : 'BTCUSDT';
-            const curP = prices[asset] || 0;
+            // ✅ FIX: Limit order असेल तर entered limit price वापर, Market असेल तर live price वापर
+            let curP;
+            if (sharkOrderType === 'Limit') {
+                const priceInputEl = document.getElementById('sp_price_input');
+                const enteredPrice = priceInputEl ? parseFloat(priceInputEl.value) : NaN;
+                curP = (enteredPrice > 0) ? enteredPrice : (prices[asset] || 0);
+            } else {
+                curP = prices[asset] || 0;
+            }
             const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
             const sl = parseFloat(document.getElementById('manual_sl_input').value) || 0;
             const tgt = parseFloat(document.getElementById('manual_target_input').value) || 0;
@@ -2519,7 +2335,10 @@
         }
 
         function manualTrade(side) {
-            if (typeof activeBattleId !== 'undefined' && activeBattleId) { placeBattleTrade(side); return; }
+            if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
+                fundedManualTrade(side);
+                return;
+            }
             const asset = document.getElementById('asset_choice').value;
             const qty = parseFloat(document.getElementById('manual_qty').value) || 1;
             const slInput = document.getElementById('manual_sl_input').value;
@@ -2537,7 +2356,7 @@
         }
 
         // ── Shark Exchange-style compact order bar ──
-        let sharkOrderType = 'Limit';
+        let sharkOrderType = 'Market';
 
         function sharkSetOrderType(type) {
             sharkOrderType = type;
@@ -2561,9 +2380,47 @@
             updateTradePreview();
         }
 
+        // ── Custom Asset Selector modal ──
+        function openAssetModal() {
+            syncAssetModalUI();
+            document.getElementById('asset_modal_overlay').style.display = 'flex';
+        }
+        function closeAssetModal() {
+            document.getElementById('asset_modal_overlay').style.display = 'none';
+        }
+        function selectAssetModal(val) {
+            const item = document.querySelector('#asset_modal_list .strat-modal-item[data-value="' + val + '"]');
+            if (item && item.classList.contains('disabled')) return;
+            document.getElementById('asset_choice').value = val;
+            switchMarket();
+            updateTradePreview();
+            syncAssetModalUI();
+            closeAssetModal();
+        }
+        function syncAssetModalUI() {
+            const val = document.getElementById('asset_choice').value;
+            document.querySelectorAll('#asset_modal_list .strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const ethOpt = document.getElementById('asset_opt_eth');
+            const goldOpt = document.getElementById('asset_opt_gold');
+            const ethItem = document.getElementById('asset_modal_item_eth');
+            const goldItem = document.getElementById('asset_modal_item_gold');
+            if (ethItem) ethItem.classList.toggle('disabled', !!(ethOpt && ethOpt.disabled));
+            if (goldItem) goldItem.classList.toggle('disabled', !!(goldOpt && goldOpt.disabled));
+            const activeItem = document.querySelector('#asset_modal_list .strat-modal-item[data-value="' + val + '"]');
+            const display = document.getElementById('asset_select_display');
+            if (activeItem && display) {
+                display.textContent = activeItem.querySelector('.strat-modal-item-label').textContent;
+            }
+        }
+
         function switchMarket() {
             const asset = document.getElementById('asset_choice').value;
             document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
+            syncStrategyModalUI();
+            syncAssetModalUI();
+            updateFundedQtyMax();
             initTradingView(); refreshUI(); syncSharkQty();
         }
 
@@ -2573,11 +2430,39 @@
                 const asset = document.getElementById('asset_choice').value;
                 document.getElementById('strategy_choice').value = assetSettings[asset].strategy;
                 showPremiumLock();
+                syncStrategyModalUI();
                 return;
             }
             const asset = document.getElementById('asset_choice').value;
             assetSettings[asset].strategy = val;
             saveData();
+            syncStrategyModalUI();
+        }
+
+        // ── Custom Strategy Selector modal ──
+        function openStrategyModal() {
+            syncStrategyModalUI();
+            document.getElementById('strategy_modal_overlay').classList.add('open');
+        }
+        function closeStrategyModal() {
+            document.getElementById('strategy_modal_overlay').classList.remove('open');
+        }
+        function selectStrategyModal(val) {
+            const sel = document.getElementById('strategy_choice');
+            sel.value = val;
+            updateAssetStrategy();
+            closeStrategyModal();
+        }
+        function syncStrategyModalUI() {
+            const val = document.getElementById('strategy_choice').value;
+            document.querySelectorAll('.strat-modal-item').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-value') === val);
+            });
+            const activeItem = document.querySelector('.strat-modal-item[data-value="' + val + '"]');
+            const display = document.getElementById('strategy_select_display');
+            if (activeItem && display) {
+                display.textContent = activeItem.querySelector('.strat-modal-item-label').textContent;
+            }
         }
 
         function showPremiumLock() {
@@ -2590,18 +2475,14 @@
         function closeAll() { trades.slice().forEach(t => closeSingle(t.id)); }
 
         // ── MODIFY ORDER ──
-        // modifyMode: 'real' | 'battle' — which trade list modifyTradeId belongs to.
         let modifyTradeId = null;
-        let modifyMode = 'real';
+        let modifyIsFunded = false;
 
-        function getModifyTradesList(mode) {
-            if (mode === 'battle') return (battleData && battleData.trades) || [];
-            return trades;
-        }
-
-        function openModify(id, modeArg) {
-            modifyMode = modeArg === 'battle' ? 'battle' : 'real';
-            const t = getModifyTradesList(modifyMode).find(t => t.id === id);
+        function openModify(id, isFunded) {
+            modifyIsFunded = !!isFunded;
+            const t = modifyIsFunded
+                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === id)
+                : trades.find(t => t.id === id);
             if (!t) return;
             modifyTradeId = id;
             const lp = prices[t.asset] || t.entry;
@@ -2616,39 +2497,41 @@
         function closeModifyModal() {
             document.getElementById('modify_modal_overlay').style.display = 'none';
             modifyTradeId = null;
-            modifyMode = 'real';
+            modifyIsFunded = false;
         }
 
         function saveModify() {
             if (!modifyTradeId) return;
-            const t = getModifyTradesList(modifyMode).find(t => t.id === modifyTradeId);
+            const t = modifyIsFunded
+                ? ((fundedChallengeData && fundedChallengeData.trades) || []).find(t => t.id === modifyTradeId)
+                : trades.find(t => t.id === modifyTradeId);
             if (!t) return;
             const newSL = parseFloat(document.getElementById('modify_sl_input').value) || 0;
             const newTGT = parseFloat(document.getElementById('modify_tgt_input').value) || 0;
             t.sl = newSL;
             t.tgt = newTGT;
-            serverModifyTrade(t.id, newSL, newTGT); // keep the always-on server in sync too
-            if (modifyMode === 'battle') {
-                saveBattleLocal();
-                renderBattlePositions();
+            if (modifyIsFunded) {
+                saveFundedChallenge();
             } else {
                 saveData();
-                refreshUI();
             }
+            refreshUI();
             closeModifyModal();
         }
 
+        function saveData() { localStorage.setItem('DELTA_ULTRA_S7', JSON.stringify({ bal: balance, trds: trades, hist: history, settings: assetSettings, auto: document.getElementById('auto_mode').checked })); }
+
+        // Guards the AUTO toggle: Auto Mode trades always post to the Real balance, so it's
+        // blocked while Funded Challenge mode is active (funded trades must be manual).
         function handleAutoModeToggle() {
             const cb = document.getElementById('auto_mode');
-            if (cb.checked && typeof activeBattleId !== 'undefined' && activeBattleId) {
+            if (cb.checked && typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
                 cb.checked = false;
-                showToast('🚫 Auto Mode is disabled while a Battle is live. Exit the Battle to use it.', '#f23645');
+                showToast('🚫 Auto Mode is disabled during Funded Challenge. Switch to Real to use it.', '#f23645');
                 return;
             }
             saveData();
         }
-
-        function saveData() { localStorage.setItem('DELTA_ULTRA_S7', JSON.stringify({ bal: balance, trds: trades, hist: history, settings: assetSettings, auto: document.getElementById('auto_mode').checked })); }
         function loadData() { 
             let s = localStorage.getItem('DELTA_ULTRA_S7'); 
             if(s) { 
@@ -2658,6 +2541,7 @@
                 document.getElementById('auto_mode').checked = p.auto || false;
                 renderHistory(); refreshUI();
             } 
+            syncStrategyModalUI();
         }
 
         document.addEventListener("visibilitychange", function() {
@@ -2888,100 +2772,572 @@
         </div>
     </div>
 
-    <div id="battle_overlay">
+    <!-- ── FUNDED ACCOUNT CHALLENGE MODAL ── -->
+    <div id="funded_overlay">
         <div class="chal-box">
-            <div class="chal-title">⚔️ PROFIT BATTLE</div>
-
-            <div onclick="promptBattleDisplayName()" style="display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; background:#1e222d; border:1px solid #2a2e39; border-radius:6px; padding:6px 10px; margin-bottom:8px;">
-                <span style="font-size:9px; color:#888;">Playing as</span>
-                <span id="battle_name_display" style="font-size:11px; font-weight:bold; color:#f0b90b;">Set your name ✏️</span>
-            </div>
+            <div class="chal-title">FUNDED ACCOUNT CHALLENGE</div>
 
             <div style="background: linear-gradient(135deg, rgba(240,185,11,0.18), rgba(240,185,11,0.06)); border: 1.5px solid #f0b90b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; text-align: center;">
-                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💵 $1,000 EACH · 🛡️ 5% MAX LOSS · ⏱️ 3 HOURS</div>
-                <div style="font-size: 10px; color: #b2b5be; margin-top:4px;">Highest P&amp;L% when time's up wins the leaderboard. Hit your loss limit and you're eliminated instantly.</div>
+                <div style="font-size: 10px; font-weight: bold; color: #f0b90b; letter-spacing: 0.5px;">💰 2-STEP HIGH STAKES CHALLENGE</div>
+                <div style="font-size: 11px; color: #b2b5be; margin-top:3px;">BTC (0.14) · ETH (2.8) · GOLD (0.50) · Unlimited Time</div>
+                <div style="font-size: 10px; color: #089981; margin-top:4px; font-weight:bold;">💸 Save $35 Upfront Fee — Practice Free</div>
             </div>
 
-            <div class="chal-section-title">➕ Host a New Battle</div>
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#0c0d10; border:1px solid #2a2e39; border-radius:4px; padding:7px 8px;">
-                <span style="font-size:10px; color:#b2b5be; white-space:nowrap;">Max Players</span>
-                <input type="number" id="battle_max_players_input" min="2" value="4" step="1" style="flex:1; box-sizing:border-box; background:#1e222d; color:#f0b90b; border:1px solid #2a2e39; border-radius:4px; padding:5px 8px; font-size:12px; font-weight:bold; text-align:center;">
+            <div id="fc_warning" class="chal-warning-banner"></div>
+
+            <!-- Step Indicator -->
+            <div class="chal-section-title">🏁 Step Progress</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Current Step</span>
+                <span class="chal-stat-val" id="fc_step_label" style="color:#f0b90b;">Step 1</span>
             </div>
-            <div style="font-size:8px; color:#666; margin:-3px 0 8px 2px;">Minimum 2 — set any lobby size you want (big group battles work too).</div>
-            <label style="display:flex; align-items:center; gap:6px; font-size:10px; color:#b2b5be; margin-bottom:8px; cursor:pointer;">
-                <input type="checkbox" id="battle_public_input" checked style="accent-color:#f0b90b;">
-                Public — show in the open lobby list for anyone to join
-            </label>
-            <button class="chal-btn chal-btn-start" onclick="createBattleChallenge()">⚔️ Create Battle</button>
-
-            <button class="chal-btn chal-btn-reset" style="margin-top:6px;" onclick="findPublicBattle()">🎲 Find Public Battle</button>
-
-            <div class="chal-section-title">🔑 Join with Code</div>
-            <div style="display:flex; gap:6px; margin-bottom:4px;">
-                <input type="text" id="battle_join_input" placeholder="e.g. 3C4080" style="flex:1; box-sizing:border-box; background:#0c0d10; color:#eee; border:1px solid #2a2e39; border-radius:4px; padding:7px 8px; font-size:10px;">
-                <button class="chal-btn chal-btn-start" style="width:auto; padding:0 14px; margin-top:0;" onclick="joinBattleByCode()">Join</button>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Profit Target</span>
+                <span class="chal-stat-val" id="fc_target_val" style="color:#38bdf8;">$500 (10%)</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Step Profit So Far</span>
+                <span class="chal-stat-val" id="fc_step_profit">$0</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_step_bar" style="background:#089981; width:0%;"></div>
             </div>
 
-            <div class="chal-section-title">📋 Your Battles</div>
-            <div id="battle_list" style="max-height:180px; overflow-y:auto; margin-bottom:6px;"></div>
+            <!-- Balance -->
+            <div class="chal-section-title">💵 Account</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Starting Balance</span>
+                <span class="chal-stat-val" id="fc_start_balance">$5,000</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Current Balance</span>
+                <span class="chal-stat-val" id="fc_current_balance">$5,000</span>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Total P&L</span>
+                <span class="chal-stat-val" id="fc_total_pnl">$0</span>
+            </div>
 
-            <button class="chal-btn chal-btn-reset" onclick="refreshBattleList()">🔄 Refresh</button>
-            <button class="chal-btn chal-btn-reset" onclick="openBattleRules()">📜 RULES</button>
-            <button class="chal-btn chal-btn-close" onclick="closeBattle()">✕ CLOSE</button>
+            <!-- Risk Limits -->
+            <div class="chal-section-title">🛡️ Risk Limits</div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Max Loss</span>
+                <span class="chal-stat-val" id="fc_max_loss">$0 / $500</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_maxloss_bar" style="background:#f23645; width:0%;"></div>
+            </div>
+            <div class="chal-stat-row">
+                <span class="chal-stat-label">Daily Loss</span>
+                <span class="chal-stat-val" id="fc_daily_loss">$0 / $250</span>
+            </div>
+            <div class="chal-progress-bar">
+                <div class="chal-progress-fill" id="fc_dailyloss_bar" style="background:#f23645; width:0%;"></div>
+            </div>
+
+            <div id="fc_passed" style="display:none; text-align:center; padding:10px; background:rgba(8,153,129,0.15); border:1px solid #089981; border-radius:6px; margin-top:8px; font-size:11px; color:#089981; font-weight:bold;">
+                🎉 CHALLENGE PASSED! FUNDED! 🎉
+            </div>
+            <div id="fc_failed" style="display:none; text-align:center; padding:10px; background:rgba(242,54,69,0.15); border:1px solid #f23645; border-radius:6px; margin-top:8px; font-size:11px; color:#f23645; font-weight:bold; line-height:1.6;">
+                ❌ You lost the challenge. But we saved your fees of $35 which you may have given to pass the funded account.
+            </div>
+
+            <button class="chal-btn chal-btn-start" id="fc_start_btn" onclick="startFundedChallenge()">🚀 START CHALLENGE</button>
+            <button class="chal-btn chal-btn-reset" id="fc_retry_btn" style="display:none;" onclick="retryFundedChallenge()">🔄 RETRY WITH NEW CHALLENGE</button>
+            <button class="chal-btn chal-btn-reset" onclick="openFundedRules()">📜 RULES</button>
+            <button class="chal-btn chal-btn-close" onclick="closeFundedChallenge()">✕ CLOSE</button>
         </div>
     </div>
 
-    <!-- Professional in-app alert modal for battle messages (replaces native alert()) -->
-    <div id="battle_alert_overlay">
-        <div class="battle-alert-box" id="battle_alert_box">
-            <span class="battle-alert-icon" id="battle_alert_icon">⚔️</span>
-            <div class="battle-alert-msg" id="battle_alert_msg"></div>
-            <div class="battle-alert-copy-row" id="battle_alert_copy_row" style="display:none;">
-                <input type="text" class="battle-alert-copy-input" id="battle_alert_copy_input" readonly>
-                <button class="battle-alert-copy-btn" onclick="copyBattleAlertText()">Copy</button>
-            </div>
-            <button class="battle-alert-ok-btn" onclick="closeBattleAlert()">OK</button>
-        </div>
-    </div>
+    <script>
+        // =============================================
+        // FUNDED ACCOUNT CHALLENGE SYSTEM
+        // =============================================
+        const FUNDED_KEY = 'BTEX_FUNDED_CHALLENGE_V1';
+        const FUNDED_START_BALANCE = 5000;      // $5,000
+        const FUNDED_MAX_LOSS = 500;            // $500 total
+        const FUNDED_DAILY_LOSS = 250;           // 5% of $5,000
+        const FUNDED_STEP1_TARGET = 500;         // 10% of $5,000
+        const FUNDED_STEP2_PCT = 0.05;           // 5% of balance at start of step 2
+        const FUNDED_MAX_QTY_MAP = { BTCUSDT: 0.14, ETHUSDT: 2.8, PAXGUSDT: 0.50 }; // per-asset max qty
+        const FUNDED_ASSETS = ['BTCUSDT', 'ETHUSDT', 'PAXGUSDT'];
+        const FUNDED_ASSET = 'BTCUSDT'; // default/back-compat reference
 
-    <!-- Profit Battle: Live status bar (trading happens via the normal Buy/Sell
-         panel on the chart below, positions/history show in the normal bottom
-         panel too — same as Funded Challenge). This bar is leaderboard-only:
-         your rank/P&L at a glance, tap to expand the full standings.
-         Two visual states — full (#battle_bar_full) and a small collapsed
-         pill (#battle_bar_mini). Minimizing (─) is NOT the same as exiting
-         the battle: positions, polling, and battle-only trading all keep
-         running either way. Actually leaving the battle to trade normally
-         again is a deliberate action from the Battles list (exitBattle()). -->
-    <div id="battle_live_bar">
-        <div id="battle_bar_mini" onclick="expandBattleBar()" style="display:none; align-items:center; gap:5px; cursor:pointer;">
-            <span style="font-weight:bold; color:#f0b90b;">⚔️</span>
-            <span id="battle_mini_rank" style="font-weight:bold; color:#f0b90b; font-size:10px;">#- / -</span>
-            <span id="battle_mini_pnl" style="font-weight:bold; font-size:10px;">+0.00%</span>
-        </div>
-        <div id="battle_bar_full">
-            <div style="display:flex; align-items:center; gap:6px;">
-                <div style="font-weight:bold; color:#f0b90b; white-space:nowrap;">⚔️ BATTLE</div>
-                <div id="battle_timer" style="font-weight:bold; color:#f0b90b; font-family:monospace; white-space:nowrap;">--:--:--</div>
-                <div onclick="toggleBattleLeaderboard()" style="display:flex; align-items:center; gap:5px; flex:1; justify-content:center; overflow:hidden; cursor:pointer;">
-                    <div style="text-align:center;">
-                        <div style="font-size:7px; color:#888;">YOUR RANK</div>
-                        <div id="battle_my_rank" style="font-weight:bold; color:#f0b90b;">#- / -</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:7px; color:#888;">P&amp;L</div>
-                        <div id="battle_my_pnl" style="font-weight:bold; color:#089981;">+0.00%</div>
-                    </div>
-                    <div style="color:#555;">▾</div>
-                </div>
-                <button onclick="openBattle()" style="background:#2a2e39; color:#f0b90b; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Battles</button>
-                <button onclick="minimizeBattleBar()" title="Minimize — battle keeps running" style="background:#2a2e39; color:#b2b5be; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; padding:3px 9px;">─</button>
-            </div>
-            <div id="battle_result_banner" style="display:none; text-align:center; padding:5px; border-radius:5px; margin-top:5px; font-weight:bold; background:rgba(255,255,255,0.05);"></div>
-            <div id="battle_leaderboard" style="display:none; margin-top:5px; max-height:150px; overflow-y:auto; background:#0c0d10; border-radius:6px; padding:4px;"></div>
-        </div>
-    </div>
+        let fundedChallengeData = null; // { active, failed, passed, step, startBalance, balance, stepStartBalance, step2Target, totalPnl, days:{}, trades:[], history:[] }
+        let tradingMode = 'real'; // 'real' | 'funded'
 
+        function getFundedTodayKey() { return getTodayKey(); }
+
+        function loadFundedChallenge() {
+            const saved = localStorage.getItem(FUNDED_KEY);
+            if (saved) fundedChallengeData = JSON.parse(saved);
+        }
+
+        function saveFundedChallenge() {
+            localStorage.setItem(FUNDED_KEY, JSON.stringify(fundedChallengeData));
+        }
+
+        function ensureFundedToday() {
+            if (!fundedChallengeData) return;
+            const k = getFundedTodayKey();
+            if (!fundedChallengeData.days[k]) fundedChallengeData.days[k] = { pnl: 0 };
+        }
+
+        function startFundedChallenge() {
+            fundedChallengeData = {
+                active: true,
+                failed: false,
+                passed: false,
+                step: 1,
+                startBalance: FUNDED_START_BALANCE,
+                balance: FUNDED_START_BALANCE,
+                stepStartBalance: FUNDED_START_BALANCE,
+                step2Target: 0,
+                totalPnl: 0,
+                days: {},
+                trades: [],
+                history: []
+            };
+            ensureFundedToday();
+            saveFundedChallenge();
+            updateFundedUI();
+            activateFundedTradingMode();
+            notifyKodular('SHOW_INTERSTITIAL_AD');
+        }
+
+        // Auto-switches the Real/Funded toggle into Funded mode and gives it a brief
+        // pulse animation so the user notices the mode changed.
+        function activateFundedTradingMode() {
+            const cb = document.getElementById('funded_mode_toggle');
+            if (cb && !cb.checked) {
+                cb.checked = true;
+                toggleTradingMode();
+            }
+            const lbl = document.getElementById('funded_mode_toggle_label');
+            if (lbl) {
+                lbl.classList.remove('toggle-pulse');
+                void lbl.offsetWidth; // restart animation if already running
+                lbl.classList.add('toggle-pulse');
+                setTimeout(() => lbl.classList.remove('toggle-pulse'), 2800);
+            }
+        }
+
+        function retryFundedChallenge() {
+            startFundedChallenge();
+        }
+
+        function openFundedChallenge() {
+            loadFundedChallenge();
+            updateFundedUI();
+            document.getElementById('funded_overlay').classList.add('show');
+        }
+
+        function closeFundedChallenge() {
+            document.getElementById('funded_overlay').classList.remove('show');
+        }
+
+        function showFundedMessage(msg, type) {
+            const w = document.getElementById('fc_warning');
+            w.innerText = msg;
+            w.style.background = type === 'warn' ? '#e67e00' : '#f23645';
+            w.style.display = 'block';
+            document.getElementById('funded_overlay').classList.add('show');
+            updateFundedUI();
+            clearTimeout(window._fcWarnTimer);
+            window._fcWarnTimer = setTimeout(function() { w.style.display = 'none'; }, 10000);
+        }
+
+        // Called before opening a funded-mode trade. Returns true if allowed.
+        function fundedCheckTrade(asset, qty) {
+            if (!fundedChallengeData || !fundedChallengeData.active) {
+                showFundedMessage('🚫 Start the Funded Account Challenge first.', 'block');
+                return false;
+            }
+            if (fundedChallengeData.failed || fundedChallengeData.passed) {
+                showFundedMessage('🔒 Challenge is over. Tap Retry to start a new one.', 'block');
+                return false;
+            }
+            if (!FUNDED_ASSETS.includes(asset)) {
+                showFundedMessage('🚫 Funded Challenge allows BTC, ETH and GOLD trades only.', 'block');
+                return false;
+            }
+            const maxQty = FUNDED_MAX_QTY_MAP[asset];
+            const label = asset.replace('USDT','').replace('PAXG','GOLD');
+            if (qty > maxQty) {
+                showFundedMessage(`🚫 Max qty allowed is ${maxQty} ${label}.`, 'block');
+                return false;
+            }
+            const openQty = (fundedChallengeData.trades || []).filter(t => t.asset === asset).reduce((sum, t) => sum + (t.qty || 0), 0);
+            if (openQty + qty > maxQty + 1e-9) {
+                const remaining = Math.max(0, maxQty - openQty);
+                showFundedMessage(`🚫 Total open qty limit is ${maxQty} ${label}. You can only add ${remaining.toFixed(2)} ${label} more.`, 'block');
+                return false;
+            }
+            return true;
+        }
+
+        function fundedManualTrade(side) {
+            const asset = document.getElementById('asset_choice').value;
+            const maxQty = FUNDED_MAX_QTY_MAP[asset] || FUNDED_MAX_QTY_MAP[FUNDED_ASSET];
+            const label = asset.replace('USDT','').replace('PAXG','GOLD');
+            let qty = parseFloat(document.getElementById('manual_qty').value) || 0.01;
+            if (qty > maxQty) qty = maxQty;
+            const _openQty = (fundedChallengeData && fundedChallengeData.trades ? fundedChallengeData.trades : []).filter(t => t.asset === asset).reduce((sum, t) => sum + (t.qty || 0), 0);
+            const _remainingQty = Math.max(0, maxQty - _openQty);
+            if (_remainingQty <= 0) {
+                showFundedMessage(`🚫 Total open qty limit is ${maxQty} ${label} already reached. Close a position first.`, 'block');
+                return;
+            }
+            if (qty > _remainingQty) qty = _remainingQty;
+            const slInput = document.getElementById('manual_sl_input').value;
+            const tgtInput = document.getElementById('manual_target_input').value;
+            const slPrice = slInput ? parseFloat(slInput) : 0;
+            const tgtPrice = tgtInput ? parseFloat(tgtInput) : 0;
+
+            if (!fundedCheckTrade(asset, qty)) return;
+
+            // Always fill at live market price — same behavior as real trading.
+            // (The Limit price field is not an actual pending order anywhere in this app;
+            // it must never be used as the fill price, or trades open miles away from market.)
+            const entryPrice = prices[asset] || 0;
+
+            const tfNow = document.getElementById('user_tf') ? document.getElementById('user_tf').value : '';
+            const trade = { id: Date.now(), side: side, entry: entryPrice, qty: qty, sl: slPrice, tgt: tgtPrice, strat: 'FUNDED', asset: asset, time: Date.now(), tf: tfNow };
+            fundedChallengeData.trades.push(trade);
+            saveFundedChallenge();
+            refreshUI();
+
+            document.getElementById('manual_sl_input').value = "";
+            document.getElementById('manual_target_input').value = "";
+            document.getElementById('sl_preview').innerText = '';
+            document.getElementById('tgt_preview').innerText = '';
+        }
+
+        function fundedCheckExits() {
+            if (!fundedChallengeData || !fundedChallengeData.active || !fundedChallengeData.trades) return;
+            fundedChallengeData.trades.slice().forEach(t => {
+                const lp = prices[t.asset]; if (!lp) return;
+                if (t.sl > 0 && ((t.side === 'BUY' && lp <= t.sl) || (t.side === 'SELL' && lp >= t.sl))) fundedCloseSingle(t.id);
+                if (t.tgt > 0 && ((t.side === 'BUY' && lp >= t.tgt) || (t.side === 'SELL' && lp <= t.tgt))) fundedCloseSingle(t.id);
+            });
+        }
+
+        function fundedCloseSingle(id, forceExitPrice) {
+            if (!fundedChallengeData) return;
+            let idx = fundedChallengeData.trades.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            let t = fundedChallengeData.trades[idx];
+            const lp = forceExitPrice || prices[t.asset] || t.entry;
+            let grossPnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+            let feeUSD = t.entry * t.qty * FEE_RATE;
+            let netPnlUSD = grossPnlUSD - feeUSD;
+
+            fundedChallengeData.balance += netPnlUSD;
+            fundedChallengeData.totalPnl += netPnlUSD;
+            ensureFundedToday();
+            const k = getFundedTodayKey();
+            fundedChallengeData.days[k].pnl += netPnlUSD;
+
+            fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+            if (fundedChallengeData.history.length > 100) fundedChallengeData.history.length = 100;
+            fundedChallengeData.trades.splice(idx, 1);
+
+            fundedCheckLimits();
+            saveFundedChallenge();
+            refreshUI();
+            updateFundedUI();
+        }
+
+        function fundedCheckLimits() {
+            if (!fundedChallengeData || fundedChallengeData.failed || fundedChallengeData.passed) return;
+            const totalLoss = fundedChallengeData.startBalance - fundedChallengeData.balance;
+            const k = getFundedTodayKey();
+            ensureFundedToday();
+            const todayLoss = fundedChallengeData.days[k].pnl < 0 ? Math.abs(fundedChallengeData.days[k].pnl) : 0;
+
+            if (totalLoss >= FUNDED_MAX_LOSS || todayLoss >= FUNDED_DAILY_LOSS) {
+                fundedFail();
+                return;
+            }
+
+            // Step progress
+            if (fundedChallengeData.step === 1) {
+                const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+                if (stepProfit >= FUNDED_STEP1_TARGET) {
+                    fundedChallengeData.step = 2;
+                    fundedChallengeData.stepStartBalance = fundedChallengeData.balance;
+                    fundedChallengeData.step2Target = fundedChallengeData.balance * FUNDED_STEP2_PCT;
+                }
+            } else if (fundedChallengeData.step === 2) {
+                const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+                if (stepProfit >= fundedChallengeData.step2Target) {
+                    fundedPass();
+                }
+            }
+        }
+
+        function fundedFail() {
+            // Force-close all open funded positions at current market price
+            if (fundedChallengeData.trades && fundedChallengeData.trades.length) {
+                fundedChallengeData.trades.slice().forEach(t => {
+                    const lp = prices[t.asset] || t.entry;
+                    let grossPnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                    let feeUSD = t.entry * t.qty * FEE_RATE;
+                    let netPnlUSD = grossPnlUSD - feeUSD;
+                    fundedChallengeData.balance += netPnlUSD;
+                    fundedChallengeData.totalPnl += netPnlUSD;
+                    fundedChallengeData.history.unshift({ asset: t.asset, strat: t.strat, side: t.side, entry: t.entry, exit: lp, pnl: netPnlUSD, fee: feeUSD, qty: t.qty, openTime: t.id, time: Date.now(), tf: t.tf });
+                });
+                fundedChallengeData.trades = [];
+            }
+            fundedChallengeData.active = false;
+            fundedChallengeData.failed = true;
+            saveFundedChallenge();
+            showFundedMessage('❌ You lost the challenge. But we saved your fees of $35 which you may have given to pass the funded account.', 'block');
+            refreshUI();
+            updateFundedUI();
+        }
+
+        function fundedPass() {
+            fundedChallengeData.active = false;
+            fundedChallengeData.passed = true;
+            saveFundedChallenge();
+            updateFundedUI();
+        }
+
+        function updateFundedUI() {
+            const startBtn = document.getElementById('fc_start_btn');
+            const retryBtn = document.getElementById('fc_retry_btn');
+            const passedEl = document.getElementById('fc_passed');
+            const failedEl = document.getElementById('fc_failed');
+
+            if (!fundedChallengeData || (!fundedChallengeData.active && !fundedChallengeData.failed && !fundedChallengeData.passed)) {
+                startBtn.style.display = 'block';
+                retryBtn.style.display = 'none';
+                passedEl.style.display = 'none';
+                failedEl.style.display = 'none';
+                document.getElementById('fc_step_label').innerText = 'Step 1';
+                document.getElementById('fc_target_val').innerText = '$500 (10%)';
+                document.getElementById('fc_step_profit').innerText = '$0';
+                document.getElementById('fc_step_bar').style.width = '0%';
+                document.getElementById('fc_start_balance').innerText = '$' + FUNDED_START_BALANCE.toLocaleString('en-US');
+                document.getElementById('fc_current_balance').innerText = '$' + FUNDED_START_BALANCE.toLocaleString('en-US');
+                document.getElementById('fc_total_pnl').innerText = '$0';
+                document.getElementById('fc_max_loss').innerText = '$0 / $' + FUNDED_MAX_LOSS;
+                document.getElementById('fc_maxloss_bar').style.width = '0%';
+                document.getElementById('fc_daily_loss').innerText = '$0 / $' + FUNDED_DAILY_LOSS;
+                document.getElementById('fc_dailyloss_bar').style.width = '0%';
+                return;
+            }
+
+            if (fundedChallengeData.failed) {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+                failedEl.style.display = 'block';
+                passedEl.style.display = 'none';
+            } else if (fundedChallengeData.passed) {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+                passedEl.style.display = 'block';
+                failedEl.style.display = 'none';
+            } else {
+                startBtn.style.display = 'none';
+                retryBtn.style.display = 'none';
+                passedEl.style.display = 'none';
+                failedEl.style.display = 'none';
+            }
+
+            const stepLabelEl = document.getElementById('fc_step_label');
+            const stepProfit = fundedChallengeData.balance - fundedChallengeData.stepStartBalance;
+            if (fundedChallengeData.step === 1) {
+                stepLabelEl.innerText = 'Step 1';
+                document.getElementById('fc_target_val').innerText = '$' + FUNDED_STEP1_TARGET + ' (10%)';
+                document.getElementById('fc_step_bar').style.width = Math.min(100, Math.max(0, (stepProfit / FUNDED_STEP1_TARGET) * 100)) + '%';
+            } else {
+                stepLabelEl.innerText = 'Step 2';
+                const t2 = fundedChallengeData.step2Target || 1;
+                document.getElementById('fc_target_val').innerText = '$' + t2.toFixed(2) + ' (5%)';
+                document.getElementById('fc_step_bar').style.width = Math.min(100, Math.max(0, (stepProfit / t2) * 100)) + '%';
+            }
+            document.getElementById('fc_step_profit').innerText = (stepProfit >= 0 ? '+$' : '-$') + Math.abs(stepProfit).toFixed(2);
+            document.getElementById('fc_step_bar').style.background = stepProfit >= 0 ? '#089981' : '#f23645';
+
+            document.getElementById('fc_start_balance').innerText = '$' + fundedChallengeData.startBalance.toLocaleString('en-US');
+            document.getElementById('fc_current_balance').innerText = '$' + fundedChallengeData.balance.toFixed(2);
+            const totalPnlEl = document.getElementById('fc_total_pnl');
+            totalPnlEl.innerText = (fundedChallengeData.totalPnl >= 0 ? '+$' : '-$') + Math.abs(fundedChallengeData.totalPnl).toFixed(2);
+            totalPnlEl.style.color = fundedChallengeData.totalPnl >= 0 ? '#089981' : '#f23645';
+
+            const totalLoss = Math.max(0, fundedChallengeData.startBalance - fundedChallengeData.balance);
+            document.getElementById('fc_max_loss').innerText = '$' + totalLoss.toFixed(2) + ' / $' + FUNDED_MAX_LOSS;
+            document.getElementById('fc_maxloss_bar').style.width = Math.min(100, (totalLoss / FUNDED_MAX_LOSS) * 100) + '%';
+
+            ensureFundedToday();
+            const k = getFundedTodayKey();
+            const todayLoss = Math.max(0, -(fundedChallengeData.days[k] ? fundedChallengeData.days[k].pnl : 0));
+            document.getElementById('fc_daily_loss').innerText = '$' + todayLoss.toFixed(2) + ' / $' + FUNDED_DAILY_LOSS;
+            document.getElementById('fc_dailyloss_bar').style.width = Math.min(100, (todayLoss / FUNDED_DAILY_LOSS) * 100) + '%';
+        }
+
+        // ── Funded Challenge Positions & History rendering (separate from real trades) ──
+        function renderFundedPositions() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1; // funded pnl stored in raw USD
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('positions_body');
+            if (!tbody) return;
+            const fTrades = (fundedChallengeData && fundedChallengeData.trades) ? fundedChallengeData.trades : [];
+            if (fTrades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#555; padding:12px; text-align:center;">No open funded positions</td></tr>';
+                return;
+            }
+            tbody.innerHTML = fTrades.map(t => {
+                const lp = prices[t.asset] || t.entry;
+                const pnlUSD = (t.side === 'BUY' ? lp - t.entry : t.entry - lp) * t.qty;
+                const pnlDisp = pnlUSD * rate;
+                const feeUSD = t.entry * t.qty * FEE_RATE;
+                const feeDisp = feeUSD * rate;
+                let buyCol, sellCol;
+                if (t.side === 'BUY') {
+                    buyCol = `<span style="color:#089981;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    sellCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                } else {
+                    sellCol = `<span style="color:#f23645;">${t.entry.toFixed(1)}</span>`;
+                    let slStr = t.sl > 0 ? `<span style="color:#f23645;font-size:8px;">SL:${t.sl.toFixed(1)}</span>` : '';
+                    let tgtStr = t.tgt > 0 ? `<span style="color:#089981;font-size:8px;">T:${t.tgt.toFixed(1)}</span>` : '';
+                    buyCol = (slStr || tgtStr) ? `<span style="display:flex;flex-direction:column;gap:1px;align-items:center;">${slStr}${tgtStr}</span>` : '<span style="color:#555;">-</span>';
+                }
+                return `<tr>
+                    <td style="text-align:left; padding-left:6px;">${t.asset.replace('USDT','')}/${t.strat}</td>
+                    <td>${buyCol}</td>
+                    <td>${sellCol}</td>
+                    <td>${t.qty}</td>
+                    <td>
+                        <div style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</div>
+                        <div style="color:#787b86; font-size:7.5px; font-weight:normal;">Fee: ${feeDisp.toFixed(2)}${sym}</div>
+                    </td>
+                    <td style="display:flex;gap:3px;align-items:center;justify-content:center;"><button onclick="openModify(${t.id}, true)" style="background:#38bdf8;color:#000;border:none;padding:3px 5px;border-radius:3px;font-size:8px;font-weight:bold;cursor:pointer;">✏️</button><button onclick="fundedCloseSingle(${t.id})" class="exit-btn">EXIT</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function buildFundedHistoryRowHTML(h, rate, sym) {
+            const pnlDisp = h.pnl * rate;
+            const openTime = h.openTime ? new Date(h.openTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            const closeTime = h.time ? new Date(h.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '-';
+            let buyPrice, sellPrice, bTime, sTime;
+            if (h.side === 'BUY') {
+                buyPrice = `<span style="color:#089981;">${h.entry.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                sellPrice = `<span style="color:#f23645;">${h.exit.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            } else {
+                sellPrice = `<span style="color:#f23645;">${h.entry.toFixed(1)}</span>`;
+                sTime = `<span style="color:#aaa;font-size:8px;">${openTime}</span>`;
+                buyPrice = `<span style="color:#089981;">${h.exit.toFixed(1)}</span>`;
+                bTime = `<span style="color:#aaa;font-size:8px;">${closeTime}</span>`;
+            }
+            const sideLetter = h.side === 'BUY' ? 'B' : 'S';
+            const feeDisp = (h.fee || 0) * rate;
+            return `<tr>
+                <td style="text-align:left; padding-left:4px; font-size:8px;">${h.asset.replace('USDT','')}/${h.strat}/${sideLetter}</td>
+                <td>${buyPrice}</td>
+                <td>${bTime}</td>
+                <td>${sellPrice}</td>
+                <td>${sTime}</td>
+                <td>${h.qty || '-'}</td>
+                <td style="color:#f23645; font-size:8px;">-${feeDisp.toFixed(2)}${sym}</td>
+                <td style="color:${pnlDisp >= 0 ? '#089981' : '#f23645'}; font-weight:bold;">${pnlDisp >= 0 ? '+' : ''}${pnlDisp.toFixed(2)}${sym}</td>
+            </tr>`;
+        }
+
+        function renderFundedHistory() {
+            const curr = document.getElementById('currency_mode').value;
+            const rate = (curr === 'INR') ? 83.50 : 1;
+            const sym = (curr === 'INR') ? ' INR' : ' USD';
+            const tbody = document.getElementById('history_body');
+            if (!tbody) return;
+            const fHistory = (fundedChallengeData && fundedChallengeData.history) ? fundedChallengeData.history : [];
+            if (fHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No funded challenge trade history</td></tr>';
+                return;
+            }
+            tbody.innerHTML = fHistory.slice(0, 20).map(h => buildFundedHistoryRowHTML(h, rate, sym)).join('');
+        }
+
+        // Keeps the manual qty input's max in sync with whichever asset (BTC/ETH/GOLD)
+        // is selected while Funded Challenge mode is active.
+        function updateFundedQtyMax() {
+            if (tradingMode !== 'funded') return;
+            const asset = document.getElementById('asset_choice').value;
+            const qtyInput = document.getElementById('manual_qty');
+            const maxQty = FUNDED_MAX_QTY_MAP[asset] || FUNDED_MAX_QTY_MAP[FUNDED_ASSET];
+            qtyInput.setAttribute('max', maxQty);
+            if (parseFloat(qtyInput.value) > maxQty) qtyInput.value = maxQty;
+        }
+
+        // ── Real / Funded Challenge trading mode toggle ──
+        function toggleTradingMode() {
+            const on = document.getElementById('funded_mode_toggle').checked;
+            tradingMode = on ? 'funded' : 'real';
+
+            const assetSel = document.getElementById('asset_choice');
+            const ethOpt = document.getElementById('asset_opt_eth');
+            const goldOpt = document.getElementById('asset_opt_gold');
+            const qtyInput = document.getElementById('manual_qty');
+            const balLabel = document.getElementById('balance_label');
+
+            if (tradingMode === 'funded') {
+                ethOpt.disabled = false;
+                goldOpt.disabled = false;
+                updateFundedQtyMax();
+                balLabel.innerHTML = '<span style="color:#f0b90b">Funded Challenge</span> Balance';
+                switchMarket();
+                loadFundedChallenge();
+
+                // Auto Mode always trades the Real balance, so force it off while Funded mode is active
+                const autoCb = document.getElementById('auto_mode');
+                const autoLbl = document.getElementById('auto_mode_label');
+                if (autoCb && autoCb.checked) {
+                    autoCb.checked = false;
+                    saveData();
+                    if (autoLbl) {
+                        autoLbl.classList.remove('toggle-pulse');
+                        void autoLbl.offsetWidth;
+                        autoLbl.classList.add('toggle-pulse');
+                        setTimeout(() => autoLbl.classList.remove('toggle-pulse'), 2800);
+                    }
+                }
+                if (autoLbl) autoLbl.classList.add('toggle-locked');
+            } else {
+                const autoLbl2 = document.getElementById('auto_mode_label');
+                if (autoLbl2) autoLbl2.classList.remove('toggle-locked');
+                ethOpt.disabled = false;
+                goldOpt.disabled = false;
+                qtyInput.removeAttribute('max');
+                balLabel.innerHTML = '<span style="color:#f0b90b">Real</span> Balance';
+            }
+            syncAssetModalUI();
+            refreshUI();
+        }
+
+        // Load funded challenge on startup, and auto-restore Funded mode if a challenge is still in progress
+        setTimeout(function() {
+            loadFundedChallenge();
+            if (fundedChallengeData && fundedChallengeData.active && !fundedChallengeData.failed && !fundedChallengeData.passed) {
+                activateFundedTradingMode();
+            }
+        }, 500);
+
+        // Funded trades exit checker — always runs in background regardless of active mode
+        setInterval(function() {
+            if (fundedChallengeData && fundedChallengeData.trades && fundedChallengeData.trades.length > 0) {
+                fundedCheckExits();
+            }
+        }, 5000);
+    </script>
 
     <script>
         // =============================================
@@ -3573,14 +3929,15 @@
             <button onclick="closeTradeHistoryModal()" style="background:#1e222d; color:#38bdf8; border:1px solid #444; border-radius:6px; width:34px; height:32px; font-size:16px; font-weight:bold; cursor:pointer;">←</button>
             <span style="color:#fff; font-weight:bold; font-size:13px; letter-spacing:0.5px;">Trade History</span>
         </div>
-        <!-- Manual / Auto sub-tabs -->
+        <!-- Manual / Auto / Funded sub-tabs -->
         <div style="display:flex; background:#1e222d; border-bottom:1px solid #2a2e39; flex-shrink:0;">
             <button id="th_tab_manual" onclick="switchTradeHistoryType('manual')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">📘 Manual</button>
             <button id="th_tab_auto" onclick="switchTradeHistoryType('auto')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">🤖 Auto</button>
+            <button id="th_tab_funded" onclick="switchTradeHistoryType('funded')" style="flex:1; padding:8px 4px; font-size:10px; font-weight:bold; color:#b2b5be; background:transparent; border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;">💰 Funded</button>
         </div>
         <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;">
             <table class="history-table">
-                <thead><tr><th>Asset</th><th>Buy</th><th>B/Time</th><th>Sell</th><th>S/Time</th><th>Qty</th><th>P&L</th></tr></thead>
+                <thead><tr><th>Asset</th><th>Buy</th><th>B/Time</th><th>Sell</th><th>S/Time</th><th>Qty</th><th>Fee</th><th>P&L</th></tr></thead>
                 <tbody id="trade_history_modal_body"></tbody>
             </table>
             <div style="text-align:center; padding:12px;">
@@ -3619,13 +3976,31 @@
             document.getElementById('th_tab_manual').style.borderBottom = thCurrentType === 'manual' ? '2px solid #38bdf8' : '2px solid transparent';
             document.getElementById('th_tab_auto').style.color = thCurrentType === 'auto' ? '#38bdf8' : '#b2b5be';
             document.getElementById('th_tab_auto').style.borderBottom = thCurrentType === 'auto' ? '2px solid #38bdf8' : '2px solid transparent';
+            document.getElementById('th_tab_funded').style.color = thCurrentType === 'funded' ? '#f0b90b' : '#b2b5be';
+            document.getElementById('th_tab_funded').style.borderBottom = thCurrentType === 'funded' ? '2px solid #f0b90b' : '2px solid transparent';
 
             const curr = document.getElementById('currency_mode').value;
-            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
-            const sym = (curr === 'USD') ? ' USD' : ' INR';
             const tbody = document.getElementById('trade_history_modal_body');
             const loadMoreBtn = document.getElementById('th_load_more_btn');
 
+            if (thCurrentType === 'funded') {
+                // Funded history is stored in raw USD (unlike real history, which is stored in INR)
+                const rate = (curr === 'INR') ? 83.50 : 1;
+                const sym = (curr === 'INR') ? ' INR' : ' USD';
+                const fHistory = (fundedChallengeData && fundedChallengeData.history) ? fundedChallengeData.history : [];
+                if (fHistory.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="color:#555; padding:12px; text-align:center;">No funded trades yet</td></tr>';
+                    loadMoreBtn.style.display = 'none';
+                    return;
+                }
+                const slice = fHistory.slice(0, thRenderCount);
+                tbody.innerHTML = slice.map(h => buildFundedHistoryRowHTML(h, rate, sym)).join('');
+                loadMoreBtn.style.display = (fHistory.length > thRenderCount) ? 'inline-block' : 'none';
+                return;
+            }
+
+            const rate = (curr === 'USD') ? (1 / 83.50) : 1;
+            const sym = (curr === 'USD') ? ' USD' : ' INR';
             const filtered = history.filter(h => (thCurrentType === 'manual') ? h.isManual === true : h.isManual !== true);
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="color:#555; padding:12px; text-align:center;">No ' + thCurrentType + ' trades yet</td></tr>';
@@ -3637,46 +4012,6 @@
             loadMoreBtn.style.display = (filtered.length > thRenderCount) ? 'inline-block' : 'none';
         }
     </script>
-
-    <!-- ── EXIT BATTLE CONFIRM MODAL ── (window.confirm() has the same problem
-         as window.prompt() in this WebView — no native dialog to catch it) -->
-    <div id="exit_battle_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
-            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="font-size:16px;">🚪</span>
-                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">EXIT BATTLE?</span>
-            </div>
-            <div style="padding:10px 12px;">
-                <div style="font-size:10px; color:#b2b5be; line-height:1.5;">Go back to normal trading? Your battle positions stay open and the battle keeps running in the background — you can rejoin anytime from the Battles list.</div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button onclick="closeExitBattleModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
-                    <button onclick="confirmExitBattle()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">🚪 EXIT</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── BATTLE DISPLAY NAME MODAL ── (window.prompt() doesn't render in this
-         WebView — no JS-dialog handler is wired up on the Flutter side — so
-         this uses the same in-page modal pattern as Modify SL/Target above) -->
-    <div id="battle_name_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#1e222d; border:1.5px solid #f0b90b; border-radius:12px; width:82%; max-width:290px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
-            <div style="background:linear-gradient(135deg,#1e222d,#2a2e39); border-bottom:1px solid #f0b90b; padding:7px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="font-size:16px;">⚔️</span>
-                <span style="color:#f0b90b; font-weight:bold; font-size:11px; letter-spacing:0.5px;">YOUR BATTLE NAME</span>
-            </div>
-            <div style="padding:10px 12px;">
-                <div style="font-size:9px; color:#b2b5be; margin-bottom:6px;">Shown on the leaderboard instead of your device id.</div>
-                <input id="battle_name_input" type="text" maxlength="24"
-                    style="width:100%; background:#131722; border:1.5px solid #f0b90b; color:#fff; font-size:13px; font-weight:bold; border-radius:5px; padding:6px 8px; box-sizing:border-box; outline:none;"
-                    placeholder="e.g. Mango">
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button onclick="closeBattleNameModal()" style="flex:1; background:transparent; border:1.5px solid #444; color:#b2b5be; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✕ CANCEL</button>
-                    <button onclick="saveBattleNameModal()" style="flex:1; background:linear-gradient(135deg,#f0b90b,#d4a017); border:none; color:#000; border-radius:5px; padding:7px; font-size:10px; font-weight:bold; cursor:pointer;">✅ SAVE</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- ── MODIFY SL/TGT MODAL ── -->
     <div id="modify_modal_overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
@@ -3718,5 +4053,10 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+        });
+    </script>
 </body>
 </html>
