@@ -147,6 +147,15 @@
            trade panel stay visible/usable; trades placed there count as battle trades. */
         #battle_live_bar { display:none; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1450; background:#131722; border-bottom:2px solid #f0b90b; padding:5px 8px; font-size:9px; }
         #battle_live_bar.show { display:block; }
+        /* Minimized state: instead of the full-width bar sitting at top:0 (which
+           covers the timeframe/indicator toolbar underneath), shrink down to a
+           small pill tucked in the top-right corner, just below that toolbar,
+           so the tools stay usable. Tap it to expand back to the full bar. */
+        #battle_live_bar.mini-corner {
+            top: 38px; left: auto; right: 6px; width: auto;
+            border-bottom: none; border: 1px solid #f0b90b; border-radius: 20px;
+            padding: 3px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
         /* Professional in-app alert modal for battle messages (replaces native alert()) */
         #battle_alert_overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10500; align-items:center; justify-content:center; }
         #battle_alert_overlay.show { display:flex; }
@@ -1983,10 +1992,12 @@
         function minimizeBattleBar() {
             document.getElementById('battle_bar_full').style.display = 'none';
             document.getElementById('battle_bar_mini').style.display = 'flex';
+            document.getElementById('battle_live_bar').classList.add('mini-corner');
         }
         function expandBattleBar() {
             document.getElementById('battle_bar_mini').style.display = 'none';
             document.getElementById('battle_bar_full').style.display = 'block';
+            document.getElementById('battle_live_bar').classList.remove('mini-corner');
         }
 
         // Deliberately leave battle-only trading mode and go back to Real/Funded,
@@ -2942,12 +2953,10 @@
          running either way. Actually leaving the battle to trade normally
          again is a deliberate action from the Battles list (exitBattle()). -->
     <div id="battle_live_bar">
-        <div id="battle_bar_mini" onclick="expandBattleBar()" style="display:none; align-items:center; gap:6px; cursor:pointer; padding:4px 2px;">
+        <div id="battle_bar_mini" onclick="expandBattleBar()" style="display:none; align-items:center; gap:5px; cursor:pointer;">
             <span style="font-weight:bold; color:#f0b90b;">⚔️</span>
             <span id="battle_mini_rank" style="font-weight:bold; color:#f0b90b; font-size:10px;">#- / -</span>
             <span id="battle_mini_pnl" style="font-weight:bold; font-size:10px;">+0.00%</span>
-            <span id="battle_mini_timer" style="color:#888; font-family:monospace; font-size:9px;">--:--:--</span>
-            <span style="color:#555; margin-left:auto;">▴ tap to expand</span>
         </div>
         <div id="battle_bar_full">
             <div style="display:flex; align-items:center; gap:6px;">
