@@ -2521,15 +2521,23 @@
         }
 
         // ── Lobby ──
+        let battleLobbyPollTimer = null;
+
         function openBattle() {
             if (!battleData) loadBattleLocal();
             const nameEl = document.getElementById('battle_name_display');
             if (nameEl) nameEl.innerText = getBattleDisplayName() || 'Set your name ✏️';
             document.getElementById('battle_overlay').classList.add('show');
             refreshBattleList();
+            // Auto-refresh the "Your Battles" list while the lobby is open, so
+            // a host sees new joiners (and everyone sees a pending battle go
+            // ACTIVE) without needing to tap Refresh and wonder if anything happened.
+            if (battleLobbyPollTimer) clearInterval(battleLobbyPollTimer);
+            battleLobbyPollTimer = setInterval(refreshBattleList, 5000);
         }
         function closeBattle() {
             document.getElementById('battle_overlay').classList.remove('show');
+            if (battleLobbyPollTimer) { clearInterval(battleLobbyPollTimer); battleLobbyPollTimer = null; }
         }
 
         async function refreshBattleList() {
