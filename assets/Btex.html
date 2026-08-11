@@ -1593,7 +1593,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); resumeActiveBattleIfAny(); serverSyncClosedTrades(); }
+        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); resumeActiveBattleIfAny(); setInterval(resumeActiveBattleIfAny, 10000); serverSyncClosedTrades(); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -2498,9 +2498,10 @@
         // still ACTIVE and, if so, restore the live battle screen exactly as
         // if the user had tapped "Open Battle" on it.
         async function resumeActiveBattleIfAny() {
+            if (activeBattleId) return; // already routing correctly, nothing to resume
             if (!battleData) loadBattleLocal();
             const id = battleData && battleData.challengeId;
-            if (!id) return;
+            if (!id || battleData.userExited) return;
             try {
                 const res = await fetch(`${SERVER_URL}/api/challenges/${id}`, { headers: { 'x-api-key': SERVER_API_KEY } });
                 if (!res.ok) return;
@@ -2510,15 +2511,15 @@
                 } else if (c.status === 'COMPLETED') {
                     // Show the result once more, then stop treating it as active.
                     openBattleLive(id);
-                } else {
+                } else if (c.status !== 'PENDING') {
                     // CANCELLED or unknown — nothing to resume, clear stale local state.
                     battleData = { challengeId: null, trades: [], eliminated: false, history: [] };
                     saveBattleLocal();
                 }
+                // else PENDING: host still hasn't started it — keep waiting, don't touch local data.
             } catch (err) {
-                // Server unreachable at startup — leave battleData as-is and
-                // just don't auto-resume; the user can still open it manually
-                // from the lobby once the server's reachable again.
+                // Server unreachable — leave battleData as-is and just don't
+                // auto-resume; we'll try again on the next periodic check.
             }
         }
 
@@ -2683,6 +2684,18 @@
                 const data = await res.json();
                 if (!res.ok) { showBattleAlert(data.error || 'Could not join', 'error'); return; }
                 refreshBattleList();
+                // Remember this battle locally right away — even while it's still
+                // PENDING (host hasn't started it yet) — so the periodic background
+                // check (resumeActiveBattleIfAny) can pick up on it going ACTIVE
+                // later and route trades correctly, even if the user closes this
+                // lobby without ever tapping "Open Battle".
+                if (!battleData) loadBattleLocal();
+                if (battleData.challengeId !== id) {
+                    battleData = { challengeId: id, trades: [], eliminated: false, history: [], userExited: false };
+                } else {
+                    battleData.userExited = false;
+                }
+                saveBattleLocal();
                 if (data.started) {
                     openBattleLive(id);
                 } else {
@@ -2739,7 +2752,7 @@
             battleLiveStatus = 'ACTIVE';
             if (!battleData) loadBattleLocal();
             if (battleData.challengeId !== id) {
-                battleData = { challengeId: id, trades: [], eliminated: false, history: [] };
+                battleData = { challengeId: id, trades: [], eliminated: false, history: [], userExited: false };
                 saveBattleLocal();
             }
             document.getElementById('battle_overlay').classList.remove('show');
@@ -2800,6 +2813,7 @@
         function confirmExitBattle() {
             closeExitBattleModal();
             closeBattle(); // close the lobby overlay if it happened to be open
+            if (battleData) { battleData.userExited = true; saveBattleLocal(); }
             closeBattleLive();
         }
 
