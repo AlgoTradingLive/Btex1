@@ -2554,7 +2554,7 @@
                 if (!res.ok) throw new Error('server error');
                 renderBattleList(await res.json(), uid);
             } catch (err) {
-                listEl.innerHTML = '<div style="text-align:center;color:#f23645;font-size:10px;padding:10px;">Could not reach the battle server. Try again.</div>';
+                listEl.innerHTML = `<div style="text-align:center;color:#f23645;font-size:10px;padding:10px;">Could not reach the battle server: ${err.message}. Try again.</div>`;
             }
         }
 
@@ -2624,7 +2624,7 @@
                 refreshBattleList();
                 shareBattleCode(data.join_code);
             } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+                showBattleAlert(`Could not reach the battle server: ${err.message}. Try again.`, 'error');
             }
         }
 
@@ -2661,7 +2661,7 @@
                     await createBattleChallenge();
                 }
             } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+                showBattleAlert(`Could not reach the battle server: ${err.message}. Try again.`, 'error');
             }
         }
 
@@ -2702,7 +2702,7 @@
                     showBattleAlert(`Joined! Waiting for host to start (${data.players}/${data.max_players} players).`, 'success');
                 }
             } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+                showBattleAlert(`Could not reach the battle server: ${err.message}. Try again.`, 'error');
             }
         }
 
@@ -2718,7 +2718,7 @@
                 if (!res.ok) { showBattleAlert(data.error || 'Could not start', 'error'); return; }
                 openBattleLive(id);
             } catch (err) {
-                showBattleAlert('Could not reach the battle server. Try again.', 'error');
+                showBattleAlert(`Could not reach the battle server: ${err.message}. Try again.`, 'error');
             }
         }
 
