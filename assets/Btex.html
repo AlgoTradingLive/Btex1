@@ -2849,11 +2849,12 @@
             // Once the battle COMPLETEs the server has written a real final_rank
             // (ties share a rank) — use that. While still live, derive a
             // running rank from sort position, sharing rank on tied P&L%.
-            let rank = 0, prevPnl = null;
+            let rank = 0, prevPnl = null, prevHasTraded = null;
             const ranked = lb.map((row, idx) => {
                 if (row.final_rank != null) return { ...row, rank: row.final_rank };
-                if (row.pnl_pct !== prevPnl) rank = idx + 1;
+                if (row.pnl_pct !== prevPnl || row.hasTraded !== prevHasTraded) rank = idx + 1;
                 prevPnl = row.pnl_pct;
+                prevHasTraded = row.hasTraded;
                 return { ...row, rank };
             });
 
