@@ -2699,7 +2699,7 @@
                 if (data.started) {
                     openBattleLive(id);
                 } else {
-                    showBattleAlert(`Joined! Waiting for host to start (${data.players}/${data.max_players} players).`, 'success');
+                    showBattleAlert(`Joined! ${data.players}/${data.max_players} players — starts automatically once full (or host can start early).`, 'success');
                 }
             } catch (err) {
                 showBattleAlert(`Could not reach the battle server: ${err.message}. Try again.`, 'error');
@@ -3851,7 +3851,7 @@
                 <span style="font-size:10px; color:#b2b5be; white-space:nowrap;">Max Players</span>
                 <input type="number" id="battle_max_players_input" min="2" value="4" step="1" style="flex:1; box-sizing:border-box; background:#1e222d; color:#38bdf8; border:1px solid #2a2e39; border-radius:4px; padding:5px 8px; font-size:12px; font-weight:bold; text-align:center;">
             </div>
-            <div style="font-size:8px; color:#666; margin:-3px 0 8px 2px;">Minimum 2 — set any lobby size you want (big group battles work too).</div>
+            <div style="font-size:8px; color:#666; margin:-3px 0 8px 2px;">Minimum 2 — set any lobby size you want. Battle starts automatically once this many players join (or you can start early anytime with fewer).</div>
             <label style="display:flex; align-items:center; gap:6px; font-size:10px; color:#b2b5be; margin-bottom:8px; cursor:pointer;">
                 <input type="checkbox" id="battle_public_input" checked style="accent-color:#38bdf8;">
                 Public — show in the open lobby list for anyone to join
