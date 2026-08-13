@@ -1593,7 +1593,7 @@
             tabContent.style.overflowY = 'auto';
         }
 
-        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); resumeActiveBattleIfAny(); setInterval(resumeActiveBattleIfAny, 10000); serverSyncClosedTrades(); }
+        function initApp() { loadData(); syncStrategyModalUI(); syncAssetModalUI(); syncCurrencyModalUI(); initTradingView(); connectAllSockets(); setInterval(dualEngine, 5000); showKeepOpenMsg(); setTimeout(hideAppLoadingOverlay, 8000); resumeActiveBattleIfAny(); setInterval(resumeActiveBattleIfAny, 10000); serverSyncClosedTrades(); setTimeout(showBattleInviteNudge, 9000); }
 
         function showKeepOpenMsg() {
             const toast = document.createElement('div');
@@ -1603,6 +1603,21 @@
             setTimeout(() => toast.style.opacity = '0', 4000);
             setTimeout(() => toast.remove(), 4800);
             toast.style.transition = 'opacity 0.8s';
+        }
+
+        // Brief center-screen nudge toward Profit Battle on app open — draws
+        // the eye the way an ad banner would, but it's just our own toast
+        // (no real notification/permission involved), gone in a few seconds,
+        // and tapping it jumps straight into the Battle lobby.
+        function showBattleInviteNudge() {
+            const toast = document.createElement('div');
+            toast.innerHTML = '⚔️ <b>Invite friends for a Trading Battle!</b><br><span style="font-weight:normal;font-size:9px;opacity:0.85;">Tap to open</span>';
+            toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(30,34,45,0.97);color:#38bdf8;border:1px solid #38bdf8;border-radius:12px;padding:14px 20px;font-size:13px;font-weight:bold;z-index:9999;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.6);cursor:pointer;';
+            toast.onclick = () => { toast.remove(); openBattle(); };
+            document.body.appendChild(toast);
+            toast.style.transition = 'opacity 0.8s';
+            setTimeout(() => toast.style.opacity = '0', 3500);
+            setTimeout(() => toast.remove(), 4300);
         }
 
         // Generic short-lived toast for quick feedback messages
