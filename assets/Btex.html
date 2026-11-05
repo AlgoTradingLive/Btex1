@@ -1875,7 +1875,7 @@
             try {
                 const settings = assetSettings[asset];
                 const strat = settings.strategy;
-                const isAuto = document.getElementById('auto_mode').checked && !(typeof activeBattleId !== 'undefined' && activeBattleId);
+                const isAuto = document.getElementById('auto_mode').checked && !isBattleTradingLive();
                 const curP = prices[asset];
                 if(!curP || !isAuto) return;
 
@@ -2236,7 +2236,7 @@
             const rate = (currency === 'INR') ? 83.50 : 1;
             const symbol = (currency === 'INR') ? ' INR' : ' USD';
 
-            if (typeof activeBattleId !== 'undefined' && activeBattleId) {
+            if (isBattleTradingLive()) {
                 // ── Battle mode: positions/history render in the same bottom
                 // panel as Real/Funded (⚔️-tagged); the leaderboard itself
                 // lives in the top battle bar, untouched by this. ──
@@ -2462,6 +2462,33 @@
         let activeBattleId = null;   // battle currently open on the live screen
         let battleLiveStatus = null; // last known status ('ACTIVE' | 'COMPLETED') of activeBattleId
         let battlePollTimer = null;
+
+        // True only while the battle is actually running. Once the server marks
+        // it COMPLETED, trading must go back to Real/Funded even though the
+        // result bar may still be on screen until the user closes it.
+        // battleTradingPaused: user has deliberately switched orders to
+        // Real/Funded while the battle keeps running (bar, rank, polling and
+        // the server-side battle trades are untouched). They can switch back
+        // any time from the "Trade:" button in the battle bar.
+        let battleTradingPaused = false;
+        function isBattleTradingLive() {
+            try { return !!activeBattleId && battleLiveStatus !== 'COMPLETED' && !battleTradingPaused; } catch (e) { return false; }
+        }
+        function syncBattleTradeBtn() {
+            const b = document.getElementById('battle_trade_btn');
+            if (!b) return;
+            const over = !activeBattleId || battleLiveStatus === 'COMPLETED';
+            b.style.display = over ? 'none' : 'inline-block';
+            b.innerText = battleTradingPaused ? 'Trade: Normal' : 'Trade: Battle';
+            b.style.color = battleTradingPaused ? '#f0b90b' : '#38bdf8';
+        }
+        function toggleBattleTrading() {
+            if (!activeBattleId || battleLiveStatus === 'COMPLETED') return;
+            battleTradingPaused = !battleTradingPaused;
+            syncBattleTradeBtn();
+            refreshUI();
+            showToast(battleTradingPaused ? '↩️ Orders now go to Real/Funded. Battle is still running.' : '⚔️ Orders now go to the Battle.', '#38bdf8');
+        }
 
         function getBattleUserId() {
             let uid = localStorage.getItem('NAFAA_USER');
@@ -2769,6 +2796,8 @@
         function openBattleLive(id) {
             activeBattleId = id;
             battleLiveStatus = 'ACTIVE';
+            battleTradingPaused = false;
+            syncBattleTradeBtn();
             if (!battleData) loadBattleLocal();
             if (battleData.challengeId !== id) {
                 battleData = { challengeId: id, trades: [], eliminated: false, history: [], userExited: false };
@@ -2777,6 +2806,8 @@
             document.getElementById('battle_overlay').classList.remove('show');
             document.getElementById('battle_live_bar').classList.add('show');
             document.getElementById('battle_result_banner').style.display = 'none';
+            const closeBtnEl = document.getElementById('battle_close_btn');
+            if (closeBtnEl) closeBtnEl.style.display = 'none';
             expandBattleBar(); // always open on the full view, never mid-minimized
 
             // Battle trading is manual-only, same as Funded Challenge — force
@@ -2800,7 +2831,18 @@
             if (battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
             activeBattleId = null;
             battleLiveStatus = null;
+            battleTradingPaused = false;
+            syncBattleTradeBtn();
             refreshUI(); // switch the bottom panel back to Real/Funded now that battle trading has stopped
+        }
+
+        // Battle is over (server says COMPLETED): the user has seen the result,
+        // so drop the battle completely — clear local battle state, hide the
+        // top bar and send trading back to Real/Funded.
+        function closeCompletedBattle() {
+            battleData = { challengeId: null, trades: [], eliminated: false, history: [] };
+            saveBattleLocal();
+            closeBattleLive();
         }
 
         // ── Minimize/expand: purely visual. The battle, its polling, and its
@@ -2942,7 +2984,10 @@
             // it minimized, instead of leaving them to notice on their own.
             if (prevStatus === 'ACTIVE' && c.status === 'COMPLETED') expandBattleBar();
 
+            syncBattleTradeBtn();
             const resultEl = document.getElementById('battle_result_banner');
+            const closeBtn = document.getElementById('battle_close_btn');
+            if (closeBtn) closeBtn.style.display = (c.status === 'COMPLETED') ? 'inline-block' : 'none';
             if (c.status === 'COMPLETED') {
                 resultEl.style.display = 'block';
                 if (!mine) {
@@ -3324,7 +3369,7 @@
         }
 
         function manualTrade(side) {
-            if (typeof activeBattleId !== 'undefined' && activeBattleId) { placeBattleTrade(side); return; }
+            if (isBattleTradingLive()) { placeBattleTrade(side); return; }
             if (typeof tradingMode !== 'undefined' && tradingMode === 'funded') {
                 fundedManualTrade(side);
                 return;
@@ -3527,7 +3572,7 @@
                 showToast('🚫 Auto Mode is disabled during Funded Challenge. Switch to Real to use it.', '#f23645');
                 return;
             }
-            if (cb.checked && typeof activeBattleId !== 'undefined' && activeBattleId) {
+            if (cb.checked && isBattleTradingLive()) {
                 cb.checked = false;
                 showToast('🚫 Auto Mode is disabled while a Battle is live. Exit the Battle to use it.', '#f23645');
                 return;
@@ -3937,8 +3982,10 @@
                     </div>
                     <div style="color:#555;">▾</div>
                 </div>
+                <button id="battle_trade_btn" onclick="toggleBattleTrading()" title="Choose where your orders go: this Battle or Real/Funded" style="display:none; background:#2a2e39; color:#38bdf8; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Trade: Battle</button>
                 <button onclick="openBattle()" style="background:#2a2e39; color:#38bdf8; border:none; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; padding:3px 6px; white-space:nowrap;">Battles</button>
                 <button onclick="minimizeBattleBar()" title="Minimize — battle keeps running" style="background:#2a2e39; color:#b2b5be; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; padding:3px 9px;">─</button>
+                <button id="battle_close_btn" onclick="closeCompletedBattle()" title="Close — battle is over" style="display:none; background:#f23645; color:#fff; border:none; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; padding:3px 8px; white-space:nowrap;">✕ Close</button>
             </div>
             <div id="battle_result_banner" style="display:none; text-align:center; padding:5px; border-radius:5px; margin-top:5px; font-weight:bold; background:rgba(255,255,255,0.05);"></div>
             <div id="battle_leaderboard" style="display:none; margin-top:5px; max-height:150px; overflow-y:auto; background:#0c0d10; border-radius:6px; padding:4px;"></div>
@@ -4380,6 +4427,14 @@
         function toggleTradingMode() {
             const on = document.getElementById('funded_mode_toggle').checked;
             tradingMode = on ? 'funded' : 'real';
+
+            // Flipping Real/Funded while a battle is live = "send my orders
+            // here now". The battle itself keeps running; only routing moves.
+            if (isBattleTradingLive()) {
+                battleTradingPaused = true;
+                syncBattleTradeBtn();
+                showToast('↩️ Orders now go to ' + (on ? 'Funded Challenge' : 'Real') + '. Battle is still running.', '#38bdf8');
+            }
 
             const assetSel = document.getElementById('asset_choice');
             const ethOpt = document.getElementById('asset_opt_eth');
